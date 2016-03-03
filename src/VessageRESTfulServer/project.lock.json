@@ -1543,6 +1543,14 @@
           "lib/net40/PasswordHash.dll": {}
         }
       },
+      "ServerControlService/1.0.0": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "BahamutCommon": "1.0.0",
+          "DataLevelDefines": "1.0.0"
+        }
+      },
       "ServiceStack/3.9.71": {
         "type": "package",
         "dependencies": {
@@ -3365,6 +3373,14 @@
         },
         "runtime": {
           "lib/net40/PasswordHash.dll": {}
+        }
+      },
+      "ServerControlService/1.0.0": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "BahamutCommon": "1.0.0",
+          "DataLevelDefines": "1.0.0"
         }
       },
       "ServiceStack/3.9.71": {
@@ -5191,6 +5207,14 @@
           "lib/net40/PasswordHash.dll": {}
         }
       },
+      "ServerControlService/1.0.0": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "BahamutCommon": "1.0.0",
+          "DataLevelDefines": "1.0.0"
+        }
+      },
       "ServiceStack/3.9.71": {
         "type": "package",
         "dependencies": {
@@ -5488,6 +5512,10 @@
     "DataLevelDefines/1.0.0": {
       "type": "project",
       "path": "../../../BahamutZero/src/DataLevelDefines/project.json"
+    },
+    "ServerControlService/1.0.0": {
+      "type": "project",
+      "path": "../../../ServerControl/src/ServerControlService/project.json"
     },
     "DBTek.Crypto/2.1.0": {
       "type": "package",
@@ -7604,7 +7632,8 @@
       "Microsoft.Extensions.Configuration.Json >= 1.0.0-rc1-final",
       "Microsoft.Extensions.Logging >= 1.0.0-rc1-final",
       "Microsoft.Extensions.Logging.Console >= 1.0.0-rc1-final",
-      "Microsoft.Extensions.Logging.Debug >= 1.0.0-rc1-final"
+      "Microsoft.Extensions.Logging.Debug >= 1.0.0-rc1-final",
+      "ServerControlService >= 1.0.0-*"
     ],
     "DNX,Version=v4.5.1": [
       "BahamutAspNetCommon >= 1.0.0-*",

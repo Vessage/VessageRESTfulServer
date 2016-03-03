@@ -7,7 +7,7 @@ using Microsoft.AspNet.Mvc;
 namespace VessageRESTfulServer.Controllers
 {
     [Route("api/[controller]")]
-    public class VessagesController : Controller
+    public class VessagesController : APIControllerBase
     {
 
         [HttpGet("New")]

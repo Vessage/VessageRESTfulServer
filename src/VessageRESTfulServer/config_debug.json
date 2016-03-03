@@ -1,0 +1,81 @@
+﻿{
+  "Data": {
+    "App": {
+      "appname": "TorontoAPIServer",
+      "appkey": "5e6c827f2fcb04e8fca80cf72db5ba004508246b",
+      "url": "http://192.168.1.168:8088",
+      "region": "default"
+    },
+    "SharelinkDBServer": {
+      "url": "mongodb://db.sharelink.online:27017"
+    },
+    "BahamutDBConnection": {
+      "connectionString": "server=bahamutdb.sharelink.online;user id=root;password=dfyybest;Charset=utf8;persistsecurityinfo=False;database=BahamutDB;Pooling=true; Max Pool Size=50;"
+    },
+    "TokenServer": {
+      "url": "redis://token.sharelink.online:6379"
+    },
+
+    "ControlServiceServer": {
+      "url": "redis://app.sharelink.online:6379"
+    },
+
+    "MessagePubSubServer": {
+      "url": "redis://pubsub.sharelink.online:6379"
+    },
+
+    "MessageCacheServer": {
+      "url": "redis://msg.sharelink.online:6379"
+    },
+
+    "ChicagoServer": {
+      "host": "192.168.1.168",
+      "port": 9657
+    },
+
+    "FileServer": {
+      "url": "http://192.168.1.168:8089"
+    },
+
+    "Log": {
+      "fileLoggers": [
+        {
+          "name": "Main",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${level:uppercase=true}:${message};${exception}",
+          "namePattern": "Main",
+          "minLevel": "Debug",
+          "fileName": "c:/logs/Toronto/8088/main.log"
+        },
+        {
+          "name": "Route",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
+          "namePattern": "Route",
+          "logLevel": "Info",
+          "fileName": "c:/logs/Toronto/8088/route.log"
+        },
+        {
+          "name": "Error",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}->${exception}",
+          "namePattern": "*",
+          "logLevel": "Error",
+          "fileName": "c:/logs/Toronto/8088/error.log"
+        },
+        {
+          "name": "Info",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
+          "namePattern": "Info",
+          "logLevel": "Info",
+          "fileName": "c:/logs/Toronto/8088/info.log"
+        },
+        {
+          "name": "Warning",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}",
+          "namePattern": "*",
+          "logLevel": "Warn",
+          "fileName": "c:/logs/TorontoAPIServer/8088/warning.log"
+        }
+      ]
+    }
+  }
+  
+}

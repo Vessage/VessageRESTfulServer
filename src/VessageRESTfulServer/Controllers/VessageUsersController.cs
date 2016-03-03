@@ -9,20 +9,32 @@ using Microsoft.AspNet.Mvc;
 namespace VessageRESTfulServer.Controllers
 {
     [Route("api/[controller]")]
-    public class ConversationsController : Controller
+    public class VessageUsersController : APIControllerBase
     {
         // GET: api/values
-        [HttpGet("ConversationList")]
-        public IEnumerable<object> GetConversationList()
+        [HttpGet]
+        public object Get()
         {
             return new string[] { "value1", "value2" };
         }
 
+        // GET api/values/5
+        [HttpGet("{userId}")]
+        public string GetUserByUserId(string userId)
+        {
+            return "value";
+        }
+
+        [HttpGet("{mobile}")]
+        public string GetUserByMobile(string mobile)
+        {
+            return "value";
+        }
+
         // POST api/values
         [HttpPost]
-        public void Post(string userId, string mobile)
+        public void Post([FromBody]string value)
         {
-
         }
 
         // PUT api/values/5
@@ -31,10 +43,5 @@ namespace VessageRESTfulServer.Controllers
         {
         }
 
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }

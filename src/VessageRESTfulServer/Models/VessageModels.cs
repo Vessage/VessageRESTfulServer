@@ -17,7 +17,7 @@ namespace VessageRESTfulServer.Models
         public DateTime CreateTime { get; set; }
     }
 
-    public class VMessage
+    public class Vessage
     {
         public ObjectId Id { get; set; }
         public ObjectId Sender { get; set; }
@@ -35,7 +35,7 @@ namespace VessageRESTfulServer.Models
         public ObjectId ChattingUserId { get; set; }
         public string ChattingUserMobile { get; set; }
 
-        public string ForUserMobile { get; set; }
+        public string ForMobile { get; set; }
 
         public string NoteName { get; set; }
         public DateTime LastMessageDateTime { get; set; }

@@ -1,0 +1,78 @@
+﻿{
+  "Data": {
+    "App": {
+      "appname": "VessageRESTfulServer",
+      "appkey": "7f9e267b33231abe16ea4b6c5fabae11b6103791",
+      "url": "http://vessageapi.bahamut.cn:8188",
+      "region": "default"
+    },
+    "VessageDBServer": {
+      "url": "mongodb://$usr:$psw@vsgdb.bahamut.cn:27017"
+    },
+    "TokenServer": {
+      "url": "redis://$psw@vsgtoken.bahamut.cn:6379"
+    },
+
+    "ControlServiceServer": {
+      "url": "redis://$psw@app.sharelink.online:6379"
+    },
+
+    "MessagePubSubServer": {
+      "url": "redis://$psw@pubsub.sharelink.online:6379"
+    },
+
+    "MessageCacheServer": {
+      "url": "redis://$psw@msg.sharelink.online:6379"
+    },
+
+    "ChicagoServer": {
+      "host": "chicago.sharelink.online",
+      "port": 9657
+    },
+
+    "FileServer": {
+      "url": "http://file.sharelink.online:8089"
+    },
+
+    "Log": {
+      "fileLoggers": [
+        {
+          "name": "Main",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${level:uppercase=true}:${message};${exception}",
+          "namePattern": "Main",
+          "minLevel": "Debug",
+          "fileName": "/home/deployment/logs/VessageRESTful/8188/main.log"
+        },
+        {
+          "name": "Route",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
+          "namePattern": "Route",
+          "logLevel": "Info",
+          "fileName": "/home/deployment/logs/VessageRESTful/8188/route.log"
+        },
+        {
+          "name": "Error",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}->${exception}",
+          "namePattern": "*",
+          "minLevel": "Error",
+          "fileName": "/home/deployment/logs/VessageRESTful/8188/error.log"
+        },
+        {
+          "name": "Info",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
+          "namePattern": "Info",
+          "logLevel": "Info",
+          "fileName": "/home/deployment/logs/VessageRESTful/8188/info.log"
+        },
+        {
+          "name": "Warning",
+          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}",
+          "namePattern": "*",
+          "logLevel": "Warn",
+          "fileName": "/home/deployment/logs/VessageRESTful/8188/warning.log"
+        }
+      ]
+    }
+  }
+  
+}
