@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using VessageRESTfulServer.Models;
 
 namespace VessageRESTfulServer.Services
 {
@@ -13,6 +14,16 @@ namespace VessageRESTfulServer.Services
         public ConversationService(IMongoClient Client)
         {
             this.Client = Client;
+        }
+
+        internal Task<IEnumerable<Conversation>> GetUserConversations(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal Task<Conversation> AddConversation(Conversation conversation)
+        {
+            throw new NotImplementedException();
         }
     }
 

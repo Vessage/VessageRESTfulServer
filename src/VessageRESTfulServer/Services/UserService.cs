@@ -28,6 +28,41 @@ namespace VessageRESTfulServer.Services
                 return null;
             }
         }
+
+        internal Task<VessageUser> GetUserOfUserId(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<VessageUser> CreateNewUser(VessageUser newUser)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal Task<VessageUser> GetUserOfMobile(string mobile)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal Task<bool> ChangeMainChatImageOfUser(string userId, string image)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal Task<bool> ChangeAvatarOfUser(string userId, string avatar)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal Task<bool> ChangeNickOfUser(string userId, string nick)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal Task<bool> UpdateMobileOfUser(string userId, string mobile)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public static class GetUserServiceExtension

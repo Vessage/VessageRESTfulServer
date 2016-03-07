@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
+using VessageRESTfulServer.Services;
+using System.Net;
+using VessageRESTfulServer.Models;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -13,34 +16,150 @@ namespace VessageRESTfulServer.Controllers
     {
         // GET: api/values
         [HttpGet]
-        public object Get()
+        public async Task<object> Get()
         {
-            return new string[] { "value1", "value2" };
+            var userService = Startup.ServicesProvider.GetUserService();
+            var user = await userService.GetUserOfUserId(UserSessionData.UserId);
+            return VessageUserToJsonObject(user);
         }
 
-        // GET api/values/5
-        [HttpGet("{userId}")]
-        public string GetUserByUserId(string userId)
+        [HttpGet("{accountId}")]
+        public async Task<object> GetUserByAccountId(string accountId)
         {
-            return "value";
+            var userService = Startup.ServicesProvider.GetUserService();
+            VessageUser user = await userService.GetUserOfAccountId(accountId);
+            if (user != null)
+            {
+                return VessageUserToJsonObject(user);
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotFound;
+                return new { msg = "NO_SUCH_USER" };
+            }
         }
 
-        [HttpGet("{mobile}")]
-        public string GetUserByMobile(string mobile)
+        [HttpGet("Mobile/{mobile}")]
+        public async Task<object> GetUserByMobile(string mobile)
         {
-            return "value";
+            var userService = Startup.ServicesProvider.GetUserService();
+            VessageUser user = await userService.GetUserOfMobile(mobile);
+            if (user != null)
+            {
+                return VessageUserToJsonObject(user);
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotFound;
+                return new { msg = "NO_SUCH_USER" };
+            }
         }
 
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody]string value)
+        private object VessageUserToJsonObject(VessageUser user)
         {
+            var jsonResultObj = new
+            {
+                accountId = user.AccountId,
+                userId = user.Id.ToString(),
+                mainChatImage = user.MainChatImage,
+                avatar = user.Avartar,
+                mobile = user.Mobile
+            };
+            return jsonResultObj;
         }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        [HttpPost("SendMobileVSMS")]
+        public async Task<object> SendMobileVSMS(string mobile)
         {
+            return new { msg = "SUCCESS" };
+        }
+
+        [HttpPost("ValidateMobileVSMS")]
+        public async Task<object> ValidateMobileVSMS(string mobile,string vsms)
+        {
+            var userService = Startup.ServicesProvider.GetUserService();
+            bool suc = await userService.UpdateMobileOfUser(UserSessionData.UserId, mobile);
+            if (suc)
+            {
+                return new { msg = "SUCCESS" };
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                return new { msg = "SERVER_ERROR" };
+            }
+        }
+
+        [HttpPut("Nick")]
+        public async Task<object> ChangeNick(string nick)
+        {
+            if (string.IsNullOrWhiteSpace(nick) == false)
+            {
+                var userService = Startup.ServicesProvider.GetUserService();
+                bool suc = await userService.ChangeNickOfUser(UserSessionData.UserId, nick);
+                if (suc)
+                {
+                    return new { msg = "SUCCESS" };
+                }
+                else
+                {
+                    Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    return new { msg = "SERVER_ERROR" };
+                }
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return new { msg = "INVALID_VALUE" };
+            }
+        }
+
+        [HttpPut("Avatar")]
+        public async Task<object> ChangeAvatar(string avatar)
+        {
+            if (string.IsNullOrWhiteSpace(avatar) == false)
+            {
+                var userService = Startup.ServicesProvider.GetUserService();
+                bool suc = await userService.ChangeAvatarOfUser(UserSessionData.UserId, avatar);
+                if (suc)
+                {
+                    return new { msg = "SUCCESS" };
+                }
+                else
+                {
+                    Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    return new { msg = "SERVER_ERROR" };
+                }
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return new { msg = "INVALID_VALUE" };
+            }
+        }
+
+        [HttpPut("MainChatImage")]
+        public async Task<object> ChangeMainChatImage(string image)
+        {
+            if (string.IsNullOrWhiteSpace(image) == false)
+            {
+                var userService = Startup.ServicesProvider.GetUserService();
+                bool suc = await userService.ChangeMainChatImageOfUser(UserSessionData.UserId, image);
+                if (suc)
+                {
+                    return new { msg = "SUCCESS" };
+                }
+                else
+                {
+                    Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    return new { msg = "SERVER_ERROR" };
+                }
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return new { msg = "INVALID_VALUE" };
+            }
         }
 
     }

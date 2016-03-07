@@ -16,45 +16,48 @@ using ServiceStack.Redis;
 using NLog.Config;
 using NLog;
 using BahamutCommon;
+using BahamutService.Service;
 
 namespace VessageRESTfulServer
 {
     public class Startup
     {
+        public static IConfigurationRoot Configuration { get; set; }
         public static IServiceProvider ServicesProvider { get; private set; }
+        public static BahamutAppInstance BahamutAppInstance { get; private set; }
+
         public static string Appkey { get; private set; }
         public static string Appname { get; private set; }
         public static string Server { get; set; }
         public static string APIUrl { get; private set; }
-        public static string FileApiUrl { get; private set; }
-        public static string SharelinkDBUrl { get; private set; }
-        public static string BahamutDBConnectionString { get; private set; }
-        public static BahamutAppInstance BahamutAppInstance { get; private set; }
-        public static string ChicagoServerAddress { get; private set; }
-        public static int ChicagoServerPort { get; private set; }
+
+        public static string AuthServerUrl { get { return Configuration["Data:AuthServer:url"]; } }
+        public static string FileApiUrl { get { return Configuration["Data:FileServer:url"]; } }
+        public static string SharelinkDBUrl { get { return Configuration["Data:SharelinkDBServer:url"]; } }
+        public static string ChicagoServerAddress { get { return Configuration["Data:ChicagoServer:host"]; } }
+        public static int ChicagoServerPort { get { return int.Parse(Configuration["Data:ChicagoServer:port"]); } }
+
         public static IDictionary<string, string> ValidatedUsers { get; private set; }
         public Startup(IHostingEnvironment env)
         {
             // Set up configuration sources.
             var builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json");
+            var configFile = "config_debug.json";
 
             if (env.IsEnvironment("Development"))
             {
                 // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
                 builder.AddApplicationInsightsSettings(developerMode: true);
-                builder.AddJsonFile("config_debug.json");
             }
             else
             {
-                builder.AddJsonFile("/etc/bahamut/vessage.json");
+                configFile = "/etc/bahamut/vessage.json";
             }
-
+            builder.AddJsonFile(configFile);
             builder.AddEnvironmentVariables();
-            Configuration = builder.Build().ReloadOnChanged("appsettings.json");
+            Configuration = builder.Build().ReloadOnChanged("appsettings.json").ReloadOnChanged(configFile);
         }
-
-        public IConfigurationRoot Configuration { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
@@ -84,6 +87,9 @@ namespace VessageRESTfulServer
 
             var messageCacheServerUrl = Configuration["Data:MessageCacheServer:url"].Replace("redis://", "");
             var mcClientManager = new PooledRedisClientManager(messageCacheServerUrl);
+
+            var pbService = new BahamutPubSubService(pbClientManager, mcClientManager);
+            services.AddInstance(pbService);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline

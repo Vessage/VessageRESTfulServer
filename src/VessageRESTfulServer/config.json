@@ -25,6 +25,10 @@
       "url": "redis://$psw@msg.sharelink.online:6379"
     },
 
+    "AuthServer": {
+      "url": "http://192.168.1.168:8086"
+    },
+
     "ChicagoServer": {
       "host": "chicago.sharelink.online",
       "port": 9657

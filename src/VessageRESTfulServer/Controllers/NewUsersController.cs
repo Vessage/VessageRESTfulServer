@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
+using System.Net;
+using VessageRESTfulServer.Services;
+using VessageRESTfulServer.Models;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,36 +14,50 @@ namespace VessageRESTfulServer.Controllers
     [Route("api/[controller]")]
     public class NewUsersController : Controller
     {
-        // GET: api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody]string value)
+        public async Task<object> Post(string accountId, string accessToken, string nickName, string motto, string region = "us")
         {
-        }
+            var userService = Startup.ServicesProvider.GetUserService();
+            var test = await userService.GetUserOfAccountId(accountId);
+            if (test != null)
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return "One AccountId Only Regist One Time";
+            }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
-        {
-        }
+            var tokenService = Startup.ServicesProvider.GetTokenService();
+            var userSession = await tokenService.ValidateToGetSessionData(Startup.Appkey, accountId, accessToken);
+            if (userSession != null)
+            {
+                var newUser = new VessageUser()
+                {
+                    AccountId = accountId,
+                    CreateTime = DateTime.UtcNow,
+                    Nick = nickName
+                };
 
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+                newUser = await userService.CreateNewUser(newUser);
+                var userId = newUser.Id.ToString();
+
+                var sessionData = await tokenService.ValidateAccessToken(Startup.Appkey, accountId, accessToken, userId);
+                return new
+                {
+                    Succeed = true,
+                    AppToken = sessionData.UserSessionData.AppToken,
+                    UserId = sessionData.UserSessionData.UserId,
+                    APIServer = Startup.APIUrl,
+                    FileAPIServer = Startup.FileApiUrl,
+                    ChicagoServer = string.Format("{0}:{1}", Startup.ChicagoServerAddress, Startup.ChicagoServerPort)
+                };
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                return "Validate Fail,Can't Not Regist New User";
+            }
+            
         }
     }
 }
