@@ -180,5 +180,10 @@ namespace VessageRESTfulServer
         {
             return provider.GetService<TokenService>();
         }
+
+        public static BahamutPubSubService GetBahamutPubSubService(this IServiceProvider provider)
+        {
+            return provider.GetService<BahamutPubSubService>();
+        }
     }
 }

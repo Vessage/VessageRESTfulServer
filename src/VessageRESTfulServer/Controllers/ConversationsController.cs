@@ -7,6 +7,7 @@ using VessageRESTfulServer.Models;
 using VessageRESTfulServer.Services;
 using BahamutCommon;
 using System.Net;
+using MongoDB.Bson;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -42,12 +43,11 @@ namespace VessageRESTfulServer.Controllers
         {
             var conversation = new Conversation()
             {
-                ChattingUserMobile = mobile,
-                UserId = new MongoDB.Bson.ObjectId(UserSessionData.UserId)
+                ChattingUserMobile = mobile
             };
             if (string.IsNullOrWhiteSpace(userId) == false)
             {
-                conversation.UserId = new MongoDB.Bson.ObjectId(userId);
+                conversation.ChattingUserId = new ObjectId(userId);
             }
             if (string.IsNullOrWhiteSpace(userId) && string.IsNullOrWhiteSpace(mobile) == false)
             {
@@ -55,7 +55,7 @@ namespace VessageRESTfulServer.Controllers
                 var user = await userService.GetUserOfMobile(mobile);
                 userId = user.Id.ToString();
             }
-            conversation = await Startup.ServicesProvider.GetConversationService().AddConversation(conversation);
+            conversation = await Startup.ServicesProvider.GetConversationService().AddConversation(UserSessionData.UserId, conversation);
             if (conversation == null)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
@@ -63,15 +63,29 @@ namespace VessageRESTfulServer.Controllers
         }
 
         // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        [HttpPut("NoteName")]
+        public async void Put(string conversationId, string noteName)
         {
+            var suc = false;
+            if (!string.IsNullOrWhiteSpace(noteName))
+            {
+                suc = await Startup.ServicesProvider.GetConversationService().ChangeConversationNoteName(UserSessionData.UserId, conversationId, noteName);   
+            }
+            if (!suc)
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotModified;
+            }
         }
 
         // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpDelete]
+        public async void Delete(string conversationId)
         {
+            bool suc = await Startup.ServicesProvider.GetConversationService().RemoveConversation(UserSessionData.UserId, conversationId);
+            if (suc == false)
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotModified;
+            }
         }
     }
 }

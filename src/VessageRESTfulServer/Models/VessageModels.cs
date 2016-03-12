@@ -27,16 +27,22 @@ namespace VessageRESTfulServer.Models
         public bool IsRead { get; set; }
     }
 
+    public class VessageBox
+    {
+        public ObjectId Id { get; set; }
+        public ObjectId UserId { get; set; }
+        public string ForMobile { get; set; }
+        public Vessage[] Vessages { get; set; }
+        public DateTime LastGetMessageTime { get; set; }
+        public DateTime LastGotMessageTime { get; set; }
+    }
+
     public class Conversation
     {
         public ObjectId Id { get; set; }
-
         public ObjectId UserId { get; set; }
         public ObjectId ChattingUserId { get; set; }
         public string ChattingUserMobile { get; set; }
-
-        public string ForMobile { get; set; }
-
         public string NoteName { get; set; }
         public DateTime LastMessageDateTime { get; set; }
     }
@@ -44,7 +50,8 @@ namespace VessageRESTfulServer.Models
     public class ConversationList
     {
         public ObjectId Id { get; set; }
-        public string UserId { get; set; }
+        public ObjectId UserId { get; set; }
+        public string ForMobile { get; set; }
         public Conversation[] Conversations { get; set; }
     }
 }

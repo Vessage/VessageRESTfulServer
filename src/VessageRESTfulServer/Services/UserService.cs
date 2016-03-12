@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using VessageRESTfulServer.Models;
+using MongoDB.Bson;
 
 namespace VessageRESTfulServer.Services
 {
@@ -29,39 +30,111 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        internal Task<VessageUser> GetUserOfUserId(string userId)
+        public async Task<VessageUser> GetUserOfUserId(string userId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var userOId = new ObjectId(userId);
+                var user = await collection.Find(u => u.Id == userOId).SingleAsync();
+                return user;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
-        public Task<VessageUser> CreateNewUser(VessageUser newUser)
+        public async Task<VessageUser> CreateNewUser(VessageUser newUser)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                await collection.InsertOneAsync(newUser);
+                return newUser;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
-        internal Task<VessageUser> GetUserOfMobile(string mobile)
+        public async Task<VessageUser> GetUserOfMobile(string mobile)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var user = await collection.Find(u => u.Mobile == mobile).SingleAsync();
+                return user;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
-        internal Task<bool> ChangeMainChatImageOfUser(string userId, string image)
+        public async Task<bool> ChangeMainChatImageOfUser(string userId, string image)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var userOId = new ObjectId(userId);
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.MainChatImage, image);
+                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
+                return user != null;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
-        internal Task<bool> ChangeAvatarOfUser(string userId, string avatar)
+        public async Task<bool> ChangeAvatarOfUser(string userId, string avatar)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var userOId = new ObjectId(userId);
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Avartar, avatar);
+                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
+                return user != null;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
-        internal Task<bool> ChangeNickOfUser(string userId, string nick)
+        public async Task<bool> ChangeNickOfUser(string userId, string nick)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var userOId = new ObjectId(userId);
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Nick, nick);
+                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
+                return user != null;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
-        internal Task<bool> UpdateMobileOfUser(string userId, string mobile)
+        public async Task<bool> UpdateMobileOfUser(string userId, string mobile)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var userOId = new ObjectId(userId);
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Mobile, mobile);
+                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
+                return user != null;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 

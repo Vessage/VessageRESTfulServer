@@ -23,6 +23,14 @@ namespace VessageRESTfulServer.Controllers
             return VessageUserToJsonObject(user);
         }
 
+        [HttpGet]
+        public async Task<object> Get(string userId)
+        {
+            var userService = Startup.ServicesProvider.GetUserService();
+            var user = await userService.GetUserOfUserId(userId);
+            return VessageUserToJsonObject(user);
+        }
+
         [HttpGet("{accountId}")]
         public async Task<object> GetUserByAccountId(string accountId)
         {
@@ -81,6 +89,8 @@ namespace VessageRESTfulServer.Controllers
             bool suc = await userService.UpdateMobileOfUser(UserSessionData.UserId, mobile);
             if (suc)
             {
+                await AppServiceProvider.GetConversationService().BindNewUserOpenedConversation(UserSessionData.UserId, mobile);
+                await AppServiceProvider.GetVessageService().BindNewUserReveicedVessages(UserSessionData.UserId, mobile);
                 return new { msg = "SUCCESS" };
             }
             else

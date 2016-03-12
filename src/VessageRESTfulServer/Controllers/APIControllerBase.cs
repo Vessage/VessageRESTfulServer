@@ -16,6 +16,8 @@ namespace VessageRESTfulServer.Controllers
         {
         }
 
+        public IServiceProvider AppServiceProvider { get { return Startup.ServicesProvider; } }
+
         public AccountSessionData UserSessionData
         {
             get { return Request.HttpContext.Items["AccountSessionData"] as AccountSessionData; }

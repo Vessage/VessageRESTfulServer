@@ -40,7 +40,6 @@ namespace VessageRESTfulServer.Controllers
 
                 newUser = await userService.CreateNewUser(newUser);
                 var userId = newUser.Id.ToString();
-
                 var sessionData = await tokenService.ValidateAccessToken(Startup.Appkey, accountId, accessToken, userId);
                 return new
                 {
