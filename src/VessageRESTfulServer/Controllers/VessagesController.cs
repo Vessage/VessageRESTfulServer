@@ -32,30 +32,23 @@ namespace VessageRESTfulServer.Controllers
                 vessageId = m.Id.ToString(),
                 fileId = m.Video,
                 sender = m.Sender.ToString(),
-                conversationId = m.ConversatinoId.ToString(),
                 isRead = m.IsRead,
                 sendTime = DateTimeUtil.ToAccurateDateTimeString(m.SendTime)
             };
         }
 
         [HttpPut("Got")]
-        public async void GotNewVessages()
+        public async Task GotNewVessages()
         {
             await AppServiceProvider.GetVessageService().UpdateGodMessageTime(UserSessionData.UserId);
         }
 
-        [HttpGet("Conversation/{cid}")]
-        public IEnumerable<object> GetConversationVessages(string cid)
-        {
-            Response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
-            return new string[] { "value1", "value2" };
-        }
-
         [HttpPost]
-        public async Task<object> SendNewVessage(string conversationId, string fileId)
+        public async Task<object> SendNewVessage(string receiverId,string receiverMobile, string fileId)
         {
             var vessage = new Vessage()
             {
+                Id = ObjectId.GenerateNewId(),
                 IsRead = false,
                 Sender = new ObjectId(UserSessionData.UserId),
                 SendTime = DateTime.UtcNow,
@@ -63,33 +56,22 @@ namespace VessageRESTfulServer.Controllers
             };
 
             var vessageService = Startup.ServicesProvider.GetVessageService();
-            var conversationService = Startup.ServicesProvider.GetConversationService();
-            Conversation senderConversation = await conversationService.GetConversationOfUser(UserSessionData.UserId, conversationId);
-            Conversation reveicerConversation = null;
-            if (senderConversation.ChattingUserId != null)
+            if (string.IsNullOrWhiteSpace(receiverId) == false)
             {
-                reveicerConversation = await conversationService.GetConversationOfReceiverId(senderConversation.ChattingUserId, UserSessionData.UserId);
-                vessage.ConversatinoId = reveicerConversation.Id;
-                vessage = await vessageService.SendVessage(reveicerConversation.UserId, vessage);
-                AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("VessageRESTfulServer", reveicerConversation.UserId.ToString(), new BahamutUserAppNotifyMessage()
+                await vessageService.SendVessage(new ObjectId(receiverId), vessage);
+            }else if (string.IsNullOrWhiteSpace(receiverMobile) == false)
+            {
+                var result = await vessageService.SendVessageForMobile(receiverMobile, vessage);
+                if (result.Item2 != ObjectId.Empty)
                 {
-                     NotificationType = "NewVessageNotify"
-                });
+                    return new { msg = "SUCCESS", chatterId = result.Item2.ToString() };
+                }
+                else
+                {
+                    return new { msg = "SUCCESS" };
+                }
             }
-            else if(senderConversation.ChattingUserMobile != null)
-            {
-                var userService = AppServiceProvider.GetUserService();
-                var sender = await userService.GetUserOfUserId(UserSessionData.UserId);
-                reveicerConversation = await conversationService.GetConversationOfReceiverMobile(senderConversation.ChattingUserMobile, UserSessionData.UserId, sender.Nick);
-                vessage.ConversatinoId = reveicerConversation.Id;
-                vessage = await vessageService.SendVessageForMobile(senderConversation.ChattingUserMobile, vessage);
-            }
-            else
-            {
-                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                return new { msg = "" };
-            }
-            string msg = "SUCCESS";
+            string msg = "FAIL";
             if (vessage == null)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
@@ -106,8 +88,8 @@ namespace VessageRESTfulServer.Controllers
             string msg = "SUCCESS";
             if (suc == false)
             {
-                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                msg = "SERVER_ERROR";
+                Response.StatusCode = (int)HttpStatusCode.Conflict;
+                msg = "FAIL";
             }
             return new { msg = msg };
         }

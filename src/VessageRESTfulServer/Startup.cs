@@ -41,14 +41,20 @@ namespace VessageRESTfulServer
         public Startup(IHostingEnvironment env)
         {
             // Set up configuration sources.
+            ValidatedUsers = new Dictionary<string, string>();
+            ReadConfig(env);
+            SetServerConfig();
+        }
+
+        private static void ReadConfig(IHostingEnvironment env)
+        {
             var builder = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json");
+                            .AddJsonFile("appsettings.json");
             var configFile = "config_debug.json";
 
             if (env.IsEnvironment("Development"))
             {
-                // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
-                builder.AddApplicationInsightsSettings(developerMode: true);
+
             }
             else
             {
@@ -59,11 +65,18 @@ namespace VessageRESTfulServer
             Configuration = builder.Build().ReloadOnChanged("appsettings.json").ReloadOnChanged(configFile);
         }
 
+        private static void SetServerConfig()
+        {
+            Server = Configuration["Data:App:url"];
+            Appkey = Configuration["Data:App:appkey"];
+            Appname = Configuration["Data:App:appname"];
+            APIUrl = Server + "/api";
+        }
+
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
-            services.AddApplicationInsightsTelemetry(Configuration);
 
             var tokenServerUrl = Configuration["Data:TokenServer:url"].Replace("redis://", "");
             var TokenServerClientManager = new PooledRedisClientManager(tokenServerUrl);
@@ -78,7 +91,6 @@ namespace VessageRESTfulServer
 
             //business services
             services.AddInstance(new UserService(new MongoClient(MongoUrl.Create(Startup.SharelinkDBUrl))));
-            services.AddInstance(new ConversationService(new MongoClient(MongoUrl.Create(Startup.SharelinkDBUrl))));
             services.AddInstance(new VessageService(new MongoClient(MongoUrl.Create(Startup.SharelinkDBUrl))));
 
             //pubsub manager
@@ -95,6 +107,7 @@ namespace VessageRESTfulServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            Startup.ServicesProvider = app.ApplicationServices;
             //Log
             var logConfig = new LoggingConfiguration();
             LoggerLoaderHelper.LoadLoggerToLoggingConfig(logConfig, Configuration, "Data:Log:fileLoggers");
@@ -138,12 +151,6 @@ namespace VessageRESTfulServer
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
 
             loggerFactory.AddDebug();
-
-            app.UseIISPlatformHandler();
-
-            app.UseApplicationInsightsRequestTelemetry();
-
-            app.UseApplicationInsightsExceptionTelemetry();
 
             app.UseStaticFiles();
 

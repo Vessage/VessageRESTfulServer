@@ -21,10 +21,10 @@ namespace VessageRESTfulServer.Models
     {
         public ObjectId Id { get; set; }
         public ObjectId Sender { get; set; }
-        public ObjectId ConversatinoId { get; set; }
         public string Video{ get; set; }
         public DateTime SendTime { get; set; }
         public bool IsRead { get; set; }
+        public string ExtraInfo { get; set; }
     }
 
     public class VessageBox
@@ -35,23 +35,5 @@ namespace VessageRESTfulServer.Models
         public Vessage[] Vessages { get; set; }
         public DateTime LastGetMessageTime { get; set; }
         public DateTime LastGotMessageTime { get; set; }
-    }
-
-    public class Conversation
-    {
-        public ObjectId Id { get; set; }
-        public ObjectId UserId { get; set; }
-        public ObjectId ChattingUserId { get; set; }
-        public string ChattingUserMobile { get; set; }
-        public string NoteName { get; set; }
-        public DateTime LastMessageDateTime { get; set; }
-    }
-
-    public class ConversationList
-    {
-        public ObjectId Id { get; set; }
-        public ObjectId UserId { get; set; }
-        public string ForMobile { get; set; }
-        public Conversation[] Conversations { get; set; }
     }
 }

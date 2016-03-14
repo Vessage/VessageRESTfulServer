@@ -1,9 +1,9 @@
 ﻿{
   "Data": {
     "App": {
-      "appname": "TorontoAPIServer",
-      "appkey": "5e6c827f2fcb04e8fca80cf72db5ba004508246b",
-      "url": "http://192.168.1.168:8088",
+      "appname": "VessageAPIServer",
+      "appkey": "7f9e267b33231abe16ea4b6c5fabae11b6103791",
+      "url": "http://192.168.1.168:8188",
       "region": "default"
     },
     "SharelinkDBServer": {
@@ -46,35 +46,35 @@
           "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${level:uppercase=true}:${message};${exception}",
           "namePattern": "Main",
           "minLevel": "Debug",
-          "fileName": "c:/logs/Toronto/8088/main.log"
+          "fileName": "c:/logs/Vessage/8188/main.log"
         },
         {
           "name": "Route",
           "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
           "namePattern": "Route",
           "logLevel": "Info",
-          "fileName": "c:/logs/Toronto/8088/route.log"
+          "fileName": "c:/logs/Vessage/8188/route.log"
         },
         {
           "name": "Error",
           "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}->${exception}",
           "namePattern": "*",
           "logLevel": "Error",
-          "fileName": "c:/logs/Toronto/8088/error.log"
+          "fileName": "c:/logs/Vessage/8188/error.log"
         },
         {
           "name": "Info",
           "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
           "namePattern": "Info",
           "logLevel": "Info",
-          "fileName": "c:/logs/Toronto/8088/info.log"
+          "fileName": "c:/logs/Vessage/8188/info.log"
         },
         {
           "name": "Warning",
           "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}",
           "namePattern": "*",
           "logLevel": "Warn",
-          "fileName": "c:/logs/TorontoAPIServer/8088/warning.log"
+          "fileName": "c:/logs/Vessage/8188/warning.log"
         }
       ]
     }

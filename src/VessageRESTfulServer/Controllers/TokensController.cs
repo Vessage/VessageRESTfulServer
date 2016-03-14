@@ -67,7 +67,10 @@ namespace VessageRESTfulServer.Controllers
             catch (Exception ex)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                throw ex;
+                return new
+                {
+                    msg = ex.Message
+                };
             }
 
         }

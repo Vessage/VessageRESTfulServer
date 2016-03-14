@@ -18,8 +18,8 @@
         "dependencies": {
           "DBTek.Crypto": "2.1.0",
           "Microsoft.Extensions.Configuration.Abstractions": "1.0.0",
-          "Newtonsoft.Json": "7.0.1",
-          "NLog": "4.2.0",
+          "Newtonsoft.Json": "8.0.2",
+          "NLog": "4.2.3",
           "PasswordHash": "1.1.0"
         }
       },
@@ -36,9 +36,9 @@
         "framework": "DNX,Version=v4.5.1",
         "dependencies": {
           "EntityFramework": "6.1.3",
-          "MongoDB.Driver": "2.1.1",
-          "MySql.Data": "6.9.7",
-          "MySql.Data.Entity": "6.9.7",
+          "MongoDB.Driver": "2.2.3",
+          "MySql.Data": "6.9.8",
+          "MySql.Data.Entity": "6.9.8",
           "ServiceStack": "3.9.71",
           "ServiceStack.Common": "3.9.71",
           "ServiceStack.Redis": "3.9.71",
@@ -66,40 +66,6 @@
         "runtime": {
           "lib/net45/EntityFramework.dll": {},
           "lib/net45/EntityFramework.SqlServer.dll": {}
-        }
-      },
-      "Microsoft.ApplicationInsights/1.1.1-beta": {
-        "type": "package",
-        "compile": {
-          "lib/net45/Microsoft.ApplicationInsights.dll": {}
-        },
-        "runtime": {
-          "lib/net45/Microsoft.ApplicationInsights.dll": {}
-        }
-      },
-      "Microsoft.ApplicationInsights.AspNet/1.0.0-rc1": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "1.1.1-beta",
-          "Microsoft.AspNet.Hosting.Abstractions": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Http.Abstractions": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Http.Features": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Mvc": "6.0.0-rc1-final",
-          "Microsoft.Extensions.Configuration": "1.0.0-rc1-final",
-          "Microsoft.Extensions.DiagnosticAdapter": "1.0.0-rc1-final",
-          "Microsoft.Extensions.Logging.Abstractions": "1.0.0-rc1-final"
-        },
-        "frameworkAssemblies": [
-          "Microsoft.CSharp",
-          "mscorlib",
-          "System",
-          "System.Core"
-        ],
-        "compile": {
-          "lib/dnx451/Microsoft.ApplicationInsights.AspNet.dll": {}
-        },
-        "runtime": {
-          "lib/dnx451/Microsoft.ApplicationInsights.AspNet.dll": {}
         }
       },
       "Microsoft.AspNet.Antiforgery/1.0.0-rc1-final": {
@@ -439,25 +405,6 @@
         },
         "runtime": {
           "lib/net451/Microsoft.AspNet.Http.Features.dll": {}
-        }
-      },
-      "Microsoft.AspNet.IISPlatformHandler/1.0.0-rc1-final": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.AspNet.Http": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Http.Extensions": "1.0.0-rc1-final"
-        },
-        "frameworkAssemblies": [
-          "Microsoft.CSharp",
-          "mscorlib",
-          "System",
-          "System.Core"
-        ],
-        "compile": {
-          "lib/net451/Microsoft.AspNet.IISPlatformHandler.dll": {}
-        },
-        "runtime": {
-          "lib/net451/Microsoft.AspNet.IISPlatformHandler.dll": {}
         }
       },
       "Microsoft.AspNet.JsonPatch/1.0.0-rc1-final": {
@@ -1199,28 +1146,6 @@
           "lib/net451/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {}
         }
       },
-      "Microsoft.Extensions.DiagnosticAdapter/1.0.0-rc1-final": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "1.0.0-rc1-final",
-          "System.Diagnostics.DiagnosticSource": "4.0.0-beta-23516"
-        },
-        "frameworkAssemblies": [
-          "Microsoft.CSharp",
-          "mscorlib",
-          "System",
-          "System.Collections.Concurrent",
-          "System.Core",
-          "System.Linq",
-          "System.Runtime"
-        ],
-        "compile": {
-          "lib/net451/Microsoft.Extensions.DiagnosticAdapter.dll": {}
-        },
-        "runtime": {
-          "lib/net451/Microsoft.Extensions.DiagnosticAdapter.dll": {}
-        }
-      },
       "Microsoft.Extensions.Globalization.CultureInfoCache/1.0.0-rc1-final": {
         "type": "package",
         "frameworkAssemblies": [
@@ -1460,7 +1385,7 @@
           "lib/net451/Microsoft.Net.Http.Headers.dll": {}
         }
       },
-      "MongoDB.Bson/2.1.1": {
+      "MongoDB.Bson/2.2.3": {
         "type": "package",
         "compile": {
           "lib/net45/MongoDB.Bson.dll": {}
@@ -1469,11 +1394,11 @@
           "lib/net45/MongoDB.Bson.dll": {}
         }
       },
-      "MongoDB.Driver/2.1.1": {
+      "MongoDB.Driver/2.2.3": {
         "type": "package",
         "dependencies": {
-          "MongoDB.Bson": "2.1.1",
-          "MongoDB.Driver.Core": "2.1.1"
+          "MongoDB.Bson": "2.2.3",
+          "MongoDB.Driver.Core": "2.2.3"
         },
         "compile": {
           "lib/net45/MongoDB.Driver.dll": {}
@@ -1482,10 +1407,10 @@
           "lib/net45/MongoDB.Driver.dll": {}
         }
       },
-      "MongoDB.Driver.Core/2.1.1": {
+      "MongoDB.Driver.Core/2.2.3": {
         "type": "package",
         "dependencies": {
-          "MongoDB.Bson": "2.1.1"
+          "MongoDB.Bson": "2.2.3"
         },
         "compile": {
           "lib/net45/MongoDB.Driver.Core.dll": {}
@@ -1494,7 +1419,7 @@
           "lib/net45/MongoDB.Driver.Core.dll": {}
         }
       },
-      "MySql.Data/6.9.7": {
+      "MySql.Data/6.9.8": {
         "type": "package",
         "compile": {
           "lib/net45/MySql.Data.dll": {}
@@ -1503,11 +1428,11 @@
           "lib/net45/MySql.Data.dll": {}
         }
       },
-      "MySql.Data.Entity/6.9.7": {
+      "MySql.Data.Entity/6.9.8": {
         "type": "package",
         "dependencies": {
           "EntityFramework": "6.0.0",
-          "MySql.Data": "6.9.7"
+          "MySql.Data": "6.9.8"
         },
         "compile": {
           "lib/net45/MySql.Data.Entity.EF6.dll": {}
@@ -1516,7 +1441,7 @@
           "lib/net45/MySql.Data.Entity.EF6.dll": {}
         }
       },
-      "Newtonsoft.Json/7.0.1": {
+      "Newtonsoft.Json/8.0.2": {
         "type": "package",
         "compile": {
           "lib/net45/Newtonsoft.Json.dll": {}
@@ -1525,7 +1450,7 @@
           "lib/net45/Newtonsoft.Json.dll": {}
         }
       },
-      "NLog/4.2.0": {
+      "NLog/4.2.3": {
         "type": "package",
         "compile": {
           "lib/net45/NLog.dll": {}
@@ -1847,8 +1772,8 @@
         "dependencies": {
           "DBTek.Crypto": "2.1.0",
           "Microsoft.Extensions.Configuration.Abstractions": "1.0.0",
-          "Newtonsoft.Json": "7.0.1",
-          "NLog": "4.2.0",
+          "Newtonsoft.Json": "8.0.2",
+          "NLog": "4.2.3",
           "PasswordHash": "1.1.0"
         }
       },
@@ -1865,9 +1790,9 @@
         "framework": "DNX,Version=v4.5.1",
         "dependencies": {
           "EntityFramework": "6.1.3",
-          "MongoDB.Driver": "2.1.1",
-          "MySql.Data": "6.9.7",
-          "MySql.Data.Entity": "6.9.7",
+          "MongoDB.Driver": "2.2.3",
+          "MySql.Data": "6.9.8",
+          "MySql.Data.Entity": "6.9.8",
           "ServiceStack": "3.9.71",
           "ServiceStack.Common": "3.9.71",
           "ServiceStack.Redis": "3.9.71",
@@ -1895,40 +1820,6 @@
         "runtime": {
           "lib/net45/EntityFramework.dll": {},
           "lib/net45/EntityFramework.SqlServer.dll": {}
-        }
-      },
-      "Microsoft.ApplicationInsights/1.1.1-beta": {
-        "type": "package",
-        "compile": {
-          "lib/net45/Microsoft.ApplicationInsights.dll": {}
-        },
-        "runtime": {
-          "lib/net45/Microsoft.ApplicationInsights.dll": {}
-        }
-      },
-      "Microsoft.ApplicationInsights.AspNet/1.0.0-rc1": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "1.1.1-beta",
-          "Microsoft.AspNet.Hosting.Abstractions": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Http.Abstractions": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Http.Features": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Mvc": "6.0.0-rc1-final",
-          "Microsoft.Extensions.Configuration": "1.0.0-rc1-final",
-          "Microsoft.Extensions.DiagnosticAdapter": "1.0.0-rc1-final",
-          "Microsoft.Extensions.Logging.Abstractions": "1.0.0-rc1-final"
-        },
-        "frameworkAssemblies": [
-          "Microsoft.CSharp",
-          "mscorlib",
-          "System",
-          "System.Core"
-        ],
-        "compile": {
-          "lib/dnx451/Microsoft.ApplicationInsights.AspNet.dll": {}
-        },
-        "runtime": {
-          "lib/dnx451/Microsoft.ApplicationInsights.AspNet.dll": {}
         }
       },
       "Microsoft.AspNet.Antiforgery/1.0.0-rc1-final": {
@@ -2268,25 +2159,6 @@
         },
         "runtime": {
           "lib/net451/Microsoft.AspNet.Http.Features.dll": {}
-        }
-      },
-      "Microsoft.AspNet.IISPlatformHandler/1.0.0-rc1-final": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.AspNet.Http": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Http.Extensions": "1.0.0-rc1-final"
-        },
-        "frameworkAssemblies": [
-          "Microsoft.CSharp",
-          "mscorlib",
-          "System",
-          "System.Core"
-        ],
-        "compile": {
-          "lib/net451/Microsoft.AspNet.IISPlatformHandler.dll": {}
-        },
-        "runtime": {
-          "lib/net451/Microsoft.AspNet.IISPlatformHandler.dll": {}
         }
       },
       "Microsoft.AspNet.JsonPatch/1.0.0-rc1-final": {
@@ -3031,28 +2903,6 @@
           "lib/net451/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {}
         }
       },
-      "Microsoft.Extensions.DiagnosticAdapter/1.0.0-rc1-final": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "1.0.0-rc1-final",
-          "System.Diagnostics.DiagnosticSource": "4.0.0-beta-23516"
-        },
-        "frameworkAssemblies": [
-          "Microsoft.CSharp",
-          "mscorlib",
-          "System",
-          "System.Collections.Concurrent",
-          "System.Core",
-          "System.Linq",
-          "System.Runtime"
-        ],
-        "compile": {
-          "lib/net451/Microsoft.Extensions.DiagnosticAdapter.dll": {}
-        },
-        "runtime": {
-          "lib/net451/Microsoft.Extensions.DiagnosticAdapter.dll": {}
-        }
-      },
       "Microsoft.Extensions.Globalization.CultureInfoCache/1.0.0-rc1-final": {
         "type": "package",
         "frameworkAssemblies": [
@@ -3292,7 +3142,7 @@
           "lib/net451/Microsoft.Net.Http.Headers.dll": {}
         }
       },
-      "MongoDB.Bson/2.1.1": {
+      "MongoDB.Bson/2.2.3": {
         "type": "package",
         "compile": {
           "lib/net45/MongoDB.Bson.dll": {}
@@ -3301,11 +3151,11 @@
           "lib/net45/MongoDB.Bson.dll": {}
         }
       },
-      "MongoDB.Driver/2.1.1": {
+      "MongoDB.Driver/2.2.3": {
         "type": "package",
         "dependencies": {
-          "MongoDB.Bson": "2.1.1",
-          "MongoDB.Driver.Core": "2.1.1"
+          "MongoDB.Bson": "2.2.3",
+          "MongoDB.Driver.Core": "2.2.3"
         },
         "compile": {
           "lib/net45/MongoDB.Driver.dll": {}
@@ -3314,10 +3164,10 @@
           "lib/net45/MongoDB.Driver.dll": {}
         }
       },
-      "MongoDB.Driver.Core/2.1.1": {
+      "MongoDB.Driver.Core/2.2.3": {
         "type": "package",
         "dependencies": {
-          "MongoDB.Bson": "2.1.1"
+          "MongoDB.Bson": "2.2.3"
         },
         "compile": {
           "lib/net45/MongoDB.Driver.Core.dll": {}
@@ -3326,7 +3176,7 @@
           "lib/net45/MongoDB.Driver.Core.dll": {}
         }
       },
-      "MySql.Data/6.9.7": {
+      "MySql.Data/6.9.8": {
         "type": "package",
         "compile": {
           "lib/net45/MySql.Data.dll": {}
@@ -3335,11 +3185,11 @@
           "lib/net45/MySql.Data.dll": {}
         }
       },
-      "MySql.Data.Entity/6.9.7": {
+      "MySql.Data.Entity/6.9.8": {
         "type": "package",
         "dependencies": {
           "EntityFramework": "6.0.0",
-          "MySql.Data": "6.9.7"
+          "MySql.Data": "6.9.8"
         },
         "compile": {
           "lib/net45/MySql.Data.Entity.EF6.dll": {}
@@ -3348,7 +3198,7 @@
           "lib/net45/MySql.Data.Entity.EF6.dll": {}
         }
       },
-      "Newtonsoft.Json/7.0.1": {
+      "Newtonsoft.Json/8.0.2": {
         "type": "package",
         "compile": {
           "lib/net45/Newtonsoft.Json.dll": {}
@@ -3357,7 +3207,7 @@
           "lib/net45/Newtonsoft.Json.dll": {}
         }
       },
-      "NLog/4.2.0": {
+      "NLog/4.2.3": {
         "type": "package",
         "compile": {
           "lib/net45/NLog.dll": {}
@@ -3679,8 +3529,8 @@
         "dependencies": {
           "DBTek.Crypto": "2.1.0",
           "Microsoft.Extensions.Configuration.Abstractions": "1.0.0",
-          "Newtonsoft.Json": "7.0.1",
-          "NLog": "4.2.0",
+          "Newtonsoft.Json": "8.0.2",
+          "NLog": "4.2.3",
           "PasswordHash": "1.1.0"
         }
       },
@@ -3697,9 +3547,9 @@
         "framework": "DNX,Version=v4.5.1",
         "dependencies": {
           "EntityFramework": "6.1.3",
-          "MongoDB.Driver": "2.1.1",
-          "MySql.Data": "6.9.7",
-          "MySql.Data.Entity": "6.9.7",
+          "MongoDB.Driver": "2.2.3",
+          "MySql.Data": "6.9.8",
+          "MySql.Data.Entity": "6.9.8",
           "ServiceStack": "3.9.71",
           "ServiceStack.Common": "3.9.71",
           "ServiceStack.Redis": "3.9.71",
@@ -3727,40 +3577,6 @@
         "runtime": {
           "lib/net45/EntityFramework.dll": {},
           "lib/net45/EntityFramework.SqlServer.dll": {}
-        }
-      },
-      "Microsoft.ApplicationInsights/1.1.1-beta": {
-        "type": "package",
-        "compile": {
-          "lib/net45/Microsoft.ApplicationInsights.dll": {}
-        },
-        "runtime": {
-          "lib/net45/Microsoft.ApplicationInsights.dll": {}
-        }
-      },
-      "Microsoft.ApplicationInsights.AspNet/1.0.0-rc1": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "1.1.1-beta",
-          "Microsoft.AspNet.Hosting.Abstractions": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Http.Abstractions": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Http.Features": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Mvc": "6.0.0-rc1-final",
-          "Microsoft.Extensions.Configuration": "1.0.0-rc1-final",
-          "Microsoft.Extensions.DiagnosticAdapter": "1.0.0-rc1-final",
-          "Microsoft.Extensions.Logging.Abstractions": "1.0.0-rc1-final"
-        },
-        "frameworkAssemblies": [
-          "Microsoft.CSharp",
-          "mscorlib",
-          "System",
-          "System.Core"
-        ],
-        "compile": {
-          "lib/dnx451/Microsoft.ApplicationInsights.AspNet.dll": {}
-        },
-        "runtime": {
-          "lib/dnx451/Microsoft.ApplicationInsights.AspNet.dll": {}
         }
       },
       "Microsoft.AspNet.Antiforgery/1.0.0-rc1-final": {
@@ -4100,25 +3916,6 @@
         },
         "runtime": {
           "lib/net451/Microsoft.AspNet.Http.Features.dll": {}
-        }
-      },
-      "Microsoft.AspNet.IISPlatformHandler/1.0.0-rc1-final": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.AspNet.Http": "1.0.0-rc1-final",
-          "Microsoft.AspNet.Http.Extensions": "1.0.0-rc1-final"
-        },
-        "frameworkAssemblies": [
-          "Microsoft.CSharp",
-          "mscorlib",
-          "System",
-          "System.Core"
-        ],
-        "compile": {
-          "lib/net451/Microsoft.AspNet.IISPlatformHandler.dll": {}
-        },
-        "runtime": {
-          "lib/net451/Microsoft.AspNet.IISPlatformHandler.dll": {}
         }
       },
       "Microsoft.AspNet.JsonPatch/1.0.0-rc1-final": {
@@ -4863,28 +4660,6 @@
           "lib/net451/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {}
         }
       },
-      "Microsoft.Extensions.DiagnosticAdapter/1.0.0-rc1-final": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "1.0.0-rc1-final",
-          "System.Diagnostics.DiagnosticSource": "4.0.0-beta-23516"
-        },
-        "frameworkAssemblies": [
-          "Microsoft.CSharp",
-          "mscorlib",
-          "System",
-          "System.Collections.Concurrent",
-          "System.Core",
-          "System.Linq",
-          "System.Runtime"
-        ],
-        "compile": {
-          "lib/net451/Microsoft.Extensions.DiagnosticAdapter.dll": {}
-        },
-        "runtime": {
-          "lib/net451/Microsoft.Extensions.DiagnosticAdapter.dll": {}
-        }
-      },
       "Microsoft.Extensions.Globalization.CultureInfoCache/1.0.0-rc1-final": {
         "type": "package",
         "frameworkAssemblies": [
@@ -5124,7 +4899,7 @@
           "lib/net451/Microsoft.Net.Http.Headers.dll": {}
         }
       },
-      "MongoDB.Bson/2.1.1": {
+      "MongoDB.Bson/2.2.3": {
         "type": "package",
         "compile": {
           "lib/net45/MongoDB.Bson.dll": {}
@@ -5133,11 +4908,11 @@
           "lib/net45/MongoDB.Bson.dll": {}
         }
       },
-      "MongoDB.Driver/2.1.1": {
+      "MongoDB.Driver/2.2.3": {
         "type": "package",
         "dependencies": {
-          "MongoDB.Bson": "2.1.1",
-          "MongoDB.Driver.Core": "2.1.1"
+          "MongoDB.Bson": "2.2.3",
+          "MongoDB.Driver.Core": "2.2.3"
         },
         "compile": {
           "lib/net45/MongoDB.Driver.dll": {}
@@ -5146,10 +4921,10 @@
           "lib/net45/MongoDB.Driver.dll": {}
         }
       },
-      "MongoDB.Driver.Core/2.1.1": {
+      "MongoDB.Driver.Core/2.2.3": {
         "type": "package",
         "dependencies": {
-          "MongoDB.Bson": "2.1.1"
+          "MongoDB.Bson": "2.2.3"
         },
         "compile": {
           "lib/net45/MongoDB.Driver.Core.dll": {}
@@ -5158,7 +4933,7 @@
           "lib/net45/MongoDB.Driver.Core.dll": {}
         }
       },
-      "MySql.Data/6.9.7": {
+      "MySql.Data/6.9.8": {
         "type": "package",
         "compile": {
           "lib/net45/MySql.Data.dll": {}
@@ -5167,11 +4942,11 @@
           "lib/net45/MySql.Data.dll": {}
         }
       },
-      "MySql.Data.Entity/6.9.7": {
+      "MySql.Data.Entity/6.9.8": {
         "type": "package",
         "dependencies": {
           "EntityFramework": "6.0.0",
-          "MySql.Data": "6.9.7"
+          "MySql.Data": "6.9.8"
         },
         "compile": {
           "lib/net45/MySql.Data.Entity.EF6.dll": {}
@@ -5180,7 +4955,7 @@
           "lib/net45/MySql.Data.Entity.EF6.dll": {}
         }
       },
-      "Newtonsoft.Json/7.0.1": {
+      "Newtonsoft.Json/8.0.2": {
         "type": "package",
         "compile": {
           "lib/net45/Newtonsoft.Json.dll": {}
@@ -5189,7 +4964,7 @@
           "lib/net45/Newtonsoft.Json.dll": {}
         }
       },
-      "NLog/4.2.0": {
+      "NLog/4.2.3": {
         "type": "package",
         "compile": {
           "lib/net45/NLog.dll": {}
@@ -5560,38 +5335,6 @@
         "tools/migrate.exe"
       ]
     },
-    "Microsoft.ApplicationInsights/1.1.1-beta": {
-      "type": "package",
-      "sha512": "aqtQ8KNFMGBFCmU3kkkEM7PlyPFvfh/1uKTxixD+myMzB9EjYeGOf0LvFnpkT1sp3voXfU8MUN+eYets8TutdQ==",
-      "files": [
-        "lib/dnxcore50/Microsoft.ApplicationInsights.dll",
-        "lib/dnxcore50/Microsoft.ApplicationInsights.XML",
-        "lib/net40/Microsoft.ApplicationInsights.dll",
-        "lib/net40/Microsoft.ApplicationInsights.XML",
-        "lib/net45/Microsoft.ApplicationInsights.dll",
-        "lib/net45/Microsoft.ApplicationInsights.XML",
-        "lib/portable-win81+wpa81/Microsoft.ApplicationInsights.dll",
-        "lib/portable-win81+wpa81/Microsoft.ApplicationInsights.XML",
-        "lib/wp8/Microsoft.ApplicationInsights.dll",
-        "lib/wp8/Microsoft.ApplicationInsights.XML",
-        "Microsoft.ApplicationInsights.1.1.1-beta.nupkg",
-        "Microsoft.ApplicationInsights.1.1.1-beta.nupkg.sha512",
-        "Microsoft.ApplicationInsights.nuspec"
-      ]
-    },
-    "Microsoft.ApplicationInsights.AspNet/1.0.0-rc1": {
-      "type": "package",
-      "sha512": "cFxg3E6Z9otsuBOKhiLqxb5H/B6wbvjvMfu+v3wG8KEJvZ2ZAzNhAXbxE69baweyWzokj5nsI+9YeSXNWacBHA==",
-      "files": [
-        "lib/dnx451/Microsoft.ApplicationInsights.AspNet.dll",
-        "lib/dnx451/Microsoft.ApplicationInsights.AspNet.xml",
-        "lib/dnxcore50/Microsoft.ApplicationInsights.AspNet.dll",
-        "lib/dnxcore50/Microsoft.ApplicationInsights.AspNet.xml",
-        "Microsoft.ApplicationInsights.AspNet.1.0.0-rc1.nupkg",
-        "Microsoft.ApplicationInsights.AspNet.1.0.0-rc1.nupkg.sha512",
-        "Microsoft.ApplicationInsights.AspNet.nuspec"
-      ]
-    },
     "Microsoft.AspNet.Antiforgery/1.0.0-rc1-final": {
       "type": "package",
       "serviceable": true,
@@ -5832,19 +5575,6 @@
         "Microsoft.AspNet.Http.Features.1.0.0-rc1-final.nupkg",
         "Microsoft.AspNet.Http.Features.1.0.0-rc1-final.nupkg.sha512",
         "Microsoft.AspNet.Http.Features.nuspec"
-      ]
-    },
-    "Microsoft.AspNet.IISPlatformHandler/1.0.0-rc1-final": {
-      "type": "package",
-      "sha512": "scDY0KQZnOvQTYDd6InIFhn4QnF5UxLtV7VoQXOlpsaEUQ0c6jDVoHvL4ylUy5zcKJkjRDUy/B7Q8TDk05kl2w==",
-      "files": [
-        "lib/dotnet5.4/Microsoft.AspNet.IISPlatformHandler.dll",
-        "lib/dotnet5.4/Microsoft.AspNet.IISPlatformHandler.xml",
-        "lib/net451/Microsoft.AspNet.IISPlatformHandler.dll",
-        "lib/net451/Microsoft.AspNet.IISPlatformHandler.xml",
-        "Microsoft.AspNet.IISPlatformHandler.1.0.0-rc1-final.nupkg",
-        "Microsoft.AspNet.IISPlatformHandler.1.0.0-rc1-final.nupkg.sha512",
-        "Microsoft.AspNet.IISPlatformHandler.nuspec"
       ]
     },
     "Microsoft.AspNet.JsonPatch/1.0.0-rc1-final": {
@@ -6428,20 +6158,6 @@
         "Microsoft.Extensions.DependencyInjection.Abstractions.nuspec"
       ]
     },
-    "Microsoft.Extensions.DiagnosticAdapter/1.0.0-rc1-final": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "E3gpaMweF1ikFox8xcx4iy8sO/84SlF3eRb0OmRIvWoVqqjfceeG4vsZ+4a4Zo36rCqT8eoTwH0VLZUX8UF3RQ==",
-      "files": [
-        "lib/dotnet5.4/Microsoft.Extensions.DiagnosticAdapter.dll",
-        "lib/dotnet5.4/Microsoft.Extensions.DiagnosticAdapter.xml",
-        "lib/net451/Microsoft.Extensions.DiagnosticAdapter.dll",
-        "lib/net451/Microsoft.Extensions.DiagnosticAdapter.xml",
-        "Microsoft.Extensions.DiagnosticAdapter.1.0.0-rc1-final.nupkg",
-        "Microsoft.Extensions.DiagnosticAdapter.1.0.0-rc1-final.nupkg.sha512",
-        "Microsoft.Extensions.DiagnosticAdapter.nuspec"
-      ]
-    },
     "Microsoft.Extensions.Globalization.CultureInfoCache/1.0.0-rc1-final": {
       "type": "package",
       "serviceable": true,
@@ -6650,44 +6366,44 @@
         "Microsoft.Net.Http.Headers.nuspec"
       ]
     },
-    "MongoDB.Bson/2.1.1": {
+    "MongoDB.Bson/2.2.3": {
       "type": "package",
-      "sha512": "exC90gaZtCi+x2kNlMNfUfTi2e20EPUIwM0ym+fTxeBBPY/5W5izlC0uXOkXxHjNyC4dn2xOX5pLbrLeji/OWA==",
+      "sha512": "AwxyD8qYgy1GQkxQV2uMzymm19QwaNNAER6gf/w8f2dDjcboEve1kv9GEz7mtn2K8p6hYQjhgnvGc+xeh0KLmg==",
       "files": [
         "lib/net45/MongoDB.Bson.dll",
         "lib/net45/MongoDB.Bson.XML",
         "License.rtf",
-        "MongoDB.Bson.2.1.1.nupkg",
-        "MongoDB.Bson.2.1.1.nupkg.sha512",
+        "MongoDB.Bson.2.2.3.nupkg",
+        "MongoDB.Bson.2.2.3.nupkg.sha512",
         "MongoDB.Bson.nuspec"
       ]
     },
-    "MongoDB.Driver/2.1.1": {
+    "MongoDB.Driver/2.2.3": {
       "type": "package",
-      "sha512": "ROXtw0yskUzrtqCN2kMR6YbPD9W2SS3ppTlICe5P6SI1MyRg2jQc/1wPllyKGtsdSHkBsiCp2MwyrQhVzR5bLQ==",
+      "sha512": "ZgRSAv+vxCCYnL/V4mChGNnx8rBnnpDO2S8Fex+G3IrVWRRgJb3rEFOEoyuyR5C5qtOHGVMlGRSSngQwbgV2Dw==",
       "files": [
         "lib/net45/MongoDB.Driver.dll",
         "lib/net45/MongoDB.Driver.XML",
         "License.rtf",
-        "MongoDB.Driver.2.1.1.nupkg",
-        "MongoDB.Driver.2.1.1.nupkg.sha512",
+        "MongoDB.Driver.2.2.3.nupkg",
+        "MongoDB.Driver.2.2.3.nupkg.sha512",
         "MongoDB.Driver.nuspec"
       ]
     },
-    "MongoDB.Driver.Core/2.1.1": {
+    "MongoDB.Driver.Core/2.2.3": {
       "type": "package",
-      "sha512": "nFJzE9k3VkigMfXoojV004LCVTD0UZaIeGVMyLPdOXerLFs81Kauqq+35mzi46f5/JBdy++q2taTuNZEKbezMQ==",
+      "sha512": "o9/7behJkN5TEG9KvRHM6HUdnsXgLl31pKRQwiCi4xgd7gAleI3sagBcujh7x40gl1NL/u4+uMPRZFpGAaGEQw==",
       "files": [
         "lib/net45/MongoDB.Driver.Core.dll",
         "License.rtf",
-        "MongoDB.Driver.Core.2.1.1.nupkg",
-        "MongoDB.Driver.Core.2.1.1.nupkg.sha512",
+        "MongoDB.Driver.Core.2.2.3.nupkg",
+        "MongoDB.Driver.Core.2.2.3.nupkg.sha512",
         "MongoDB.Driver.Core.nuspec"
       ]
     },
-    "MySql.Data/6.9.7": {
+    "MySql.Data/6.9.8": {
       "type": "package",
-      "sha512": "ugpH3iQUH8HltnG62oUaN/3aeGG56BFeTAh381DjEzz9CSx/99y4rUvWFmt84WhecGi7p0Lh6yWg+QGQ4rgjGQ==",
+      "sha512": "ZSkMKsB1J9Cb/nO3+GlfX/YttibU23y5ZQtn/xzzl3xfPK512wP1jNjiVG4AFvmeJrf02qHNc/GfXJGYYHN8Pg==",
       "files": [
         "CHANGES",
         "content/app.config.transform",
@@ -6696,30 +6412,30 @@
         "lib/net20-cf/MySql.Data.CF.dll",
         "lib/net40/MySql.Data.dll",
         "lib/net45/MySql.Data.dll",
-        "MySql.Data.6.9.7.nupkg",
-        "MySql.Data.6.9.7.nupkg.sha512",
+        "MySql.Data.6.9.8.nupkg",
+        "MySql.Data.6.9.8.nupkg.sha512",
         "MySql.Data.nuspec",
         "Readme.txt"
       ]
     },
-    "MySql.Data.Entity/6.9.7": {
+    "MySql.Data.Entity/6.9.8": {
       "type": "package",
-      "sha512": "hYx+WoyysYQ7lt0Ty8ybh1A4zWUON0+7Sj6UxQ3vSWsEww4x1F0ruaGqEOTV8b8T/5ui3NyqXD8x+PN4jzvQFw==",
+      "sha512": "jdMn+++xLDtdrTy4QYIWWoIsf2EGC4UACEkPcvWloD9Zty5KmlY8Zee9csJB9BpO3mlGzSNzc15vJmrg/Vv1vQ==",
       "files": [
         "CHANGES",
         "content/app.config.transform",
         "content/web.config.transform",
         "lib/net40/MySql.Data.Entity.EF6.dll",
         "lib/net45/MySql.Data.Entity.EF6.dll",
-        "MySql.Data.Entity.6.9.7.nupkg",
-        "MySql.Data.Entity.6.9.7.nupkg.sha512",
+        "MySql.Data.Entity.6.9.8.nupkg",
+        "MySql.Data.Entity.6.9.8.nupkg.sha512",
         "MySql.Data.Entity.nuspec",
         "Readme.txt"
       ]
     },
-    "Newtonsoft.Json/7.0.1": {
+    "Newtonsoft.Json/8.0.2": {
       "type": "package",
-      "sha512": "q3V4KLetMLnt1gpAVWgtXnHjKs0UG/RalBc29u2ZKxd5t5Ze4JBL5WiiYIklJyK/5CRiIiNwigVQUo0FgbsuWA==",
+      "sha512": "e5yWmEfu68rmtG431zl9N/7PlNKQDIuiDW5MHlEFAZcecakcxrIGnKqrPAtWNILzK2oNanRB5cD150MYhECK3g==",
       "files": [
         "lib/net20/Newtonsoft.Json.dll",
         "lib/net20/Newtonsoft.Json.xml",
@@ -6733,15 +6449,15 @@
         "lib/portable-net40+sl5+wp80+win8+wpa81/Newtonsoft.Json.xml",
         "lib/portable-net45+wp80+win8+wpa81+dnxcore50/Newtonsoft.Json.dll",
         "lib/portable-net45+wp80+win8+wpa81+dnxcore50/Newtonsoft.Json.xml",
-        "Newtonsoft.Json.7.0.1.nupkg",
-        "Newtonsoft.Json.7.0.1.nupkg.sha512",
+        "Newtonsoft.Json.8.0.2.nupkg",
+        "Newtonsoft.Json.8.0.2.nupkg.sha512",
         "Newtonsoft.Json.nuspec",
         "tools/install.ps1"
       ]
     },
-    "NLog/4.2.0": {
+    "NLog/4.2.3": {
       "type": "package",
-      "sha512": "8K9/OFb7KXdnWr16kwCDM3goFc/HhvyXFLzq8FTjN34is3HRxk9a9NJUhiqOOKD5L3Nv7kJyp24+h1V0zQIAPA==",
+      "sha512": "j6ZuwmXtiRUdlmon8ekYTKYFuQuIVi3ACJm7izHZL9KMmX2x/5Dvi98/EE7wcFNwmSz85QTITKYU4Q04u6VXSg==",
       "files": [
         "lib/net35/NLog.dll",
         "lib/net35/NLog.xml",
@@ -6753,8 +6469,8 @@
         "lib/sl4/NLog.xml",
         "lib/sl5/NLog.dll",
         "lib/sl5/NLog.xml",
-        "NLog.4.2.0.nupkg",
-        "NLog.4.2.0.nupkg.sha512",
+        "NLog.4.2.3.nupkg",
+        "NLog.4.2.3.nupkg.sha512",
         "NLog.nuspec"
       ]
     },
@@ -7623,8 +7339,7 @@
   },
   "projectFileDependencyGroups": {
     "": [
-      "Microsoft.ApplicationInsights.AspNet >= 1.0.0-rc1",
-      "Microsoft.AspNet.IISPlatformHandler >= 1.0.0-rc1-final",
+      "BahamutAspNetCommon >= 1.0.0-*",
       "Microsoft.AspNet.Mvc >= 6.0.0-rc1-final",
       "Microsoft.AspNet.Server.Kestrel >= 1.0.0-rc1-final",
       "Microsoft.AspNet.StaticFiles >= 1.0.0-rc1-final",
@@ -7635,9 +7350,6 @@
       "Microsoft.Extensions.Logging.Debug >= 1.0.0-rc1-final",
       "ServerControlService >= 1.0.0-*"
     ],
-    "DNX,Version=v4.5.1": [
-      "BahamutAspNetCommon >= 1.0.0-*",
-      "BahamutService >= 1.0.0-*"
-    ]
+    "DNX,Version=v4.5.1": []
   }
 }

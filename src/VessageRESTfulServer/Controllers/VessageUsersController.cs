@@ -6,6 +6,7 @@ using Microsoft.AspNet.Mvc;
 using VessageRESTfulServer.Services;
 using System.Net;
 using VessageRESTfulServer.Models;
+using MongoDB.Bson;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -23,7 +24,7 @@ namespace VessageRESTfulServer.Controllers
             return VessageUserToJsonObject(user);
         }
 
-        [HttpGet]
+        [HttpGet("UserId/{userId}")]
         public async Task<object> Get(string userId)
         {
             var userService = Startup.ServicesProvider.GetUserService();
@@ -31,7 +32,7 @@ namespace VessageRESTfulServer.Controllers
             return VessageUserToJsonObject(user);
         }
 
-        [HttpGet("{accountId}")]
+        [HttpGet("AccountId/{accountId}")]
         public async Task<object> GetUserByAccountId(string accountId)
         {
             var userService = Startup.ServicesProvider.GetUserService();
@@ -83,21 +84,27 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("ValidateMobileVSMS")]
-        public async Task<object> ValidateMobileVSMS(string mobile,string vsms)
+        public async Task<object> ValidateMobileVSMS(string mobile, string vsms)
         {
+            var userId = UserSessionData.UserId;
+            var userOId = new ObjectId(userId);
             var userService = Startup.ServicesProvider.GetUserService();
-            bool suc = await userService.UpdateMobileOfUser(UserSessionData.UserId, mobile);
-            if (suc)
+            try
             {
-                await AppServiceProvider.GetConversationService().BindNewUserOpenedConversation(UserSessionData.UserId, mobile);
-                await AppServiceProvider.GetVessageService().BindNewUserReveicedVessages(UserSessionData.UserId, mobile);
-                return new { msg = "SUCCESS" };
+                bool suc = await userService.UpdateMobileOfUser(userId, mobile);
+                if (suc)
+                {
+                    var vb = await AppServiceProvider.GetVessageService().BindNewUserReveicedVessages(userId, mobile);
+                    return new { msg = "SUCCESS" };
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                return new { msg = "SERVER_ERROR" };
+                LogWarning(ex.Message);
             }
+
+            Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            return new { msg = "SERVER_ERROR" };
         }
 
         [HttpPut("Nick")]

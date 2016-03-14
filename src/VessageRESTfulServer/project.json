@@ -5,8 +5,7 @@
   },
 
   "dependencies": {
-    "Microsoft.ApplicationInsights.AspNet": "1.0.0-rc1",
-    "Microsoft.AspNet.IISPlatformHandler": "1.0.0-rc1-final",
+    "BahamutAspNetCommon": "1.0.0-*",
     "Microsoft.AspNet.Mvc": "6.0.0-rc1-final",
     "Microsoft.AspNet.Server.Kestrel": "1.0.0-rc1-final",
     "Microsoft.AspNet.StaticFiles": "1.0.0-rc1-final",
@@ -23,12 +22,7 @@
   },
 
   "frameworks": {
-    "dnx451": {
-      "dependencies": {
-        "BahamutAspNetCommon": "1.0.0-*",
-        "BahamutService": "1.0.0-*"
-      }
-    }
+    "dnx451": {}
   },
 
   "exclude": [

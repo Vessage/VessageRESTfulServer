@@ -20,7 +20,10 @@ namespace VessageRESTfulServer.Controllers
 
         public AccountSessionData UserSessionData
         {
-            get { return Request.HttpContext.Items["AccountSessionData"] as AccountSessionData; }
+            get
+            {
+                return Request.HttpContext.Items["AccountSessionData"] as AccountSessionData;
+            }
         }
 
         public void LogInfo(string message,params object[] args)

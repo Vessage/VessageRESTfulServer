@@ -11,7 +11,7 @@ using VessageRESTfulServer.Models;
 
 namespace VessageRESTfulServer.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class NewUsersController : Controller
     {
 
