@@ -17,6 +17,8 @@ using NLog.Config;
 using NLog;
 using BahamutCommon;
 using BahamutService.Service;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNet.Server.Kestrel.Https;
 
 namespace VessageRESTfulServer
 {
@@ -139,6 +141,9 @@ namespace VessageRESTfulServer
             {
                 LogManager.GetLogger("Main").Error(ex, "Unable To Regist App Instance");
             }
+            
+            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+            loggerFactory.AddDebug();
 
             //Authentication
             var openRoutes = new string[]
@@ -148,14 +153,18 @@ namespace VessageRESTfulServer
             };
             app.UseMiddleware<BahamutAspNetCommon.TokenAuthentication>(Appkey, ServicesProvider.GetTokenService(), openRoutes);
 
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+#if OPEN_HTTPS
+            //HTTPS
+            var certPath = "cert.pfx";
+            var signingCertificate = new X509Certificate2(certPath, "test");
+            app.UseKestrelHttps(signingCertificate);
+#endif
 
-            loggerFactory.AddDebug();
-
+            //Route
             app.UseStaticFiles();
-
             app.UseMvc();
 
+            //Startup
             LogManager.GetLogger("Main").Info("VessageRESTful Server Started!");
         }
 

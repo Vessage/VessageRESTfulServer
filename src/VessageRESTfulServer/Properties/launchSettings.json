@@ -18,7 +18,7 @@
     },
     "web": {
       "commandName": "web",
-      "commandLineArgs": "--server.urls http://192.168.1.168:8188",
+      "commandLineArgs": "--server.urls https://vessageapi.bahamut.cn:8188",
       "environmentVariables": {
         "Hosting:Environment": "Development"
       }

@@ -796,6 +796,24 @@
           "lib/dnx451/Microsoft.AspNet.Server.Kestrel.dll": {}
         }
       },
+      "Microsoft.AspNet.Server.Kestrel.Https/1.0.0-rc1-final": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNet.Server.Kestrel": "1.0.0-rc1-final"
+        },
+        "frameworkAssemblies": [
+          "Microsoft.CSharp",
+          "mscorlib",
+          "System",
+          "System.Core"
+        ],
+        "compile": {
+          "lib/net451/Microsoft.AspNet.Server.Kestrel.Https.dll": {}
+        },
+        "runtime": {
+          "lib/net451/Microsoft.AspNet.Server.Kestrel.Https.dll": {}
+        }
+      },
       "Microsoft.AspNet.StaticFiles/1.0.0-rc1-final": {
         "type": "package",
         "dependencies": {
@@ -2551,6 +2569,24 @@
         },
         "native": {
           "runtimes/win7-x86/native/libuv.dll": {}
+        }
+      },
+      "Microsoft.AspNet.Server.Kestrel.Https/1.0.0-rc1-final": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNet.Server.Kestrel": "1.0.0-rc1-final"
+        },
+        "frameworkAssemblies": [
+          "Microsoft.CSharp",
+          "mscorlib",
+          "System",
+          "System.Core"
+        ],
+        "compile": {
+          "lib/net451/Microsoft.AspNet.Server.Kestrel.Https.dll": {}
+        },
+        "runtime": {
+          "lib/net451/Microsoft.AspNet.Server.Kestrel.Https.dll": {}
         }
       },
       "Microsoft.AspNet.StaticFiles/1.0.0-rc1-final": {
@@ -4310,6 +4346,24 @@
           "runtimes/win7-x64/native/libuv.dll": {}
         }
       },
+      "Microsoft.AspNet.Server.Kestrel.Https/1.0.0-rc1-final": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNet.Server.Kestrel": "1.0.0-rc1-final"
+        },
+        "frameworkAssemblies": [
+          "Microsoft.CSharp",
+          "mscorlib",
+          "System",
+          "System.Core"
+        ],
+        "compile": {
+          "lib/net451/Microsoft.AspNet.Server.Kestrel.Https.dll": {}
+        },
+        "runtime": {
+          "lib/net451/Microsoft.AspNet.Server.Kestrel.Https.dll": {}
+        }
+      },
       "Microsoft.AspNet.StaticFiles/1.0.0-rc1-final": {
         "type": "package",
         "dependencies": {
@@ -5852,6 +5906,18 @@
         "thirdpartynotices.txt"
       ]
     },
+    "Microsoft.AspNet.Server.Kestrel.Https/1.0.0-rc1-final": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "f+yjnxPVrsUcw8tCfA0MDTTtz5YnxPdivDsMIdEKgtmqihtloKMOC49MvDr0sZjw6pkja4fVJPGbb9SlputhGw==",
+      "files": [
+        "lib/net451/Microsoft.AspNet.Server.Kestrel.Https.dll",
+        "lib/net451/Microsoft.AspNet.Server.Kestrel.Https.xml",
+        "Microsoft.AspNet.Server.Kestrel.Https.1.0.0-rc1-final.nupkg",
+        "Microsoft.AspNet.Server.Kestrel.Https.1.0.0-rc1-final.nupkg.sha512",
+        "Microsoft.AspNet.Server.Kestrel.Https.nuspec"
+      ]
+    },
     "Microsoft.AspNet.StaticFiles/1.0.0-rc1-final": {
       "type": "package",
       "serviceable": true,
@@ -5882,7 +5948,7 @@
     },
     "Microsoft.CodeAnalysis.Analyzers/1.0.0": {
       "type": "package",
-      "sha512": "2+V/VDgZu59Thrlp+FQH38H/SmPBegMKsG0ie1ZZyHtx7kJNEozIx/p9zs0UrolX0uyYX7Ouoj3Q3Be15lqXxA==",
+      "sha512": "E7VdmGw6xO3VHWapC+pNLZmo6yncS53UY3bmb5WZm9wliJBB1A6brgzKA4fcqiLrmJFx71r0M2zEbRDphRLUNg==",
       "files": [
         "analyzers/dotnet/cs/Microsoft.CodeAnalysis.Analyzers.dll",
         "analyzers/dotnet/cs/Microsoft.CodeAnalysis.CSharp.Analyzers.dll",
@@ -7342,6 +7408,7 @@
       "BahamutAspNetCommon >= 1.0.0-*",
       "Microsoft.AspNet.Mvc >= 6.0.0-rc1-final",
       "Microsoft.AspNet.Server.Kestrel >= 1.0.0-rc1-final",
+      "Microsoft.AspNet.Server.Kestrel.Https >= 1.0.0-rc1-final",
       "Microsoft.AspNet.StaticFiles >= 1.0.0-rc1-final",
       "Microsoft.Extensions.Configuration.FileProviderExtensions >= 1.0.0-rc1-final",
       "Microsoft.Extensions.Configuration.Json >= 1.0.0-rc1-final",

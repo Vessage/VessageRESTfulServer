@@ -26,7 +26,7 @@
     },
 
     "AuthServer": {
-      "url": "http://192.168.1.168:8086"
+      "url": "http://auth.bahamut.cn:8086"
     },
 
     "ChicagoServer": {

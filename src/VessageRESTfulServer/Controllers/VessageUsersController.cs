@@ -44,11 +44,11 @@ namespace VessageRESTfulServer.Controllers
             else
             {
                 Response.StatusCode = (int)HttpStatusCode.NotFound;
-                return new { msg = "NO_SUCH_USER" };
+                return null;
             }
         }
 
-        [HttpGet("Mobile/{mobile}")]
+        [HttpGet("Mobile")]
         public async Task<object> GetUserByMobile(string mobile)
         {
             var userService = Startup.ServicesProvider.GetUserService();
@@ -60,12 +60,16 @@ namespace VessageRESTfulServer.Controllers
             else
             {
                 Response.StatusCode = (int)HttpStatusCode.NotFound;
-                return new { msg = "NO_SUCH_USER" };
+                return null;
             }
         }
 
         private object VessageUserToJsonObject(VessageUser user)
         {
+			if(user == null)
+			{
+				return null;
+			}
             var jsonResultObj = new
             {
                 accountId = user.AccountId,
