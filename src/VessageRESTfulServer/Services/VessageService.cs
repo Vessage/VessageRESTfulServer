@@ -97,7 +97,7 @@ namespace VessageRESTfulServer.Services
             var result = new List<Vessage>();
             foreach (var vb in vbs)
             {
-                var vs = from v in vb.Vessages where v.SendTime > vb.LastGotMessageTime & v.IsRead == false select v;
+                var vs = from v in vb.Vessages where v.SendTime > vb.LastGotMessageTime && v.IsRead == false select v;
                 result.AddRange(vs);
             }
             var updateGetTime = new UpdateDefinitionBuilder<VessageBox>().Set(vb => vb.LastGetMessageTime, DateTime.UtcNow);
