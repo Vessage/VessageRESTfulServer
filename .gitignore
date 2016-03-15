@@ -229,3 +229,4 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+src/VessageRESTfulServer/config_debug.json
