@@ -33,6 +33,7 @@ namespace VessageRESTfulServer.Controllers
                 fileId = m.Video,
                 sender = m.Sender.ToString(),
                 isRead = m.IsRead,
+                extraInfo = m.ExtraInfo,
                 sendTime = DateTimeUtil.ToAccurateDateTimeString(m.SendTime)
             };
         }
@@ -43,11 +44,38 @@ namespace VessageRESTfulServer.Controllers
             await AppServiceProvider.GetVessageService().UpdateGodMessageTime(UserSessionData.UserId);
         }
 
+        [HttpPut("FinishSendVessage")]
+        public async Task<object> FinishSendVessage(string vessageBoxId,string vessageId,string fileId)
+        {
+            bool suc = await AppServiceProvider.GetVessageService().FinishSendVessage(vessageBoxId, UserSessionData.UserId, vessageId, fileId);
+            var msg = "SUCCESS";
+            if (suc == false)
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotModified;
+                msg = "FAIL";
+            }
+            return new { msg = msg };
+        }
+
+        [HttpPut("CancelSendVessage")]
+        public async Task<object> CancelSendVessage(string vessageBoxId,string vessageId)
+        {
+            bool suc = await AppServiceProvider.GetVessageService().CancelSendVessage(vessageId, UserSessionData.UserId, vessageId);
+
+            var msg = "SUCCESS";
+            if (suc == false)
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotModified;
+                msg = "FAIL";
+            }
+            return new { msg = msg };
+        }
+
         [HttpPost("ForMobile")]
-        public async Task<object> SendNewVessageForMobile(string receiverMobile, string fileId)
+        public async Task<object> SendNewVessageForMobile(string receiverMobile, string extraInfo)
         {
             Vessage vessage = null;
-
+            Tuple<ObjectId, ObjectId> result = null;
             var vessageService = Startup.ServicesProvider.GetVessageService();
             if (string.IsNullOrWhiteSpace(receiverMobile) == false)
             {
@@ -57,25 +85,38 @@ namespace VessageRESTfulServer.Controllers
                     IsRead = false,
                     Sender = new ObjectId(UserSessionData.UserId),
                     SendTime = DateTime.UtcNow,
-                    Video = fileId
+                    VideoReady = false,
+                    ExtraInfo = extraInfo
                 };
-                var result = await vessageService.SendVessageForMobile(receiverMobile, vessage);
-                vessage = result.Item1;
+                var receiver = await AppServiceProvider.GetUserService().GetUserOfMobile(receiverMobile);
+                if (receiver == null)
+                {
+                    result = await vessageService.SendVessageForMobile(receiverMobile, vessage);
+                }
+                else
+                {
+                    result = await vessageService.SendVessage(receiver.Id, vessage);
+                }
             }
-            string msg = "SUCCESS";
-            if (vessage == null)
+
+            if (result == null)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                msg = "FAIL";
+                return new { msg = "FAIL" };
             }
-            return new { msg = msg };
+
+            return new
+            {
+                vessageBoxId = result.Item1.ToString(),
+                vessageId = result.Item2.ToString()
+            };
         }
 
         [HttpPost("ForUser")]
-        public async Task<object> SendNewVessageForUser(string receiverId, string fileId)
+        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo)
         {
             Vessage vessage = null;
-
+            Tuple<ObjectId, ObjectId> result = null;
             var vessageService = Startup.ServicesProvider.GetVessageService();
             if (string.IsNullOrWhiteSpace(receiverId) == false)
             {
@@ -84,18 +125,23 @@ namespace VessageRESTfulServer.Controllers
                     Id = ObjectId.GenerateNewId(),
                     IsRead = false,
                     Sender = new ObjectId(UserSessionData.UserId),
+                    VideoReady = false,
                     SendTime = DateTime.UtcNow,
-                    Video = fileId
+                    ExtraInfo = extraInfo
                 };
-                vessage = await vessageService.SendVessage(new ObjectId(receiverId), vessage);
+                result = await vessageService.SendVessage(new ObjectId(receiverId), vessage);
             }
-            string msg = "SUCCESS";
-            if (vessage == null)
+            if (result == null)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                msg = "FAIL";
+                return new { msg = "FAIL" };
             }
-            return new { msg = msg };
+
+            return new
+            {
+                vessageBoxId = result.Item1.ToString(),
+                vessageId = result.Item2.ToString()
+            };
         }
 
         [HttpPut("Read/{vid}")]

@@ -24,6 +24,7 @@ namespace VessageRESTfulServer.Models
         public string Video{ get; set; }
         public DateTime SendTime { get; set; }
         public bool IsRead { get; set; }
+        public bool VideoReady { get; set; }
         public string ExtraInfo { get; set; }
     }
 

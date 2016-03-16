@@ -17,43 +17,85 @@ namespace VessageRESTfulServer.Services
             this.Client = Client;
         }
 
-        internal async Task<Vessage> SendVessage(ObjectId reveicerId, Vessage vessage)
+        internal async Task<Tuple<ObjectId, ObjectId>> SendVessage(ObjectId receicerId, Vessage vessage)
         {
             vessage.Id = ObjectId.GenerateNewId();
             var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
             var update = new UpdateDefinitionBuilder<VessageBox>().Push(vb => vb.Vessages, vessage);
-            var result = await collection.FindOneAndUpdateAsync(vb => vb.UserId == reveicerId, update);
-            if (result == null)
+            try
             {
-                var newVb = new VessageBox()
+                var result = await collection.FindOneAndUpdateAsync(vb => vb.UserId == receicerId, update);
+                if (result == null)
                 {
-                    UserId = reveicerId,
-                    Vessages = new Vessage[] { vessage }
-                };
-                await collection.InsertOneAsync(newVb);
+                    var newVb = new VessageBox()
+                    {
+                        UserId = receicerId,
+                        Vessages = new Vessage[] { vessage },
+                        LastGetMessageTime = DateTime.UtcNow.AddMinutes(-2),
+                        LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2)
+                    };
+                    await collection.InsertOneAsync(newVb);
+                    result = newVb;
+                }
+                return new Tuple<ObjectId, ObjectId>(result.Id, vessage.Id);
             }
-            return vessage;
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
-        internal async Task<Tuple<Vessage,ObjectId>> SendVessageForMobile(string reveicerMobile, Vessage vessage)
+        internal async Task<Tuple<ObjectId,ObjectId>> SendVessageForMobile(string receicerMobile, Vessage vessage)
         {
             vessage.Id = ObjectId.GenerateNewId();
             var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
             var update = new UpdateDefinitionBuilder<VessageBox>().Push(vb => vb.Vessages, vessage);
-            var result = await collection.FindOneAndUpdateAsync(vb => vb.ForMobile == reveicerMobile, update);
-            if (result == null)
+            try
             {
-                var newVb = new VessageBox()
+                var result = await collection.FindOneAndUpdateAsync(vb => vb.ForMobile == receicerMobile, update);
+                if (result == null)
                 {
-                    ForMobile = reveicerMobile,
-                    Vessages = new Vessage[] { vessage },
-                    LastGetMessageTime = DateTime.UtcNow.AddMinutes(-2),
-                    LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2)
-                };
-                await collection.InsertOneAsync(newVb);
-                result = newVb;
+                    var newVb = new VessageBox()
+                    {
+                        ForMobile = receicerMobile,
+                        Vessages = new Vessage[] { vessage },
+                        LastGetMessageTime = DateTime.UtcNow.AddMinutes(-2),
+                        LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2)
+                    };
+                    await collection.InsertOneAsync(newVb);
+                    result = newVb;
+                }
+                return new Tuple<ObjectId, ObjectId>(result.Id, vessage.Id);
             }
-            return new Tuple<Vessage, ObjectId>(vessage, result.UserId);
+            catch (Exception)
+            {
+                return null;
+            }
+            
+        }
+
+        internal async Task<bool> CancelSendVessage(string vbId, string senderId, string vessageId)
+        {
+            var vbOId = new ObjectId(vbId);
+            var vessageOId = new ObjectId(vessageId);
+            var senderOId = new ObjectId(senderId);
+            var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
+            var update = Builders<VessageBox>.Update.PullFilter(vb => vb.Vessages, v => v.Id == vessageOId && v.Sender == senderOId);
+            var result = await collection.UpdateManyAsync(vb => vb.Id == vbOId, update);
+            return result.ModifiedCount > 0;
+        }
+
+        internal async Task<bool> FinishSendVessage(string vbId,string senderId, string vessageId, string fileId)
+        {
+            var collection = Client.GetDatabase("Vessage").GetCollection<BsonDocument>("VessageBox");
+            var filter1 = Builders<BsonDocument>.Filter.Eq("_id", new ObjectId(vbId));
+            var filter2 = Builders<BsonDocument>.Filter.Eq("Vessages.Sender", new ObjectId(senderId));
+            var filter3 = Builders<BsonDocument>.Filter.Eq("Vessages._id", new ObjectId(vessageId));
+            var update1 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.VideoReady", true);
+            var update2 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.Video", fileId);
+            var update = Builders<BsonDocument>.Update.Combine(update1, update2);
+            var result = await collection.UpdateManyAsync(filter1 & filter2 & filter1, update);
+            return result.ModifiedCount > 0;
         }
 
         internal async Task<bool> SetVessageRead(string userId, string vid)
@@ -97,7 +139,7 @@ namespace VessageRESTfulServer.Services
             var result = new List<Vessage>();
             foreach (var vb in vbs)
             {
-                var vs = from v in vb.Vessages where v.SendTime > vb.LastGotMessageTime && v.IsRead == false select v;
+                var vs = from v in vb.Vessages where v.VideoReady && v.SendTime > vb.LastGotMessageTime && v.IsRead == false select v;
                 result.AddRange(vs);
             }
             var updateGetTime = new UpdateDefinitionBuilder<VessageBox>().Set(vb => vb.LastGetMessageTime, DateTime.UtcNow);

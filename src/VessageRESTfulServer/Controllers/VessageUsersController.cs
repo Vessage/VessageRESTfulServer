@@ -7,6 +7,7 @@ using VessageRESTfulServer.Services;
 using System.Net;
 using VessageRESTfulServer.Models;
 using MongoDB.Bson;
+using BahamutCommon;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -76,7 +77,7 @@ namespace VessageRESTfulServer.Controllers
                 userId = user.Id.ToString(),
                 mainChatImage = user.MainChatImage,
                 avatar = user.Avartar,
-                mobile = user.Mobile
+                mobile = UserSessionData.UserId == user.Id.ToString() ? user.Mobile : StringUtil.Md5String(user.Mobile)
             };
             return jsonResultObj;
         }
