@@ -102,7 +102,7 @@ namespace VessageRESTfulServer
             var messageCacheServerUrl = Configuration["Data:MessageCacheServer:url"].Replace("redis://", "");
             var mcClientManager = new PooledRedisClientManager(messageCacheServerUrl);
 
-            var pbService = new BahamutPubSubService(pbClientManager, mcClientManager);
+            var pbService = new BahamutPubSubService(pbClientManager);
             services.AddInstance(pbService);
         }
 

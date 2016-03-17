@@ -85,17 +85,41 @@ namespace VessageRESTfulServer.Services
             return result.ModifiedCount > 0;
         }
 
-        internal async Task<bool> FinishSendVessage(string vbId,string senderId, string vessageId, string fileId)
+        internal async Task<Tuple<ObjectId,string>> FinishSendVessage(string vbId,string senderId, string vessageId, string fileId)
         {
             var collection = Client.GetDatabase("Vessage").GetCollection<BsonDocument>("VessageBox");
             var filter1 = Builders<BsonDocument>.Filter.Eq("_id", new ObjectId(vbId));
             var filter2 = Builders<BsonDocument>.Filter.Eq("Vessages.Sender", new ObjectId(senderId));
             var filter3 = Builders<BsonDocument>.Filter.Eq("Vessages._id", new ObjectId(vessageId));
+            var filter = filter1 & filter2 & filter3;
             var update1 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.VideoReady", true);
             var update2 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.Video", fileId);
             var update = Builders<BsonDocument>.Update.Combine(update1, update2);
-            var result = await collection.UpdateManyAsync(filter1 & filter2 & filter1, update);
-            return result.ModifiedCount > 0;
+            var result = await collection.FindOneAndUpdateAsync(filter, update);
+            if (result!= null)
+            {
+
+            }
+            BsonValue outUserId;
+            BsonValue outMobile;
+            if(result.TryGetValue("UserId", out outUserId))
+            {
+                if (outUserId == null || outUserId.AsObjectId == ObjectId.Empty)
+                {
+                    if(result.TryGetValue("ForMobile", out outMobile))
+                    {
+                        if (outMobile != null && !string.IsNullOrWhiteSpace(outMobile.AsString))
+                        {
+                            return new Tuple<ObjectId, string>(ObjectId.Empty, outMobile.AsString);
+                        }
+                    }
+                }
+                else
+                {
+                    return new Tuple<ObjectId, string>(outUserId.AsObjectId, null);
+                }
+            }
+            return new Tuple<ObjectId, string>(ObjectId.Empty, null);
         }
 
         internal async Task<bool> SetVessageRead(string userId, string vid)

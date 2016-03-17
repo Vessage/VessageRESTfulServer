@@ -47,12 +47,24 @@ namespace VessageRESTfulServer.Controllers
         [HttpPut("FinishSendVessage")]
         public async Task<object> FinishSendVessage(string vessageBoxId,string vessageId,string fileId)
         {
-            bool suc = await AppServiceProvider.GetVessageService().FinishSendVessage(vessageBoxId, UserSessionData.UserId, vessageId, fileId);
+            var result = await AppServiceProvider.GetVessageService().FinishSendVessage(vessageBoxId, UserSessionData.UserId, vessageId, fileId);
             var msg = "SUCCESS";
-            if (suc == false)
+            if (result.Item1 != ObjectId.Empty)
+            {
+                var notifyMsg = new BahamutPublishModel
+                {
+                    NotifyType = "NewVessageNotify",
+                    ToUser = result.Item1.ToString()
+                };
+                AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage(Startup.Appname, notifyMsg);
+            }
+            else if (!string.IsNullOrWhiteSpace(result.Item2))
+            {
+                //TODO: Send sms to the mobile user
+            }
+            else
             {
                 Response.StatusCode = (int)HttpStatusCode.NotModified;
-                msg = "FAIL";
             }
             return new { msg = msg };
         }
