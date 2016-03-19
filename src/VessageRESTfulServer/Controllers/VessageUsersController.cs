@@ -8,6 +8,10 @@ using System.Net;
 using VessageRESTfulServer.Models;
 using MongoDB.Bson;
 using BahamutCommon;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.IO;
+using System.Net.Security;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -83,14 +87,61 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("SendMobileVSMS")]
-        public async Task<object> SendMobileVSMS(string mobile)
+        public object SendMobileVSMS(string mobile)
         {
-            return new { msg = "SUCCESS" };
+            Response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
+            return new { msg = "NOT_ALLOWED" };
+        }
+
+        private static async Task<int> ValidateMobSMSCode(string mobSMSAppkey,string mobile, string zone, string code)
+        {
+            return await Task.Run(() =>
+             {
+                 WebRequest request = WebRequest.Create("https://webapi.sms.mob.com/sms/verify");
+                 request.Proxy = null;
+                 request.Credentials = CredentialCache.DefaultCredentials;
+
+                //allows for validation of SSL certificates 
+
+                ServicePointManager.ServerCertificateValidationCallback += new System.Net.Security.RemoteCertificateValidationCallback(ValidateServerCertificate);
+                 var data = string.Format("appkey={0}&amp;phone={1}&amp;zone={2}&amp;code={3}", mobSMSAppkey, mobile, zone, code);
+                 byte[] bs = Encoding.UTF8.GetBytes(data);
+                 request.Method = "Post";
+                 using (Stream reqStream = request.GetRequestStream())
+                 {
+                     reqStream.Write(bs, 0, bs.Length);
+                 }
+                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                 Stream dataStream = response.GetResponseStream();
+                 StreamReader reader = new StreamReader(dataStream);
+                 string responseFromServer = reader.ReadToEnd();
+                 dynamic responseObj = Newtonsoft.Json.JsonConvert.DeserializeObject(responseFromServer);
+                 try
+                 {
+                     return responseObj.status;
+                 }
+                 catch (Exception)
+                 {
+                     return -1;
+                 }
+             });
+        }
+
+        //for testing purpose only, accept any dodgy certificate... 
+        private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
         }
 
         [HttpPost("ValidateMobileVSMS")]
-        public async Task<object> ValidateMobileVSMS(string mobile, string vsms)
+        public async Task<object> ValidateMobileVSMS(string mobile, string zone, string code)
         {
+            var res = await ValidateMobSMSCode(Startup.Configuration["Data:MobSMSAppKey"], mobile, zone, code);
+            if (res != 200)
+            {
+                Response.StatusCode = res;
+                return new { msg = res.ToString() };
+            }
             var userId = UserSessionData.UserId;
             var userOId = new ObjectId(userId);
             var userService = Startup.ServicesProvider.GetUserService();

@@ -6,6 +6,9 @@
       "url": "http://vessageapi.bahamut.cn:8188",
       "region": "default"
     },
+
+    "MobSMSAppKey": "xxx",
+
     "VessageDBServer": {
       "url": "mongodb://$usr:$psw@vsgdb.bahamut.cn:27017"
     },
