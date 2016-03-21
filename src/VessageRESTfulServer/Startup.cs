@@ -35,7 +35,7 @@ namespace VessageRESTfulServer
 
         public static string AuthServerUrl { get { return Configuration["Data:AuthServer:url"]; } }
         public static string FileApiUrl { get { return Configuration["Data:FileServer:url"]; } }
-        public static string SharelinkDBUrl { get { return Configuration["Data:SharelinkDBServer:url"]; } }
+        public static string VessageDBServer { get { return Configuration["Data:VessageDBServer:url"]; } }
         public static string ChicagoServerAddress { get { return Configuration["Data:ChicagoServer:host"]; } }
         public static int ChicagoServerPort { get { return int.Parse(Configuration["Data:ChicagoServer:port"]); } }
 
@@ -92,8 +92,8 @@ namespace VessageRESTfulServer
             });
 
             //business services
-            services.AddInstance(new UserService(new MongoClient(MongoUrl.Create(Startup.SharelinkDBUrl))));
-            services.AddInstance(new VessageService(new MongoClient(MongoUrl.Create(Startup.SharelinkDBUrl))));
+            services.AddInstance(new UserService(new MongoClient(MongoUrl.Create(VessageDBServer))));
+            services.AddInstance(new VessageService(new MongoClient(MongoUrl.Create(VessageDBServer))));
 
             //pubsub manager
             var pubsubServerUrl = Configuration["Data:MessagePubSubServer:url"].Replace("redis://", "");
