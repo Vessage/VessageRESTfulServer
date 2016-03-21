@@ -81,6 +81,7 @@ namespace VessageRESTfulServer.Controllers
                 userId = user.Id.ToString(),
                 mainChatImage = user.MainChatImage,
                 avatar = user.Avartar,
+				nickName = user.Nick,
                 mobile = UserSessionData.UserId == user.Id.ToString() ? user.Mobile : StringUtil.Md5String(user.Mobile)
             };
             return jsonResultObj;
