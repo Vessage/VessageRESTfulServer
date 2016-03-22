@@ -56,7 +56,7 @@ namespace VessageRESTfulServer.Controllers
                     NotifyType = "NewVessageNotify",
                     ToUser = result.Item1.ToString()
                 };
-                AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("VegeNotify", notifyMsg);
+                AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
             }
             else if (!string.IsNullOrWhiteSpace(result.Item2))
             {
