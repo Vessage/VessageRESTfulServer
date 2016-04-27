@@ -75,6 +75,11 @@ namespace VessageRESTfulServer.Controllers
 			{
 				return null;
 			}
+            var mobile = UserSessionData.UserId == user.Id.ToString() ? user.Mobile : StringUtil.Md5String(user.Mobile);
+            if(mobile == null)
+            {
+                mobile = "";
+            }
             var jsonResultObj = new
             {
                 accountId = user.AccountId,
@@ -82,8 +87,9 @@ namespace VessageRESTfulServer.Controllers
                 mainChatImage = user.MainChatImage,
                 avatar = user.Avartar,
 				nickName = user.Nick,
-                mobile = UserSessionData.UserId == user.Id.ToString() ? user.Mobile : StringUtil.Md5String(user.Mobile)
+                mobile = mobile
             };
+            
             return jsonResultObj;
         }
 
