@@ -12,6 +12,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.IO;
 using System.Net.Security;
+using BahamutService.Service;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -91,6 +92,30 @@ namespace VessageRESTfulServer.Controllers
             };
             
             return jsonResultObj;
+        }
+
+        [HttpPost("UserDevice")]
+        public object RegistUserDevice(String deviceToken,String deviceType)
+        {
+            if(string.IsNullOrWhiteSpace(deviceToken) || string.IsNullOrWhiteSpace(deviceType))
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return new { msg = "PARAMETERS_ERROR" };
+            }
+            var notifyMsg = new BahamutPublishModel
+            {
+                NotifyType = "RegistUserDevice",
+                Info = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                {
+                    AccountId = UserSessionData.AccountId,
+                    Appkey = UserSessionData.Appkey,
+                    DeviceToken = deviceToken,
+                    DeviceType = deviceType
+                }),
+                ToUser = UserSessionData.UserId
+            };
+            AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
+            return new { msg = "OK" };
         }
 
         [HttpPost("SendMobileVSMS")]
