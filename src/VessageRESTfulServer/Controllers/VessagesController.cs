@@ -9,6 +9,7 @@ using BahamutService.Service;
 using MongoDB.Bson;
 using System.Net;
 using BahamutCommon;
+using Newtonsoft.Json;
 
 namespace VessageRESTfulServer.Controllers
 {
@@ -53,6 +54,13 @@ namespace VessageRESTfulServer.Controllers
             {
                 var notifyMsg = new BahamutPublishModel
                 {
+                    NotifyInfo = JsonConvert.SerializeObject(new
+                    {
+                        BuilderId = 1,
+                        AfterOpen = "go_custom",
+                        Custom = "NewVessageNotify",
+                        Text = UserSessionData.UserId
+                    }),
                     NotifyType = "NewVessageNotify",
                     ToUser = result.Item1.ToString()
                 };
