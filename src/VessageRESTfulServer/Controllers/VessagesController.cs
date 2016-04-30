@@ -59,7 +59,8 @@ namespace VessageRESTfulServer.Controllers
                         BuilderId = 1,
                         AfterOpen = "go_custom",
                         Custom = "NewVessageNotify",
-                        Text = UserSessionData.UserId
+                        Text = UserSessionData.UserId,
+                        LocKey = "NEW_VMSG_NOTIFICATION"
                     }),
                     NotifyType = "NewVessageNotify",
                     ToUser = result.Item1.ToString()
