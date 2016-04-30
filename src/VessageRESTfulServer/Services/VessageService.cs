@@ -98,25 +98,24 @@ namespace VessageRESTfulServer.Services
             var result = await collection.FindOneAndUpdateAsync(filter, update);
             if (result!= null)
             {
-
-            }
-            BsonValue outUserId;
-            BsonValue outMobile;
-            if(result.TryGetValue("UserId", out outUserId))
-            {
-                if (outUserId == null || outUserId.AsObjectId == ObjectId.Empty)
+                BsonValue outUserId;
+                BsonValue outMobile;
+                if (result.TryGetValue("UserId", out outUserId))
                 {
-                    if(result.TryGetValue("ForMobile", out outMobile))
+                    if (outUserId == null || outUserId.AsObjectId == ObjectId.Empty)
                     {
-                        if (outMobile != null && !string.IsNullOrWhiteSpace(outMobile.AsString))
+                        if (result.TryGetValue("ForMobile", out outMobile))
                         {
-                            return new Tuple<ObjectId, string>(ObjectId.Empty, outMobile.AsString);
+                            if (outMobile != null && !string.IsNullOrWhiteSpace(outMobile.AsString))
+                            {
+                                return new Tuple<ObjectId, string>(ObjectId.Empty, outMobile.AsString);
+                            }
                         }
                     }
-                }
-                else
-                {
-                    return new Tuple<ObjectId, string>(outUserId.AsObjectId, null);
+                    else
+                    {
+                        return new Tuple<ObjectId, string>(outUserId.AsObjectId, null);
+                    }
                 }
             }
             return new Tuple<ObjectId, string>(ObjectId.Empty, null);
