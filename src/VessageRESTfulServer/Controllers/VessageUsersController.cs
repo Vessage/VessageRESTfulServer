@@ -118,6 +118,23 @@ namespace VessageRESTfulServer.Controllers
             return new { msg = "OK" };
         }
 
+        [HttpDelete("UserDevice")]
+        public object RemoveUserDevice()
+        {
+            var notifyMsg = new BahamutPublishModel
+            {
+                NotifyType = "RemoveUserDevice",
+                Info = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                {
+                    AccountId = UserSessionData.AccountId,
+                    Appkey = UserSessionData.Appkey
+                }),
+                ToUser = UserSessionData.UserId
+            };
+            AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
+            return new { msg = "OK" };
+        }
+
         [HttpPost("SendMobileVSMS")]
         public object SendMobileVSMS(string mobile)
         {
