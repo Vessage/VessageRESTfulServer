@@ -159,13 +159,13 @@ namespace VessageRESTfulServer.Controllers
                 if (msg.Postmen.Contains(nextReceiver))
                 {
                     Response.StatusCode = 404;
-                    return new { msg = "USER_POSTED_THIS_MSG" };
+                    return new { msg = "USER_POSTED_THIS_PAPER" };
                 }
             }
             catch (Exception)
             {
                 Response.StatusCode = 400;
-                return new { msg = "MSG_NOT_FOUND" };
+                return new { msg = "NO_SUCH_PAPER_ID" };
             }
             
             var collection = client.GetDatabase("LittlePaperMessage").GetCollection<PaperMessageBox>("PaperMessageBox");
