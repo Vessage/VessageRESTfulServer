@@ -221,7 +221,8 @@ namespace VessageRESTfulServer.Controllers
 
                 if (result.ModifiedCount > 0)
                 {
-                    return new { msg = "SUCCESS" };
+					msg.Receiver = UserSessionData.UserId;
+                    return PaperMessageToJsonObject(msg,UserSessionData.UserId);
                 }
                 else
                 {
