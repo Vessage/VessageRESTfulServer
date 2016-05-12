@@ -21,13 +21,36 @@ namespace VessageRESTfulServer.Controllers
     [Route("api/[controller]")]
     public class VessageUsersController : APIControllerBase
     {
+        private static Queue<VessageUser> ActiveUsers = new Queue<VessageUser>();
         // GET: api/values
         [HttpGet]
         public async Task<object> Get()
         {
             var userService = Startup.ServicesProvider.GetUserService();
             var user = await userService.GetUserOfUserId(UserSessionData.UserId);
+            if (ActiveUsers.Contains(user) == false)
+            {
+                ActiveUsers.Enqueue(user);
+                if (ActiveUsers.Count > 10)
+                {
+                    ActiveUsers.Dequeue();
+                }
+            }
             return VessageUserToJsonObject(user);
+        }
+
+        [HttpGet("Active")]
+        public IEnumerable<object> GetActiveUsers()
+        {
+            var result = from u in ActiveUsers select new
+            {
+                accountId = u.AccountId,
+                userId = u.Id.ToString(),
+                mainChatImage = u.MainChatImage,
+                avatar = u.Avartar,
+                nickName = u.Nick
+            };
+            return result;
         }
 
         [HttpGet("UserId/{userId}")]

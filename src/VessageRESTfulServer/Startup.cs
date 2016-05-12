@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -17,8 +15,6 @@ using NLog.Config;
 using NLog;
 using BahamutCommon;
 using BahamutService.Service;
-using System.Security.Cryptography.X509Certificates;
-using Microsoft.AspNet.Server.Kestrel.Https;
 
 namespace VessageRESTfulServer
 {
@@ -94,6 +90,7 @@ namespace VessageRESTfulServer
             //business services
             services.AddInstance(new UserService(new MongoClient(MongoUrl.Create(VessageDBServer))));
             services.AddInstance(new VessageService(new MongoClient(MongoUrl.Create(VessageDBServer))));
+            services.AddInstance(new SharedService(new MongoClient(MongoUrl.Create(VessageDBServer))));
 
             //pubsub manager
             var pubsubServerUrl = Configuration["Data:MessagePubSubServer:url"].Replace("redis://", "");

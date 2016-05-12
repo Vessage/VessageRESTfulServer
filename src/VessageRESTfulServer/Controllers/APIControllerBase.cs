@@ -7,6 +7,7 @@ using BahamutCommon;
 using BahamutService.Model;
 using MongoDB.Driver;
 using NLog;
+using MongoDB.Bson;
 
 namespace VessageRESTfulServer.Controllers
 {
@@ -23,6 +24,14 @@ namespace VessageRESTfulServer.Controllers
             get
             {
                 return Request.HttpContext.Items["AccountSessionData"] as AccountSessionData;
+            }
+        }
+
+        public ObjectId UserObjectId
+        {
+            get
+            {
+                return new ObjectId(UserSessionData.UserId);
             }
         }
 
