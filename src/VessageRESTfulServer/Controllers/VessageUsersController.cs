@@ -40,7 +40,7 @@ namespace VessageRESTfulServer.Controllers
                 var userService = Startup.ServicesProvider.GetUserService();
                 var user = await userService.GetUserOfUserId(UserSessionData.UserId);
                 ActiveUsers.Enqueue(user);
-                if (ActiveUsers.Count > 15)
+                if (ActiveUsers.Count > 20)
                 {
                     ActiveUsers.Dequeue();
                 }
