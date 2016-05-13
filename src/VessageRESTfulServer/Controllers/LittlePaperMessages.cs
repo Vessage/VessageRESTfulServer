@@ -8,12 +8,14 @@ using VessageRESTfulServer.Services;
 using MongoDB.Driver;
 using BahamutCommon;
 using System.Net;
+using BahamutService.Service;
+using Newtonsoft.Json;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace VessageRESTfulServer.Controllers
 {
-
+    
     class LittlePaperMessage
     {
         public ObjectId Id{ get; set; }
@@ -35,7 +37,8 @@ namespace VessageRESTfulServer.Controllers
     [Route("api/[controller]")]
     public class LittlePaperMessages : APIControllerBase
     {
-        
+        public static string ActivityId = "1000";
+
         [HttpGet("Received")]
         public async Task<IEnumerable<object>> Get()
         {
@@ -124,12 +127,32 @@ namespace VessageRESTfulServer.Controllers
                     };
                     await collection.InsertOneAsync(msgBox);
                 }
+                AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, nextReceiver, 1);
+                PublishActivityNotify(nextReceiver);
                 return PaperMessageToJsonObject(newMsg, UserSessionData.UserId);
             }
             catch (Exception)
             {}
             Response.StatusCode = 500;
             return null;
+        }
+
+        private void PublishActivityNotify(string nextReceiver)
+        {
+            var notifyMsg = new BahamutPublishModel
+            {
+                NotifyInfo = JsonConvert.SerializeObject(new
+                {
+                    BuilderId = 2,
+                    AfterOpen = "go_custom",
+                    Custom = "ActivityUpdatedNotify",
+                    Text = UserSessionData.UserId,
+                    LocKey = "ACTIVITY_UPDATED_NOTIFICATION"
+                }),
+                NotifyType = "ActivityUpdatedNotify",
+                ToUser = nextReceiver
+            };
+            AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
         }
 
         [HttpPut("PostMessage")]
@@ -140,7 +163,7 @@ namespace VessageRESTfulServer.Controllers
 
             if (UserSessionData.UserId == nextReceiver)
             {
-                Response.StatusCode = 404;
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 return new { msg = "SELF_IS_RECEIVER" };
             }
             bool isAnonymous = false;
@@ -158,7 +181,7 @@ namespace VessageRESTfulServer.Controllers
                 var msg = await msgCollection.Find(m => m.Id == paperOId).FirstAsync();
                 if (msg.Postmen.Contains(nextReceiver))
                 {
-                    Response.StatusCode = 404;
+                    Response.StatusCode = 403;
                     return new { msg = "USER_POSTED_THIS_PAPER" };
                 }
             }
@@ -170,7 +193,7 @@ namespace VessageRESTfulServer.Controllers
             
             var collection = client.GetDatabase("LittlePaperMessage").GetCollection<PaperMessageBox>("PaperMessageBox");
 
-            var updatePosterBox = new UpdateDefinitionBuilder<PaperMessageBox>().PullFilter(mb => mb.ReceivedMessages, id => id == paperOId);
+            var updatePosterBox = new UpdateDefinitionBuilder<PaperMessageBox>().Pull(b => b.ReceivedMessages, paperOId);
             await collection.UpdateOneAsync(mbox => mbox.UserId == UserObjectId, updatePosterBox);
 
             var updateReceiverBox = new UpdateDefinitionBuilder<PaperMessageBox>().Push(mb => mb.ReceivedMessages, paperOId);
@@ -193,6 +216,8 @@ namespace VessageRESTfulServer.Controllers
                 updateMsg = new UpdateDefinitionBuilder<LittlePaperMessage>().Combine(updateMsg, updateMsgPostmen);
             }
             await msgCollection.UpdateOneAsync(m => m.Id == paperOId, updateMsg);
+            AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, nextReceiver, 1);
+            PublishActivityNotify(nextReceiver);
             return new { msg = "SUCCESS" };
         }
 
@@ -213,10 +238,11 @@ namespace VessageRESTfulServer.Controllers
                     return new { msg = "PAPER_OPENED" };
                 }
 
-                var update = new UpdateDefinitionBuilder<PaperMessageBox>().PullFilter(mb => mb.ReceivedMessages, id => id == paperOId);
+                var update = new UpdateDefinitionBuilder<PaperMessageBox>().Pull(mb => mb.ReceivedMessages, paperOId);
                 var result = await collection.UpdateOneAsync(mbox => mbox.UserId == UserObjectId, update);
-
-                var updateMsg = new UpdateDefinitionBuilder<LittlePaperMessage>().Set(pm => pm.Receiver, UserSessionData.UserId);
+                var updateMsgTime = new UpdateDefinitionBuilder<LittlePaperMessage>().Set(m => m.UpdatedTime, DateTime.UtcNow);
+                var updateMsgReceiver = new UpdateDefinitionBuilder<LittlePaperMessage>().Set(pm => pm.Receiver, UserSessionData.UserId);
+                var updateMsg = new UpdateDefinitionBuilder<LittlePaperMessage>().Combine(updateMsgReceiver, updateMsgTime);
                 result = await msgCollection.UpdateOneAsync(m => m.Id == paperOId, updateMsg);
 
                 if (result.ModifiedCount > 0)
@@ -233,7 +259,7 @@ namespace VessageRESTfulServer.Controllers
             }
             catch (Exception)
             {
-                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                Response.StatusCode = (int)HttpStatusCode.NotFound;
                 return new { msg = "NO_SUCH_PAPER_ID" };
             }
             

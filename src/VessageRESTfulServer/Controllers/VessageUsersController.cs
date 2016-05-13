@@ -22,34 +22,40 @@ namespace VessageRESTfulServer.Controllers
     public class VessageUsersController : APIControllerBase
     {
         private static Queue<VessageUser> ActiveUsers = new Queue<VessageUser>();
-        // GET: api/values
+        
         [HttpGet]
         public async Task<object> Get()
         {
             var userService = Startup.ServicesProvider.GetUserService();
             var user = await userService.GetUserOfUserId(UserSessionData.UserId);
-            if (ActiveUsers.Contains(user) == false)
-            {
-                ActiveUsers.Enqueue(user);
-                if (ActiveUsers.Count > 10)
-                {
-                    ActiveUsers.Dequeue();
-                }
-            }
             return VessageUserToJsonObject(user);
         }
 
         [HttpGet("Active")]
-        public IEnumerable<object> GetActiveUsers()
+        public async Task<IEnumerable<object>> GetActiveUsers()
         {
-            var result = from u in ActiveUsers select new
+            var users = from au in ActiveUsers where au.Id == UserObjectId select au;
+            if (users.Count() == 0)
             {
-                accountId = u.AccountId,
-                userId = u.Id.ToString(),
-                mainChatImage = u.MainChatImage,
-                avatar = u.Avartar,
-                nickName = u.Nick
-            };
+                var userService = Startup.ServicesProvider.GetUserService();
+                var user = await userService.GetUserOfUserId(UserSessionData.UserId);
+                ActiveUsers.Enqueue(user);
+                if (ActiveUsers.Count > 15)
+                {
+                    ActiveUsers.Dequeue();
+                }
+            }
+
+            var result = from u in ActiveUsers
+                         where u.Id != UserObjectId
+                         select new
+                         {
+                             accountId = u.AccountId,
+                             userId = u.Id.ToString(),
+                             mainChatImage = u.MainChatImage,
+                             avatar = u.Avartar,
+                             nickName = u.Nick
+                         };
             return result;
         }
 

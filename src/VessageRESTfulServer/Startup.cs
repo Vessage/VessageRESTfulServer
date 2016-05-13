@@ -91,6 +91,7 @@ namespace VessageRESTfulServer
             services.AddInstance(new UserService(new MongoClient(MongoUrl.Create(VessageDBServer))));
             services.AddInstance(new VessageService(new MongoClient(MongoUrl.Create(VessageDBServer))));
             services.AddInstance(new SharedService(new MongoClient(MongoUrl.Create(VessageDBServer))));
+            services.AddInstance(new ActivityService(new MongoClient(MongoUrl.Create(VessageDBServer))));
 
             //pubsub manager
             var pubsubServerUrl = Configuration["Data:MessagePubSubServer:url"].Replace("redis://", "");
