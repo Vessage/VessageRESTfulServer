@@ -34,6 +34,11 @@ namespace VessageRESTfulServer.Controllers
         [HttpGet("Active")]
         public async Task<IEnumerable<object>> GetActiveUsers()
         {
+            Response.StatusCode = (int)HttpStatusCode.Gone;
+            if (Response.StatusCode == (int)HttpStatusCode.Gone)
+            {
+                return null;
+            }
             var users = from au in ActiveUsers where au.Id == UserObjectId select au;
             if (users.Count() == 0)
             {
@@ -44,11 +49,6 @@ namespace VessageRESTfulServer.Controllers
                 {
                     ActiveUsers.Dequeue();
                 }
-            }
-            Response.StatusCode = (int)HttpStatusCode.Gone;
-            if(Response.StatusCode == (int)HttpStatusCode.Gone)
-            {
-                return null;
             }
             var result = from u in ActiveUsers
                          where u.Id != UserObjectId

@@ -22,6 +22,7 @@ namespace VessageRESTfulServer.Controllers
         public string Sender { get; set; }
         public string ReceiverInfo { get; set; }
         public string Content { get; set; }
+        public DateTime CreateTime { get; set; }
         public DateTime UpdatedTime { get; set; }
         public string Receiver { get; set; }
         public string[] Postmen { get; set; }
@@ -111,7 +112,8 @@ namespace VessageRESTfulServer.Controllers
                     Postmen = new string[] { UserSessionData.UserId },
                     ReceiverInfo = receiverInfo,
                     Sender = UserSessionData.UserId,
-                    UpdatedTime = DateTime.UtcNow
+                    UpdatedTime = DateTime.UtcNow,
+                    CreateTime = DateTime.UtcNow
                 };
                 var msgCollection = client.GetDatabase("LittlePaperMessage").GetCollection<LittlePaperMessage>("LittlePaperMessage");
                 await msgCollection.InsertOneAsync(newMsg);
