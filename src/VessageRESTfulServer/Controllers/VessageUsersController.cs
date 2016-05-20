@@ -45,7 +45,11 @@ namespace VessageRESTfulServer.Controllers
                     ActiveUsers.Dequeue();
                 }
             }
-
+            Response.StatusCode = (int)HttpStatusCode.Gone;
+            if(Response.StatusCode == (int)HttpStatusCode.Gone)
+            {
+                return null;
+            }
             var result = from u in ActiveUsers
                          where u.Id != UserObjectId
                          select new
