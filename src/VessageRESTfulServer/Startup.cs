@@ -20,6 +20,8 @@ namespace VessageRESTfulServer
 {
     public class Startup
     {
+        public static IHostingEnvironment ServerHostingEnvironment { get; private set; }
+
         public static IConfigurationRoot Configuration { get; set; }
         public static IServiceProvider ServicesProvider { get; private set; }
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
@@ -36,6 +38,14 @@ namespace VessageRESTfulServer
         public static int ChicagoServerPort { get { return int.Parse(Configuration["Data:ChicagoServer:port"]); } }
 
         public static IDictionary<string, string> ValidatedUsers { get; private set; }
+        public static bool IsProduction
+        {
+            get
+            {
+                return ServerHostingEnvironment.IsProduction();
+            }
+        }
+
         public Startup(IHostingEnvironment env)
         {
             // Set up configuration sources.
@@ -49,14 +59,10 @@ namespace VessageRESTfulServer
             var builder = new ConfigurationBuilder()
                             .AddJsonFile("appsettings.json");
             var configFile = "config_debug.json";
-
-            if (env.IsEnvironment("Development"))
+            ServerHostingEnvironment = env;
+            if (env.IsProduction())
             {
-
-            }
-            else
-            {
-                configFile = "/etc/bahamut/vessage.json";
+                configFile = "/etc/bahamut/vege/vessage.json";
             }
             builder.AddJsonFile(configFile);
             builder.AddEnvironmentVariables();

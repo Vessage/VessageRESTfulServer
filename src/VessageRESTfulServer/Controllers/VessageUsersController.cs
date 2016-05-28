@@ -34,10 +34,17 @@ namespace VessageRESTfulServer.Controllers
         [HttpGet("Active")]
         public async Task<IEnumerable<object>> GetActiveUsers()
         {
-            Response.StatusCode = (int)HttpStatusCode.Gone;
-            if (Response.StatusCode == (int)HttpStatusCode.Gone)
+            if (Startup.IsProduction)
             {
-                return null;
+                var vegeActiveUserLock = "/etc/bahamut/vege/active_user.lock";
+                if (System.IO.File.Exists(vegeActiveUserLock))
+                {
+                    Response.StatusCode = (int)HttpStatusCode.Gone;
+                    if (Response.StatusCode == (int)HttpStatusCode.Gone)
+                    {
+                        return null;
+                    }
+                }
             }
             var users = from au in ActiveUsers where au.Id == UserObjectId select au;
             if (users.Count() == 0)
