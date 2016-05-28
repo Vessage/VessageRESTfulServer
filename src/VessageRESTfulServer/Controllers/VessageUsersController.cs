@@ -159,7 +159,7 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpDelete("UserDevice")]
-        public object RemoveUserDevice()
+        public object RemoveUserDevice(String deviceToken)
         {
             var notifyMsg = new BahamutPublishModel
             {
@@ -167,7 +167,8 @@ namespace VessageRESTfulServer.Controllers
                 Info = Newtonsoft.Json.JsonConvert.SerializeObject(new
                 {
                     AccountId = UserSessionData.AccountId,
-                    Appkey = UserSessionData.Appkey
+                    Appkey = UserSessionData.Appkey,
+                    DeviceToken = deviceToken
                 }),
                 ToUser = UserSessionData.UserId
             };
