@@ -224,9 +224,10 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("ValidateMobileVSMS")]
-        public async Task<object> ValidateMobileVSMS(string mobile, string zone, string code)
+        public async Task<object> ValidateMobileVSMS(string smsAppkey,string mobile, string zone, string code)
         {
-            var res = await ValidateMobSMSCode(Startup.Configuration["Data:MobSMSAppKey"], mobile, zone, code);
+            var mobSMSAppkey = smsAppkey == null ? Startup.Configuration["Data:MobSMSAppKey"] : smsAppkey;
+            var res = await ValidateMobSMSCode(mobSMSAppkey, mobile, zone, code);
             if (res != 200)
             {
                 Response.StatusCode = res;
