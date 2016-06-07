@@ -87,9 +87,12 @@ namespace VessageRESTfulServer.Services
                 var user = await collection.Find(u => u.Mobile == mobile).FirstAsync();
                 return user;
             }
-            catch (Exception ex)
+            catch (InvalidOperationException)
             {
                 return null;
+            }catch (Exception)
+            {
+                throw;
             }
         }
 
