@@ -151,17 +151,19 @@ namespace VessageRESTfulServer.Services
                 if (user != null)
                 {
                     var mobileUser = await collection.Find(u => u.Mobile == mobile && u.AccountId == null).FirstAsync();
-                    mobileUser.AccountId = user.AccountId;
-                    mobileUser.Avartar = user.Avartar;
-                    mobileUser.CreateTime = user.CreateTime;
-                    mobileUser.MainChatImage = user.MainChatImage;
-                    mobileUser.Mobile = mobile;
-                    mobileUser.Nick = user.Nick;
-                    user = await collection.FindOneAndReplaceAsync(u => u.Id == user.Id, mobileUser);
-                    if (user != null)
+                    var update = new UpdateDefinitionBuilder<VessageUser>()
+                        .Set(u => u.AccountId, user.AccountId)
+                        .Set(u => u.Avartar, user.Avartar)
+                        .Set(u => u.CreateTime, user.CreateTime)
+                        .Set(u => u.MainChatImage, user.MainChatImage)
+                        .Set(u => u.Mobile, mobile)
+                        .Set(u => u.Nick, user.Nick);
+                    mobileUser = await collection.FindOneAndUpdateAsync(u => u.Id == mobileUser.Id, update);
+                    await collection.DeleteOneAsync(u => u.Id == user.Id);
+                    if (mobileUser != null)
                     {
                         return mobileUser;
-                    }                    
+                    }
                 }
             }
             catch (Exception)

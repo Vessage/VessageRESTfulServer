@@ -51,10 +51,13 @@ namespace VessageRESTfulServer.Controllers
             {
                 var userService = Startup.ServicesProvider.GetUserService();
                 var user = await userService.GetUserOfUserId(UserSessionData.UserId);
-                ActiveUsers.Enqueue(user);
-                if (ActiveUsers.Count > 20)
-                {
-                    ActiveUsers.Dequeue();
+                if (!string.IsNullOrEmpty(user.AccountId) && !string.IsNullOrEmpty(user.Mobile))
+                {                    
+                    ActiveUsers.Enqueue(user);
+                    if (ActiveUsers.Count > 20)
+                    {
+                        ActiveUsers.Dequeue();
+                    }
                 }
             }
             var result = from u in ActiveUsers
@@ -255,31 +258,31 @@ namespace VessageRESTfulServer.Controllers
                 Response.StatusCode = res;
                 return new { msg = res.ToString() };
             }
-            var userId = UserSessionData.UserId;
+            var sessionData = UserSessionData;
+            var userId = sessionData.UserId;
             var userOId = new ObjectId(userId);
             var userService = Startup.ServicesProvider.GetUserService();
             try
             {
-                var registedUser = await userService.BindExistsUserOnRegist(UserSessionData.UserId, mobile);
+                var registedUser = await userService.BindExistsUserOnRegist(userId, mobile);
                 if (registedUser == null)
                 {
                     bool suc = await userService.UpdateMobileOfUser(userId, mobile);
                     if (suc)
                     {
-                        //var vb = await AppServiceProvider.GetVessageService().BindNewUserReveicedVessages(userId, mobile);
                         return new { msg = "SUCCESS" };
                     }
                 }
                 else
                 {
                     var tokenService = Startup.ServicesProvider.GetTokenService();
-                    tokenService.ReleaseAppToken(UserSessionData.Appkey, UserSessionData.UserId, UserSessionData.AppToken);
-                    UserSessionData.UserId = registedUser.Id.ToString();
-                    tokenService.SetUserSessionData(UserSessionData);
+                    tokenService.ReleaseAppToken(sessionData.Appkey, userId, sessionData.AppToken);
+                    sessionData.UserId = registedUser.Id.ToString();
+                    tokenService.SetUserSessionData(sessionData);
                     return new
                     {
                         msg = "SUCCESS",
-                        newUserId = UserSessionData.UserId
+                        newUserId = sessionData.UserId
                     };
                 }
             }
