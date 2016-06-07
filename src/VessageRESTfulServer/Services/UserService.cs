@@ -45,6 +45,26 @@ namespace VessageRESTfulServer.Services
             }
         }
 
+        public async Task<VessageUser> CreateNewUserByMobile(string mobile)
+        {
+            
+            try
+            {
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var user = new VessageUser
+                {
+                    CreateTime = DateTime.UtcNow,
+                    Mobile = mobile
+                };
+                await collection.InsertOneAsync(user);
+                return user;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         public async Task<VessageUser> CreateNewUser(VessageUser newUser)
         {
             try
@@ -119,6 +139,35 @@ namespace VessageRESTfulServer.Services
             {
                 return false;
             }
+        }
+
+        public async Task<VessageUser> BindExistsUserOnRegist(string userId, string mobile)
+        {
+            try
+            {
+                var userOId = new ObjectId(userId);
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var user = await collection.Find(u => u.Id == userOId && u.Mobile == null).FirstAsync();
+                if (user != null)
+                {
+                    var mobileUser = await collection.Find(u => u.Mobile == mobile && u.AccountId == null).FirstAsync();
+                    mobileUser.AccountId = user.AccountId;
+                    mobileUser.Avartar = user.Avartar;
+                    mobileUser.CreateTime = user.CreateTime;
+                    mobileUser.MainChatImage = user.MainChatImage;
+                    mobileUser.Mobile = mobile;
+                    mobileUser.Nick = user.Nick;
+                    user = await collection.FindOneAndReplaceAsync(u => u.Id == user.Id, mobileUser);
+                    if (user != null)
+                    {
+                        return mobileUser;
+                    }                    
+                }
+            }
+            catch (Exception)
+            {
+            }
+            return null;
         }
 
         public async Task<bool> UpdateMobileOfUser(string userId, string mobile)

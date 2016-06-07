@@ -45,7 +45,13 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        internal async Task<Tuple<ObjectId,ObjectId>> SendVessageForMobile(string receicerMobile, Vessage vessage)
+        /// <summary>
+        /// 已过时
+        /// </summary>
+        /// <param name="receicerMobile"></param>
+        /// <param name="vessage"></param>
+        /// <returns></returns>
+        private async Task<Tuple<ObjectId,ObjectId>> SendVessageForMobile(string receicerMobile, Vessage vessage)
         {
             vessage.Id = ObjectId.GenerateNewId();
             var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
@@ -71,7 +77,6 @@ namespace VessageRESTfulServer.Services
             {
                 return null;
             }
-            
         }
 
         internal async Task<bool> CancelSendVessage(string vbId, string senderId, string vessageId)
@@ -170,7 +175,13 @@ namespace VessageRESTfulServer.Services
             return result;
         }
 
-        internal async Task<VessageBox> BindNewUserReveicedVessages(string userId, string mobile)
+        /// <summary>
+        /// 已过时
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="mobile"></param>
+        /// <returns></returns>
+        private async Task<VessageBox> BindNewUserReveicedVessages(string userId, string mobile)
         {
             var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
             var update1 = new UpdateDefinitionBuilder<VessageBox>().Set(vb => vb.UserId, new ObjectId(userId));

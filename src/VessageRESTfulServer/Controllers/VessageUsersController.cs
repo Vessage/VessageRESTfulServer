@@ -185,6 +185,12 @@ namespace VessageRESTfulServer.Controllers
 
         private static async Task<int> ValidateMobSMSCode(string mobSMSAppkey,string mobile, string zone, string code)
         {
+#if DEBUG
+            if (1 == int.Parse("1"))
+            {
+                return 200;
+            }
+#endif
             return await Task.Run(() =>
              {
                  WebRequest request = WebRequest.Create("https://webapi.sms.mob.com/sms/verify");
@@ -223,6 +229,22 @@ namespace VessageRESTfulServer.Controllers
             return true;
         }
 
+        [HttpPost("NewMobileUser")]
+        public async Task<object> NewMobileUser(string mobile)
+        {
+            var userService = this.AppServiceProvider.GetUserService();
+            var user = await userService.GetUserOfMobile(mobile);
+            if (user == null)
+            {
+                user = await userService.CreateNewUserByMobile(mobile);
+            }
+            if (user == null)
+            {
+                Response.StatusCode = 500;
+            }
+            return VessageUserToJsonObject(user); 
+        }
+
         [HttpPost("ValidateMobileVSMS")]
         public async Task<object> ValidateMobileVSMS(string smsAppkey,string mobile, string zone, string code)
         {
@@ -238,11 +260,27 @@ namespace VessageRESTfulServer.Controllers
             var userService = Startup.ServicesProvider.GetUserService();
             try
             {
-                bool suc = await userService.UpdateMobileOfUser(userId, mobile);
-                if (suc)
+                var registedUser = await userService.BindExistsUserOnRegist(UserSessionData.UserId, mobile);
+                if (registedUser == null)
                 {
-                    var vb = await AppServiceProvider.GetVessageService().BindNewUserReveicedVessages(userId, mobile);
-                    return new { msg = "SUCCESS" };
+                    bool suc = await userService.UpdateMobileOfUser(userId, mobile);
+                    if (suc)
+                    {
+                        //var vb = await AppServiceProvider.GetVessageService().BindNewUserReveicedVessages(userId, mobile);
+                        return new { msg = "SUCCESS" };
+                    }
+                }
+                else
+                {
+                    var tokenService = Startup.ServicesProvider.GetTokenService();
+                    tokenService.ReleaseAppToken(UserSessionData.Appkey, UserSessionData.UserId, UserSessionData.AppToken);
+                    UserSessionData.UserId = registedUser.Id.ToString();
+                    tokenService.SetUserSessionData(UserSessionData);
+                    return new
+                    {
+                        msg = "SUCCESS",
+                        newUserId = UserSessionData.UserId
+                    };
                 }
             }
             catch (Exception ex)

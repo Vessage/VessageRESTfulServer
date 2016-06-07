@@ -98,6 +98,7 @@ namespace VessageRESTfulServer.Controllers
             Vessage vessage = null;
             Tuple<ObjectId, ObjectId> result = null;
             var vessageService = Startup.ServicesProvider.GetVessageService();
+            var userService = AppServiceProvider.GetUserService();
             if (string.IsNullOrWhiteSpace(receiverMobile) == false)
             {
                 vessage = new Vessage()
@@ -109,12 +110,13 @@ namespace VessageRESTfulServer.Controllers
                     VideoReady = false,
                     ExtraInfo = extraInfo
                 };
-                var receiver = await AppServiceProvider.GetUserService().GetUserOfMobile(receiverMobile);
+                var receiver = await userService.GetUserOfMobile(receiverMobile);
                 if (receiver == null)
                 {
-                    result = await vessageService.SendVessageForMobile(receiverMobile, vessage);
+                    receiver = await userService.CreateNewUserByMobile(receiverMobile);
                 }
-                else
+
+                if (receiver != null)
                 {
                     result = await vessageService.SendVessage(receiver.Id, vessage);
                 }
