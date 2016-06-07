@@ -136,7 +136,7 @@ namespace VessageRESTfulServer.Services
             return result.ModifiedCount > 0;
         }
 
-        internal async Task<bool> UpdateGodMessageTime(string userId)
+        internal async Task<bool> UpdateGotMessageTime(string userId)
         {
             var userOId = new ObjectId(userId);
             var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");

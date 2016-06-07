@@ -42,7 +42,7 @@ namespace VessageRESTfulServer.Controllers
         [HttpPut("Got")]
         public async Task GotNewVessages()
         {
-            await AppServiceProvider.GetVessageService().UpdateGodMessageTime(UserSessionData.UserId);
+            await AppServiceProvider.GetVessageService().UpdateGotMessageTime(UserSessionData.UserId);
         }
 
         [HttpPut("FinishSendVessage")]

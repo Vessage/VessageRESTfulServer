@@ -81,9 +81,16 @@ namespace VessageRESTfulServer.Services
 
         public async Task<VessageUser> GetUserOfMobile(string mobile)
         {
-            var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
-            var user = await collection.Find(u => u.Mobile == mobile).FirstAsync();
-            return user;
+            try
+            {
+                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var user = await collection.Find(u => u.Mobile == mobile).FirstAsync();
+                return user;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         public async Task<bool> ChangeMainChatImageOfUser(string userId, string image)
