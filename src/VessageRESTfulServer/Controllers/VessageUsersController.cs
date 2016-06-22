@@ -288,6 +288,7 @@ namespace VessageRESTfulServer.Controllers
                     tokenService.ReleaseAppToken(sessionData.Appkey, userId, sessionData.AppToken);
                     sessionData.UserId = registedUser.Id.ToString();
                     tokenService.SetUserSessionData(sessionData);
+                    UpdateBahamutAccountMobile(sessionData, mobile);
                     return new
                     {
                         msg = "SUCCESS",
