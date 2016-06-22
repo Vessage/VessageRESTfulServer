@@ -19,6 +19,7 @@ namespace VessageRESTfulServer.Services
     public class ActivityService
     {
         protected IMongoClient Client { get; set; }
+        public IMongoDatabase ActivityBadgeDataDb { get { return Client.GetDatabase("ActivityBadgeData"); } }
         public ActivityService(IMongoClient Client)
         {
             this.Client = Client;
@@ -27,7 +28,7 @@ namespace VessageRESTfulServer.Services
         public async void AddActivityBadge(string activityId, string userId, int addiction)
         {
             var userOId = new ObjectId(userId);
-            var collection = Client.GetDatabase("ActivityBadgeData").GetCollection<ActivityBadgeData>("ActivityBadgeData");
+            var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("ActivityBadgeData");
             try
             {
 
@@ -54,7 +55,7 @@ namespace VessageRESTfulServer.Services
         public async void SetActivityMiniBadge(string activityId, string userId)
         {
             var userOId = new ObjectId(userId);
-            var collection = Client.GetDatabase("ActivityBadgeData").GetCollection<ActivityBadgeData>("ActivityBadgeData");
+            var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("ActivityBadgeData");
             try
             {
                 var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Push(d => d.MiniBadgeActivity, activityId);
@@ -79,7 +80,7 @@ namespace VessageRESTfulServer.Services
         public async Task<ActivityBadgeData> GetActivityBoardData(string userId)
         {
             var userOId = new ObjectId(userId);
-            var collection = Client.GetDatabase("ActivityBadgeData").GetCollection<ActivityBadgeData>("ActivityBadgeData");
+            var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("ActivityBadgeData");
             var update1 = new UpdateDefinitionBuilder<ActivityBadgeData>().Set(d => d.BadgeValueActivity, new string[0]);
             var update2 = new UpdateDefinitionBuilder<ActivityBadgeData>().Set(d => d.MiniBadgeActivity, new string[0]);
             var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Combine(update1, update2);

@@ -12,15 +12,18 @@ namespace VessageRESTfulServer.Services
     public class VessageService
     {
         protected IMongoClient Client { get; set; }
+        private IMongoDatabase VessageDb { get { return Client.GetDatabase("Vessage"); } }
+
         public VessageService(IMongoClient Client)
         {
             this.Client = Client;
         }
 
+
         internal async Task<Tuple<ObjectId, ObjectId>> SendVessage(ObjectId receicerId, Vessage vessage)
         {
             vessage.Id = ObjectId.GenerateNewId();
-            var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
+            var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             var update = new UpdateDefinitionBuilder<VessageBox>().Push(vb => vb.Vessages, vessage);
             try
             {
@@ -54,7 +57,7 @@ namespace VessageRESTfulServer.Services
         private async Task<Tuple<ObjectId,ObjectId>> SendVessageForMobile(string receicerMobile, Vessage vessage)
         {
             vessage.Id = ObjectId.GenerateNewId();
-            var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
+            var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             var update = new UpdateDefinitionBuilder<VessageBox>().Push(vb => vb.Vessages, vessage);
             try
             {
@@ -84,7 +87,7 @@ namespace VessageRESTfulServer.Services
             var vbOId = new ObjectId(vbId);
             var vessageOId = new ObjectId(vessageId);
             var senderOId = new ObjectId(senderId);
-            var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
+            var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             var update = Builders<VessageBox>.Update.PullFilter(vb => vb.Vessages, v => v.Id == vessageOId && v.Sender == senderOId);
             var result = await collection.UpdateManyAsync(vb => vb.Id == vbOId, update);
             return result.ModifiedCount > 0;
@@ -92,7 +95,7 @@ namespace VessageRESTfulServer.Services
 
         internal async Task<Tuple<ObjectId,string>> FinishSendVessage(string vbId,string senderId, string vessageId, string fileId)
         {
-            var collection = Client.GetDatabase("Vessage").GetCollection<BsonDocument>("VessageBox");
+            var collection = VessageDb.GetCollection<BsonDocument>("VessageBox");
             var filter1 = Builders<BsonDocument>.Filter.Eq("_id", new ObjectId(vbId));
             var filter2 = Builders<BsonDocument>.Filter.Eq("Vessages.Sender", new ObjectId(senderId));
             var filter3 = Builders<BsonDocument>.Filter.Eq("Vessages._id", new ObjectId(vessageId));
@@ -128,7 +131,7 @@ namespace VessageRESTfulServer.Services
 
         internal async Task<bool> SetVessageRead(string userId, string vid)
         {
-            var collection = Client.GetDatabase("Vessage").GetCollection<BsonDocument>("VessageBox");
+            var collection = VessageDb.GetCollection<BsonDocument>("VessageBox");
             var filter1 = Builders<BsonDocument>.Filter.Eq("UserId", new ObjectId(userId));
             var filter2 = Builders<BsonDocument>.Filter.Eq("Vessages._id", new ObjectId(vid));
             var update = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.IsRead", true);
@@ -139,7 +142,7 @@ namespace VessageRESTfulServer.Services
         internal async Task<bool> UpdateGotMessageTime(string userId)
         {
             var userOId = new ObjectId(userId);
-            var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
+            var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             try
             {
                 var vb = await collection.Find(v => v.UserId == userOId).FirstAsync();
@@ -162,7 +165,7 @@ namespace VessageRESTfulServer.Services
         internal async Task<IEnumerable<Vessage>> GetNotReadMessageOfUser(string userId)
         {
             var userOId = new ObjectId(userId);
-            var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
+            var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             var vbs = await collection.Find(vb => vb.UserId == userOId).ToListAsync();
             var result = new List<Vessage>();
             foreach (var vb in vbs)
@@ -183,7 +186,7 @@ namespace VessageRESTfulServer.Services
         /// <returns></returns>
         private async Task<VessageBox> BindNewUserReveicedVessages(string userId, string mobile)
         {
-            var collection = Client.GetDatabase("Vessage").GetCollection<VessageBox>("VessageBox");
+            var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             var update1 = new UpdateDefinitionBuilder<VessageBox>().Set(vb => vb.UserId, new ObjectId(userId));
             var update2 = new UpdateDefinitionBuilder<VessageBox>().Unset(vb => vb.ForMobile);
             var update = Builders<VessageBox>.Update.Combine(update1, update2);

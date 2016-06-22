@@ -12,15 +12,18 @@ namespace VessageRESTfulServer.Services
     public class UserService
     {
         protected IMongoClient Client { get; set; }
+        private IMongoDatabase UserDb { get { return Client.GetDatabase("Vessage"); } }
+
         public UserService(IMongoClient Client)
         {
             this.Client = Client;
         }
+
         public async Task<VessageUser> GetUserOfAccountId(string accountId)
         {
             try
             {
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var user = await collection.Find(u => u.AccountId == accountId).SingleAsync();
                 return user;
             }
@@ -34,7 +37,7 @@ namespace VessageRESTfulServer.Services
         {
             try
             {
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var userOId = new ObjectId(userId);
                 var user = await collection.Find(u => u.Id == userOId).SingleAsync();
                 return user;
@@ -50,7 +53,7 @@ namespace VessageRESTfulServer.Services
             
             try
             {
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var user = new VessageUser
                 {
                     CreateTime = DateTime.UtcNow,
@@ -69,7 +72,7 @@ namespace VessageRESTfulServer.Services
         {
             try
             {
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 await collection.InsertOneAsync(newUser);
                 return newUser;
             }
@@ -83,7 +86,7 @@ namespace VessageRESTfulServer.Services
         {
             try
             {
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var user = await collection.Find(u => u.Mobile == mobile).FirstAsync();
                 return user;
             }
@@ -101,7 +104,7 @@ namespace VessageRESTfulServer.Services
             try
             {
                 var userOId = new ObjectId(userId);
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.MainChatImage, image);
                 var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
                 return user != null;
@@ -117,7 +120,7 @@ namespace VessageRESTfulServer.Services
             try
             {
                 var userOId = new ObjectId(userId);
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Avartar, avatar);
                 var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
                 return user != null;
@@ -133,7 +136,7 @@ namespace VessageRESTfulServer.Services
             try
             {
                 var userOId = new ObjectId(userId);
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Nick, nick);
                 var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
                 return user != null;
@@ -149,7 +152,7 @@ namespace VessageRESTfulServer.Services
             try
             {
                 var userOId = new ObjectId(userId);
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var user = await collection.Find(u => u.Id == userOId && u.Mobile == null).FirstAsync();
                 if (user != null)
                 {
@@ -180,7 +183,7 @@ namespace VessageRESTfulServer.Services
             try
             {
                 var userOId = new ObjectId(userId);
-                var collection = Client.GetDatabase("Vessage").GetCollection<VessageUser>("VessageUser");
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Mobile, mobile);
                 var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
                 return user != null;

@@ -22,7 +22,7 @@ namespace VessageRESTfulServer
     {
         public static IHostingEnvironment ServerHostingEnvironment { get; private set; }
 
-        public static IConfigurationRoot Configuration { get; set; }
+        public static IConfiguration Configuration { get; set; }
         public static IServiceProvider ServicesProvider { get; private set; }
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
 

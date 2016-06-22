@@ -13,6 +13,10 @@ using System.Text;
 using System.IO;
 using System.Net.Security;
 using BahamutService.Service;
+using MongoDB.Driver.GeoJsonObjectModel;
+using Newtonsoft.Json;
+using BahamutService.Model;
+using System.Net.Http;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -31,6 +35,13 @@ namespace VessageRESTfulServer.Controllers
             return VessageUserToJsonObject(user);
         }
 
+        [HttpGet("Near")]
+        public async Task<IEnumerable<object>> GetNearUsers(string location)
+        {
+            Response.StatusCode = (int)HttpStatusCode.Gone;
+            return null;
+        }
+
         [HttpGet("Active")]
         public async Task<IEnumerable<object>> GetActiveUsers()
         {
@@ -40,10 +51,7 @@ namespace VessageRESTfulServer.Controllers
                 if (System.IO.File.Exists(vegeActiveUserLock))
                 {
                     Response.StatusCode = (int)HttpStatusCode.Gone;
-                    if (Response.StatusCode == (int)HttpStatusCode.Gone)
-                    {
-                        return null;
-                    }
+                    return null;
                 }
             }
             var users = from au in ActiveUsers where au.Id == UserObjectId select au;
@@ -270,6 +278,7 @@ namespace VessageRESTfulServer.Controllers
                     bool suc = await userService.UpdateMobileOfUser(userId, mobile);
                     if (suc)
                     {
+                        UpdateBahamutAccountMobile(sessionData, mobile);
                         return new { msg = "SUCCESS" };
                     }
                 }
@@ -293,6 +302,21 @@ namespace VessageRESTfulServer.Controllers
 
             Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             return new { msg = "SERVER_ERROR" };
+        }
+
+        private async void UpdateBahamutAccountMobile(AccountSessionData sessionData, string newMobile)
+        {
+            HttpClient client = new HttpClient();
+            string url = string.Format("{0}/BahamutAccounts/AccountMobile", Startup.AuthServerUrl);
+            var kvList = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("appkey", Startup.Appkey),
+                new KeyValuePair<string, string>("appToken", UserSessionData.AppToken),
+                new KeyValuePair<string, string>("accountId", UserSessionData.AccountId),
+                new KeyValuePair<string, string>("userId", UserSessionData.UserId),
+                new KeyValuePair<string, string>("newMobile", newMobile)
+            };
+            await client.PutAsync(url, new FormUrlEncodedContent(kvList));
         }
 
         [HttpPut("Nick")]
