@@ -18,9 +18,9 @@
     },
     "web": {
       "commandName": "web",
-      "commandLineArgs": "--server.urls https://vessageapi.bahamut.cn:8188",
+      "commandLineArgs": "--server.urls http://vessageapi.bahamut.cn:8188",
       "environmentVariables": {
-        "Hosting:Environment": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }

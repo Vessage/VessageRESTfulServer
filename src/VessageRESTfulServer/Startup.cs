@@ -16,6 +16,7 @@ using NLog;
 using BahamutCommon;
 using BahamutService.Service;
 using System.IO;
+using Newtonsoft.Json.Serialization;
 
 namespace VessageRESTfulServer
 {
@@ -77,7 +78,8 @@ namespace VessageRESTfulServer
         private static void ReadConfig(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
-                            .AddJsonFile("appsettings.json",true,true);
+                .SetBasePath(env.ContentRootPath)            
+                .AddJsonFile("appsettings.json",true,true);
             var configFile = "config_debug.json";
             ServerHostingEnvironment = env;
             if (env.IsProduction())
@@ -111,6 +113,9 @@ namespace VessageRESTfulServer
 
             services.AddMvc(config => {
                 config.Filters.Add(new BahamutAspNetCommon.LogExceptionFilter());
+            }).AddJsonOptions(op =>
+            {
+                op.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             });
 
             //business services
