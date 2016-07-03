@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using VessageRESTfulServer.Services;
 using System.Net;
 using VessageRESTfulServer.Models;
@@ -36,7 +36,7 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpGet("Near")]
-        public async Task<IEnumerable<object>> GetNearUsers(string location)
+        public Task<IEnumerable<object>> GetNearUsers(string location)
         {
             Response.StatusCode = (int)HttpStatusCode.Gone;
             return null;

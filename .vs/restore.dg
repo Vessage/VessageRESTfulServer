@@ -1,0 +1,8 @@
+#:D:\Source\Git\bahamut\VessageRESTfulServer\src\VessageRESTfulServer\VessageRESTfulServer.xproj
+D:\Source\Git\bahamut\VessageRESTfulServer\src\VessageRESTfulServer\VessageRESTfulServer.xproj|D:\Source\Git\bahamut\BahamutZero\src\BahamutAspNetCommon\BahamutAspNetCommon.xproj
+D:\Source\Git\bahamut\VessageRESTfulServer\src\VessageRESTfulServer\VessageRESTfulServer.xproj|D:\Source\Git\bahamut\ServerControl\src\ServerControlService\ServerControlService.xproj
+D:\Source\Git\bahamut\BahamutZero\src\BahamutAspNetCommon\BahamutAspNetCommon.xproj|D:\Source\Git\bahamut\BahamutZero\src\BahamutService\BahamutService.xproj
+D:\Source\Git\bahamut\BahamutZero\src\BahamutService\BahamutService.xproj|D:\Source\Git\bahamut\BahamutZero\src\BahamutCommon\BahamutCommon.xproj
+D:\Source\Git\bahamut\BahamutZero\src\BahamutService\BahamutService.xproj|D:\Source\Git\bahamut\BahamutZero\src\DataLevelDefines\DataLevelDefines.xproj
+D:\Source\Git\bahamut\ServerControl\src\ServerControlService\ServerControlService.xproj|D:\Source\Git\bahamut\BahamutZero\src\BahamutCommon\BahamutCommon.xproj
+D:\Source\Git\bahamut\ServerControl\src\ServerControlService\ServerControlService.xproj|D:\Source\Git\bahamut\BahamutZero\src\DataLevelDefines\DataLevelDefines.xproj

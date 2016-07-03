@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Hosting;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,9 +15,29 @@ using NLog.Config;
 using NLog;
 using BahamutCommon;
 using BahamutService.Service;
+using System.IO;
 
 namespace VessageRESTfulServer
 {
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var configuration = new ConfigurationBuilder()
+            .AddCommandLine(args)
+            .Build();
+
+            var host = new WebHostBuilder()
+                .UseKestrel()
+                .UseConfiguration(configuration)
+                .UseContentRoot(Directory.GetCurrentDirectory())
+                .UseStartup<Startup>()
+                .Build();
+
+            host.Run();
+        }
+    }
+
     public class Startup
     {
         public static IHostingEnvironment ServerHostingEnvironment { get; private set; }
@@ -57,16 +77,16 @@ namespace VessageRESTfulServer
         private static void ReadConfig(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
-                            .AddJsonFile("appsettings.json");
+                            .AddJsonFile("appsettings.json",true,true);
             var configFile = "config_debug.json";
             ServerHostingEnvironment = env;
             if (env.IsProduction())
             {
                 configFile = "/etc/bahamut/vege/vessage.json";
             }
-            builder.AddJsonFile(configFile);
+            builder.AddJsonFile(configFile,true,true);
             builder.AddEnvironmentVariables();
-            Configuration = builder.Build().ReloadOnChanged("appsettings.json").ReloadOnChanged(configFile);
+            Configuration = builder.Build();
         }
 
         private static void SetServerConfig()
@@ -86,18 +106,18 @@ namespace VessageRESTfulServer
             var TokenServerClientManager = new PooledRedisClientManager(tokenServerUrl);
             var serverControlUrl = Configuration["Data:ControlServiceServer:url"].Replace("redis://", "");
             var ControlServerServiceClientManager = new PooledRedisClientManager(serverControlUrl);
-            services.AddInstance(new ServerControlManagementService(ControlServerServiceClientManager));
-            services.AddInstance(new TokenService(TokenServerClientManager));
+            services.AddSingleton(new ServerControlManagementService(ControlServerServiceClientManager));
+            services.AddSingleton(new TokenService(TokenServerClientManager));
 
             services.AddMvc(config => {
                 config.Filters.Add(new BahamutAspNetCommon.LogExceptionFilter());
             });
 
             //business services
-            services.AddInstance(new UserService(new MongoClient(MongoUrl.Create(VessageDBServer))));
-            services.AddInstance(new VessageService(new MongoClient(MongoUrl.Create(VessageDBServer))));
-            services.AddInstance(new SharedService(new MongoClient(MongoUrl.Create(VessageDBServer))));
-            services.AddInstance(new ActivityService(new MongoClient(MongoUrl.Create(VessageDBServer))));
+            services.AddSingleton(new UserService(new MongoClient(MongoUrl.Create(VessageDBServer))));
+            services.AddSingleton(new VessageService(new MongoClient(MongoUrl.Create(VessageDBServer))));
+            services.AddSingleton(new SharedService(new MongoClient(MongoUrl.Create(VessageDBServer))));
+            services.AddSingleton(new ActivityService(new MongoClient(MongoUrl.Create(VessageDBServer))));
 
             //pubsub manager
             var pubsubServerUrl = Configuration["Data:MessagePubSubServer:url"].Replace("redis://", "");
@@ -107,7 +127,7 @@ namespace VessageRESTfulServer
             var mcClientManager = new PooledRedisClientManager(messageCacheServerUrl);
 
             var pbService = new BahamutPubSubService(pbClientManager);
-            services.AddInstance(pbService);
+            services.AddSingleton(pbService);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
@@ -184,9 +204,7 @@ namespace VessageRESTfulServer
             BahamutAppInstance.OnlineUsers = ValidatedUsers.Count;
             serverMgrService.ReActiveAppInstance(BahamutAppInstance);
         }
-
-        // Entry point for the application.
-        public static void Main(string[] args) => WebApplication.Run<Startup>(args);
+        
     }
 
     public static class IGetBahamutServiceExtension
