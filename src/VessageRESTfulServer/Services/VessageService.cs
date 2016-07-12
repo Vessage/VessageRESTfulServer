@@ -20,13 +20,17 @@ namespace VessageRESTfulServer.Services
         }
 
 
-        internal async Task<Tuple<ObjectId, ObjectId>> SendVessage(ObjectId receicerId, Vessage vessage)
+        public async Task<Tuple<ObjectId, ObjectId>> SendVessage(ObjectId receicerId, Vessage vessage,bool isGroup)
         {
             vessage.Id = ObjectId.GenerateNewId();
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             var update = new UpdateDefinitionBuilder<VessageBox>().Push(vb => vb.Vessages, vessage);
             try
             {
+                if (isGroup)
+                {
+                    vessage.Sender = receicerId;
+                }
                 var result = await collection.FindOneAndUpdateAsync(vb => vb.UserId == receicerId, update);
                 if (result == null)
                 {
@@ -35,7 +39,8 @@ namespace VessageRESTfulServer.Services
                         UserId = receicerId,
                         Vessages = new Vessage[] { vessage },
                         LastGetMessageTime = DateTime.UtcNow.AddMinutes(-2),
-                        LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2)
+                        LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2),
+                        isGroup = isGroup
                     };
                     await collection.InsertOneAsync(newVb);
                     result = newVb;
@@ -82,7 +87,20 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        internal async Task<bool> CancelSendVessage(string vbId, string senderId, string vessageId)
+        public async Task SendGroupVessageToChatters(ObjectId groupId, ObjectId[] chatters, ObjectId vessageId)
+        {
+            var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
+            var vb = await collection.Find(f => f.Id == groupId && f.isGroup).FirstAsync();
+            var vsg = vb.Vessages.First(f => f.Id == vessageId);
+            foreach (var chatter in chatters)
+            {
+                await SendVessage(chatter, vsg, true);
+            }
+            var update = new UpdateDefinitionBuilder<VessageBox>().PullFilter(f => f.Vessages, d => d.Id == vessageId);
+            await collection.UpdateOneAsync(f => f.UserId == groupId && f.isGroup, update);
+        }
+
+        public async Task<bool> CancelSendVessage(string vbId, string senderId, string vessageId)
         {
             var vbOId = new ObjectId(vbId);
             var vessageOId = new ObjectId(vessageId);
@@ -93,43 +111,43 @@ namespace VessageRESTfulServer.Services
             return result.ModifiedCount > 0;
         }
 
-        internal async Task<Tuple<ObjectId,string>> FinishSendVessage(string vbId,string senderId, string vessageId, string fileId)
+        public class FinishSendVessageResult
+        {
+            public ObjectId ReceiverId { get; set; }
+            public string ReceiverMobile { get; set; }
+            public bool ReceiverIsGroup { get; set; }
+        }
+
+        public async Task<FinishSendVessageResult> FinishSendVessage(ObjectId vbId, ObjectId senderId, ObjectId vessageId, string fileId)
         {
             var collection = VessageDb.GetCollection<BsonDocument>("VessageBox");
-            var filter1 = Builders<BsonDocument>.Filter.Eq("_id", new ObjectId(vbId));
-            var filter2 = Builders<BsonDocument>.Filter.Eq("Vessages.Sender", new ObjectId(senderId));
-            var filter3 = Builders<BsonDocument>.Filter.Eq("Vessages._id", new ObjectId(vessageId));
+            var filter1 = Builders<BsonDocument>.Filter.Eq("_id", vbId);
+            var filter2 = Builders<BsonDocument>.Filter.Eq("Vessages.Sender", senderId);
+            var filter3 = Builders<BsonDocument>.Filter.Eq("Vessages._id", vessageId);
             var filter = filter1 & filter2 & filter3;
             var update1 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.VideoReady", true);
             var update2 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.Video", fileId);
             var update = Builders<BsonDocument>.Update.Combine(update1, update2);
             var result = await collection.FindOneAndUpdateAsync(filter, update);
-            if (result!= null)
+            if (result != null)
             {
                 BsonValue outUserId;
                 BsonValue outMobile;
-                if (result.TryGetValue("UserId", out outUserId))
+                BsonValue outIsGroup;
+                result.TryGetValue("UserId", out outUserId);
+                result.TryGetValue("ForMobile", out outMobile);
+                result.TryGetValue("IsGroup", out outIsGroup);
+                return new FinishSendVessageResult
                 {
-                    if (outUserId == null || outUserId.AsObjectId == ObjectId.Empty)
-                    {
-                        if (result.TryGetValue("ForMobile", out outMobile))
-                        {
-                            if (outMobile != null && !string.IsNullOrWhiteSpace(outMobile.AsString))
-                            {
-                                return new Tuple<ObjectId, string>(ObjectId.Empty, outMobile.AsString);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        return new Tuple<ObjectId, string>(outUserId.AsObjectId, null);
-                    }
-                }
+                    ReceiverId = outUserId.AsObjectId,
+                    ReceiverIsGroup = outIsGroup.AsBoolean,
+                    ReceiverMobile = outMobile.AsString
+                };
             }
-            return new Tuple<ObjectId, string>(ObjectId.Empty, null);
+            return null;
         }
 
-        internal async Task<bool> SetVessageRead(string userId, string vid)
+        public async Task<bool> SetVessageRead(string userId, string vid)
         {
             var collection = VessageDb.GetCollection<BsonDocument>("VessageBox");
             var filter1 = Builders<BsonDocument>.Filter.Eq("UserId", new ObjectId(userId));

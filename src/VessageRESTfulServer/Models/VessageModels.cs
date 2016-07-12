@@ -26,6 +26,7 @@ namespace VessageRESTfulServer.Models
         public bool IsRead { get; set; }
         public bool VideoReady { get; set; }
         public string ExtraInfo { get; set; }
+        public bool IsGroup { get; set; }
     }
 
     public class VessageBox
@@ -36,5 +37,15 @@ namespace VessageRESTfulServer.Models
         public Vessage[] Vessages { get; set; }
         public DateTime LastGetMessageTime { get; set; }
         public DateTime LastGotMessageTime { get; set; }
+        public bool isGroup { get; set; }
+    }
+
+    public class ChatGroup
+    {
+        public ObjectId Id { get; set; }
+        public ObjectId[] Hosters { get; set; }
+        public ObjectId[] Chatters { get; set; }
+        public string InviteCode { get; set; }
+        public string GroupName { get; set; }
     }
 }

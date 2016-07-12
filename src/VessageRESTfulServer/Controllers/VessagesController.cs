@@ -35,7 +35,8 @@ namespace VessageRESTfulServer.Controllers
                 sender = m.Sender.ToString(),
                 isRead = m.IsRead,
                 extraInfo = m.ExtraInfo,
-                sendTime = DateTimeUtil.ToAccurateDateTimeString(m.SendTime)
+                sendTime = DateTimeUtil.ToAccurateDateTimeString(m.SendTime),
+                isGroup = m.IsGroup
             };
         }
 
@@ -48,32 +49,53 @@ namespace VessageRESTfulServer.Controllers
         [HttpPut("FinishSendVessage")]
         public async Task<object> FinishSendVessage(string vessageBoxId,string vessageId,string fileId)
         {
-            var result = await AppServiceProvider.GetVessageService().FinishSendVessage(vessageBoxId, UserSessionData.UserId, vessageId, fileId);
+            var vsgOId = new ObjectId(vessageId);
+            var result = await AppServiceProvider.GetVessageService().FinishSendVessage(new ObjectId(vessageBoxId), UserObjectId, vsgOId, fileId);
             var msg = "SUCCESS";
-            if (result.Item1 != ObjectId.Empty)
+            if (result == null)
             {
-                var notifyMsg = new BahamutPublishModel
-                {
-                    NotifyInfo = JsonConvert.SerializeObject(new
-                    {
-                        BuilderId = 1,
-                        AfterOpen = "go_custom",
-                        Custom = "NewVessageNotify",
-                        Text = UserSessionData.UserId,
-                        LocKey = "NEW_VMSG_NOTIFICATION"
-                    }),
-                    NotifyType = "NewVessageNotify",
-                    ToUser = result.Item1.ToString()
-                };
-                AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
-            }
-            else if (!string.IsNullOrWhiteSpace(result.Item2))
-            {
-                //TODO: Send sms to the mobile user
+                Response.StatusCode = (int)HttpStatusCode.NotModified;
+                return new { msg = "FAIL" };
             }
             else
             {
-                Response.StatusCode = (int)HttpStatusCode.NotModified;
+                if (result.ReceiverId != ObjectId.Empty)
+                {
+                    IEnumerable<ObjectId> toUsers;
+                    string sender = UserSessionData.UserId;
+                    if (result.ReceiverIsGroup)
+                    {
+                        ChatGroup group = await AppServiceProvider.GetGroupChatService().GetChatGroupById(result.ReceiverId);
+                        await AppServiceProvider.GetVessageService().SendGroupVessageToChatters(group.Id, group.Chatters, vsgOId);
+                        toUsers = group.Chatters;
+                        sender = group.Id.ToString();
+                    }
+                    else
+                    {
+                        toUsers = new ObjectId[] { result.ReceiverId };
+                    }
+                    foreach (var toUser in toUsers)
+                    {
+                        var notifyMsg = new BahamutPublishModel
+                        {
+                            NotifyInfo = JsonConvert.SerializeObject(new
+                            {
+                                BuilderId = 1,
+                                AfterOpen = "go_custom",
+                                Custom = "NewVessageNotify",
+                                Text = sender,
+                                LocKey = "NEW_VMSG_NOTIFICATION"
+                            }),
+                            NotifyType = "NewVessageNotify",
+                            ToUser = toUser.ToString()
+                        };
+                        AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(result.ReceiverMobile))
+                {
+                    //TODO: Send sms to the mobile user
+                }
             }
             return new { msg = msg };
         }
@@ -118,7 +140,7 @@ namespace VessageRESTfulServer.Controllers
 
                 if (receiver != null)
                 {
-                    result = await vessageService.SendVessage(receiver.Id, vessage);
+                    result = await vessageService.SendVessage(receiver.Id, vessage, false);
                 }
             }
 
@@ -136,7 +158,7 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("ForUser")]
-        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo)
+        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false)
         {
             Vessage vessage = null;
             Tuple<ObjectId, ObjectId> result = null;
@@ -150,9 +172,10 @@ namespace VessageRESTfulServer.Controllers
                     Sender = new ObjectId(UserSessionData.UserId),
                     VideoReady = false,
                     SendTime = DateTime.UtcNow,
-                    ExtraInfo = extraInfo
+                    ExtraInfo = extraInfo,
+                    IsGroup = isGroup
                 };
-                result = await vessageService.SendVessage(new ObjectId(receiverId), vessage);
+                result = await vessageService.SendVessage(new ObjectId(receiverId), vessage, isGroup);
             }
             if (result == null)
             {
