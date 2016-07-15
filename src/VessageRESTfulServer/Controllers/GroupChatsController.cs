@@ -16,11 +16,16 @@ namespace VessageRESTfulServer.Controllers
     [Route("api/[controller]")]
     public class GroupChatsController : APIControllerBase
     {
-        [HttpPost("CreateGroupChat")]
-        public async Task<object> CreateGroupChat(string groupUsers)
+
+        [HttpGet]
+        public async Task<object> GetGroupChat(string groupId)
         {
-            var userIds = from id in groupUsers.Split(new char[] { ',', ';' }) select new ObjectId(id);
-            var g = await AppServiceProvider.GetGroupChatService().CreateChatGroup(UserObjectId, userIds);
+            var g = await AppServiceProvider.GetGroupChatService().GetChatGroupById(new ObjectId(groupId));
+            return ChatGroupToJsonObject(g);
+        }
+
+        private object ChatGroupToJsonObject(ChatGroup g)
+        {
             return new
             {
                 groupId = g.Id.ToString(),
@@ -28,6 +33,14 @@ namespace VessageRESTfulServer.Controllers
                 chatters = from chatter in g.Chatters select chatter.ToString(),
                 inviteCode = g.InviteCode
             };
+        }
+
+        [HttpPost("CreateGroupChat")]
+        public async Task<object> CreateGroupChat(string groupUsers)
+        {
+            var userIds = from id in groupUsers.Split(new char[] { ',', ';' }) select new ObjectId(id);
+            var g = await AppServiceProvider.GetGroupChatService().CreateChatGroup(UserObjectId, userIds);
+            return ChatGroupToJsonObject(g);
         }
 
         [HttpPost("JoinGroupChat")]
