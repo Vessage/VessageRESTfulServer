@@ -65,7 +65,7 @@ namespace VessageRESTfulServer.Controllers
                     string sender = UserSessionData.UserId;
                     if (result.ReceiverIsGroup)
                     {
-                        ChatGroup group = await AppServiceProvider.GetGroupChatService().GetChatGroupById(result.ReceiverId);
+                        ChatGroup group = await AppServiceProvider.GetGroupChatService().GetChatGroupById(UserObjectId,result.ReceiverId);
                         await AppServiceProvider.GetVessageService().SendGroupVessageToChatters(group.Id, group.Chatters, vsgOId);
                         toUsers = group.Chatters;
                         sender = group.Id.ToString();
@@ -162,7 +162,18 @@ namespace VessageRESTfulServer.Controllers
         {
             Vessage vessage = null;
             Tuple<ObjectId, ObjectId> result = null;
-            var vessageService = Startup.ServicesProvider.GetVessageService();
+            var receiverOId = new ObjectId(receiverId);
+            var vessageService = AppServiceProvider.GetVessageService();
+            if (isGroup)
+            {
+                var groupService = AppServiceProvider.GetGroupChatService();
+                var group = await groupService.GetChatGroupById(UserObjectId,receiverOId);
+                if (group == null)
+                {
+                    Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                    return new { msg = "NOT_IN__CHAT_GROUP" };
+                }
+            }
             if (string.IsNullOrWhiteSpace(receiverId) == false)
             {
                 vessage = new Vessage()
@@ -175,7 +186,7 @@ namespace VessageRESTfulServer.Controllers
                     ExtraInfo = extraInfo,
                     IsGroup = isGroup
                 };
-                result = await vessageService.SendVessage(new ObjectId(receiverId), vessage, isGroup);
+                result = await vessageService.SendVessage(receiverOId, vessage, isGroup);
             }
             if (result == null)
             {

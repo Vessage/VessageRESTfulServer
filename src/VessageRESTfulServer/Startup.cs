@@ -123,6 +123,7 @@ namespace VessageRESTfulServer
             services.AddSingleton(new VessageService(new MongoClient(MongoUrl.Create(VessageDBServer))));
             services.AddSingleton(new SharedService(new MongoClient(MongoUrl.Create(VessageDBServer))));
             services.AddSingleton(new ActivityService(new MongoClient(MongoUrl.Create(VessageDBServer))));
+            services.AddSingleton(new GroupChatService(new MongoClient(MongoUrl.Create(VessageDBServer))));
 
             //pubsub manager
             var pubsubServerUrl = Configuration["Data:MessagePubSubServer:url"].Replace("redis://", "");
