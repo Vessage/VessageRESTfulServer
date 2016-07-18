@@ -37,7 +37,7 @@ namespace VessageRESTfulServer.Models
         public Vessage[] Vessages { get; set; }
         public DateTime LastGetMessageTime { get; set; }
         public DateTime LastGotMessageTime { get; set; }
-        public bool isGroup { get; set; }
+        public bool IsGroup { get; set; }
     }
 
     public class ChatGroup

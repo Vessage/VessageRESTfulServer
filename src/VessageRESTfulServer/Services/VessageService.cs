@@ -27,10 +27,6 @@ namespace VessageRESTfulServer.Services
             var update = new UpdateDefinitionBuilder<VessageBox>().Push(vb => vb.Vessages, vessage);
             try
             {
-                if (isGroup)
-                {
-                    vessage.Sender = receicerId;
-                }
                 var result = await collection.FindOneAndUpdateAsync(vb => vb.UserId == receicerId, update);
                 if (result == null)
                 {
@@ -40,7 +36,7 @@ namespace VessageRESTfulServer.Services
                         Vessages = new Vessage[] { vessage },
                         LastGetMessageTime = DateTime.UtcNow.AddMinutes(-2),
                         LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2),
-                        isGroup = isGroup
+                        IsGroup = isGroup
                     };
                     await collection.InsertOneAsync(newVb);
                     result = newVb;
@@ -74,7 +70,8 @@ namespace VessageRESTfulServer.Services
                         ForMobile = receicerMobile,
                         Vessages = new Vessage[] { vessage },
                         LastGetMessageTime = DateTime.UtcNow.AddMinutes(-2),
-                        LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2)
+                        LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2),
+                        IsGroup = false
                     };
                     await collection.InsertOneAsync(newVb);
                     result = newVb;
@@ -87,17 +84,17 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task SendGroupVessageToChatters(ObjectId groupId, ObjectId[] chatters, ObjectId vessageId)
+        public async Task SendGroupVessageToChatters(ObjectId groupId, IEnumerable<ObjectId> chatters, ObjectId vessageId)
         {
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
-            var vb = await collection.Find(f => f.Id == groupId && f.isGroup).FirstAsync();
+            var vb = await collection.Find(f => f.UserId == groupId && f.IsGroup).FirstAsync();
             var vsg = vb.Vessages.First(f => f.Id == vessageId);
             foreach (var chatter in chatters)
             {
-                await SendVessage(chatter, vsg, true);
+                await SendVessage(chatter, vsg, false);
             }
             var update = new UpdateDefinitionBuilder<VessageBox>().PullFilter(f => f.Vessages, d => d.Id == vessageId);
-            await collection.UpdateOneAsync(f => f.UserId == groupId && f.isGroup, update);
+            await collection.UpdateOneAsync(f => f.UserId == groupId && f.IsGroup, update);
         }
 
         public async Task<bool> CancelSendVessage(string vbId, string senderId, string vessageId)
@@ -123,8 +120,9 @@ namespace VessageRESTfulServer.Services
             var collection = VessageDb.GetCollection<BsonDocument>("VessageBox");
             var filter1 = Builders<BsonDocument>.Filter.Eq("_id", vbId);
             var filter2 = Builders<BsonDocument>.Filter.Eq("Vessages.Sender", senderId);
+            var filter2_1 = Builders<BsonDocument>.Filter.Eq("IsGroup", true);
             var filter3 = Builders<BsonDocument>.Filter.Eq("Vessages._id", vessageId);
-            var filter = filter1 & filter2 & filter3;
+            var filter = filter1 & (filter2_1 | filter2) & filter3;
             var update1 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.VideoReady", true);
             var update2 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.Video", fileId);
             var update = Builders<BsonDocument>.Update.Combine(update1, update2);
@@ -137,11 +135,12 @@ namespace VessageRESTfulServer.Services
                 result.TryGetValue("UserId", out outUserId);
                 result.TryGetValue("ForMobile", out outMobile);
                 result.TryGetValue("IsGroup", out outIsGroup);
+                
                 return new FinishSendVessageResult
                 {
-                    ReceiverId = outUserId.AsObjectId,
-                    ReceiverIsGroup = outIsGroup.AsBoolean,
-                    ReceiverMobile = outMobile.AsString
+                    ReceiverId = outUserId != null && outUserId.IsObjectId ? outUserId.AsObjectId : ObjectId.Empty,
+                    ReceiverIsGroup = outIsGroup != null && outIsGroup.IsBoolean ? outIsGroup.AsBoolean : false,
+                    ReceiverMobile = outMobile != null && outMobile.IsString ? outMobile.AsString : null
                 };
             }
             return null;
@@ -176,8 +175,6 @@ namespace VessageRESTfulServer.Services
             {
                 return false;
             }
-            
-            
         }
 
         internal async Task<IEnumerable<Vessage>> GetNotReadMessageOfUser(string userId)

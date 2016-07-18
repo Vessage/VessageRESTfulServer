@@ -22,11 +22,17 @@ namespace VessageRESTfulServer.Services
             this.Client = Client;
         }
 
-        public async Task<ChatGroup> CreateChatGroup(ObjectId hoster, IEnumerable<ObjectId> chatters)
+        public async Task<ChatGroup> CreateChatGroup(ObjectId hoster, IEnumerable<ObjectId> chatters,string groupName)
         {
+            var chatterList = new List<ObjectId>(chatters);
+            if (!chatterList.Contains(hoster))
+            {
+                chatterList.Insert(0, hoster);
+            }
             var group = new ChatGroup
             {
-                Chatters = chatters.ToArray(),
+                GroupName = groupName,
+                Chatters = chatterList.ToArray(),
                 Hosters = new ObjectId[] { hoster },
                 InviteCode = new Random(DateTime.Now.Millisecond).Next(1000, 9999).ToString()
             };
@@ -40,6 +46,14 @@ namespace VessageRESTfulServer.Services
             var collection = VessageDb.GetCollection<ChatGroup>("ChatGroup");
             var update = new UpdateDefinitionBuilder<ChatGroup>().Push(g => g.Chatters, userId);
             var result = await collection.UpdateOneAsync(f => f.Id == groupId && f.InviteCode == inviteCode && !f.Chatters.Contains(userId), update);
+            return result.ModifiedCount > 0;
+        }
+
+        public async Task<bool> AddUserJoinGroup(ObjectId hoster, ObjectId groupId, ObjectId userId)
+        {
+            var collection = VessageDb.GetCollection<ChatGroup>("ChatGroup");
+            var update = new UpdateDefinitionBuilder<ChatGroup>().Push(g => g.Chatters, userId);
+            var result = await collection.UpdateOneAsync(f => f.Id == groupId && f.Hosters.Contains(hoster) && !f.Chatters.Contains(userId), update);
             return result.ModifiedCount > 0;
         }
 
@@ -60,10 +74,17 @@ namespace VessageRESTfulServer.Services
             return await KickUserFromChatGroup(collection, hoster, groupId, kickUserId);
         }
 
-        public async Task<ChatGroup> GetChatGroupById(ObjectId groupId)
+        public async Task<ChatGroup> GetChatGroupById(ObjectId userId,ObjectId groupId)
         {
             var collection = VessageDb.GetCollection<ChatGroup>("ChatGroup");
-            return await collection.Find(f => f.Id == groupId).FirstAsync();
+            try
+            {
+                return await collection.Find(f => f.Id == groupId && f.Chatters.Contains(userId)).FirstAsync();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         private async Task<bool> KickUserFromChatGroup(IMongoCollection<ChatGroup> collection, ObjectId hoster, ObjectId groupId, ObjectId kickUserId)
