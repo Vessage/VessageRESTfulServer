@@ -138,9 +138,9 @@ namespace VessageRESTfulServer.Services
                 
                 return new FinishSendVessageResult
                 {
-                    ReceiverId = outUserId.IsObjectId ? outUserId.AsObjectId : ObjectId.Empty,
-                    ReceiverIsGroup = outIsGroup.IsBoolean ? outIsGroup.AsBoolean : false,
-                    ReceiverMobile = outMobile.IsString ? outMobile.AsString : null
+                    ReceiverId = outUserId != null && outUserId.IsObjectId ? outUserId.AsObjectId : ObjectId.Empty,
+                    ReceiverIsGroup = outIsGroup != null && outIsGroup.IsBoolean ? outIsGroup.AsBoolean : false,
+                    ReceiverMobile = outMobile != null && outMobile.IsString ? outMobile.AsString : null
                 };
             }
             return null;
