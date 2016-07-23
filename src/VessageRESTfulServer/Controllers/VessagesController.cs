@@ -36,7 +36,8 @@ namespace VessageRESTfulServer.Controllers
                 isRead = m.IsRead,
                 extraInfo = m.ExtraInfo,
                 sendTime = DateTimeUtil.ToAccurateDateTimeString(m.SendTime),
-                isGroup = m.IsGroup
+                isGroup = m.IsGroup,
+                typeId = m.TypeId
             };
         }
 
@@ -48,7 +49,7 @@ namespace VessageRESTfulServer.Controllers
 
         
         [HttpPost("ForMobile")]
-        public async Task<object> SendNewVessageForMobile(string receiverMobile, string extraInfo)
+        public async Task<object> SendNewVessageForMobile(string receiverMobile, string extraInfo, int typeId = 0)
         {
             Vessage vessage = null;
             Tuple<ObjectId, ObjectId> result = null;
@@ -63,7 +64,9 @@ namespace VessageRESTfulServer.Controllers
                     Sender = new ObjectId(UserSessionData.UserId),
                     SendTime = DateTime.UtcNow,
                     VideoReady = false,
-                    ExtraInfo = extraInfo
+                    ExtraInfo = extraInfo,
+                    IsGroup = false,
+                    TypeId = typeId
                 };
                 var receiver = await userService.GetUserOfMobile(receiverMobile);
                 if (receiver == null)
@@ -91,7 +94,7 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("ForUser")]
-        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false)
+        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false, int typeId = 0)
         {
             Vessage vessage = null;
             Tuple<ObjectId, ObjectId> result = null;
@@ -117,7 +120,8 @@ namespace VessageRESTfulServer.Controllers
                     VideoReady = false,
                     SendTime = DateTime.UtcNow,
                     ExtraInfo = extraInfo,
-                    IsGroup = isGroup
+                    IsGroup = isGroup,
+                    TypeId = typeId
                 };
                 result = await vessageService.SendVessage(receiverOId, vessage, isGroup);
             }

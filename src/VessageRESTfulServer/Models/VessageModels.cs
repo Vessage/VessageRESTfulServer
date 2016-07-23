@@ -27,6 +27,7 @@ namespace VessageRESTfulServer.Models
         public bool VideoReady { get; set; }
         public string ExtraInfo { get; set; }
         public bool IsGroup { get; set; }
+        public int TypeId { get; set; }
     }
 
     public class VessageBox
