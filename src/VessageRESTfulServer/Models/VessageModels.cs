@@ -6,6 +6,14 @@ using System.Threading.Tasks;
 
 namespace VessageRESTfulServer.Models
 {
+    public class ChatImageInfo
+    {
+        public ObjectId Id { get; set; }
+        public ObjectId UserId { get; set; }
+        public string ImageFileId { get; set; }
+        public string ImageType { get; set; }
+    }
+
     public class VessageUser
     {
         public ObjectId Id { get; set; }

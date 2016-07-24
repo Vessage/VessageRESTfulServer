@@ -68,16 +68,14 @@ namespace VessageRESTfulServer.Controllers
                     }
                 }
             }
-            var result = from u in ActiveUsers
-                         where u.Id != UserObjectId
-                         select new
-                         {
-                             accountId = u.AccountId,
-                             userId = u.Id.ToString(),
-                             mainChatImage = u.MainChatImage,
-                             avatar = u.Avartar,
-                             nickName = u.Nick
-                         };
+            var result = new List<object>();
+            foreach (var u in ActiveUsers)
+            {
+                if (u.Id != UserObjectId)
+                {
+                    result.Add(VessageUserToJsonObject(u));
+                }
+            }
             return result;
         }
 
@@ -123,14 +121,9 @@ namespace VessageRESTfulServer.Controllers
 
         private object VessageUserToJsonObject(VessageUser user)
         {
-			if(user == null)
-			{
-				return null;
-			}
-            var mobile = UserSessionData.UserId == user.Id.ToString() ? user.Mobile : StringUtil.Md5String(user.Mobile);
-            if(mobile == null)
+            if (user == null)
             {
-                mobile = "";
+                return null;
             }
             var jsonResultObj = new
             {
@@ -138,10 +131,10 @@ namespace VessageRESTfulServer.Controllers
                 userId = user.Id.ToString(),
                 mainChatImage = user.MainChatImage,
                 avatar = user.Avartar,
-				nickName = user.Nick,
-                mobile = mobile
+                nickName = user.Nick,
+                mobile = UserSessionData.UserId == user.Id.ToString() ? user.Mobile : StringUtil.Md5String(user.Mobile)
             };
-            
+
             return jsonResultObj;
         }
 
@@ -351,6 +344,46 @@ namespace VessageRESTfulServer.Controllers
             {
                 var userService = Startup.ServicesProvider.GetUserService();
                 bool suc = await userService.ChangeAvatarOfUser(UserSessionData.UserId, avatar);
+                if (suc)
+                {
+                    return new { msg = "SUCCESS" };
+                }
+                else
+                {
+                    Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    return new { msg = "SERVER_ERROR" };
+                }
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return new { msg = "INVALID_VALUE" };
+            }
+        }
+
+        [HttpGet("ChatImages")]
+        public async Task<object> GetChatImages(string userId)
+        {
+            var images = await AppServiceProvider.GetUserService().GetUserChatImages(new ObjectId(userId));
+            return new
+            {
+                userId = userId,
+                chatImages = from i in images
+                             select new
+                             {
+                                 imageId = i.ImageFileId,
+                                 imageType = i.ImageType
+                             }
+            };
+        }
+
+        [HttpPut("ChatImages")]
+        public async Task<object> UpdateChatImage(string image,string imageType)
+        {
+            if (string.IsNullOrWhiteSpace(image) == false)
+            {
+                var userService = Startup.ServicesProvider.GetUserService();
+                bool suc = await userService.UpdateChatImageOfUser(UserSessionData.UserId, image, imageType);
                 if (suc)
                 {
                     return new { msg = "SUCCESS" };

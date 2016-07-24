@@ -193,6 +193,37 @@ namespace VessageRESTfulServer.Services
                 return false;
             }
         }
+
+        public async Task<IEnumerable<ChatImageInfo>> GetUserChatImages(ObjectId userObjectId)
+        {
+            var collection = UserDb.GetCollection<ChatImageInfo>("UserChatImage");
+            var result = await collection.Find(f => f.UserId == userObjectId).ToListAsync();
+            return result;
+        }
+
+        public async Task<bool> UpdateChatImageOfUser(string userId, string image, string imageType)
+        {
+            try
+            {
+                var userOId = new ObjectId(userId);
+                var collection = UserDb.GetCollection<ChatImageInfo>("UserChatImage");
+                var newChatImage = new ChatImageInfo
+                {
+                    UserId = userOId,
+                    ImageFileId = image,
+                    ImageType = imageType
+                };
+
+                var op = new FindOneAndReplaceOptions<ChatImageInfo>();
+                op.IsUpsert = true;
+                newChatImage = await collection.FindOneAndReplaceAsync<ChatImageInfo>(ci => ci.UserId == userOId && ci.ImageType == imageType, newChatImage, op);
+                return newChatImage != null;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 
     public static class GetUserServiceExtension
