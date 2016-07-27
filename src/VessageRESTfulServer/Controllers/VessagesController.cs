@@ -37,7 +37,8 @@ namespace VessageRESTfulServer.Controllers
                 extraInfo = m.ExtraInfo,
                 sendTime = DateTimeUtil.ToAccurateDateTimeString(m.SendTime),
                 isGroup = m.IsGroup,
-                typeId = m.TypeId
+                typeId = m.TypeId,
+                body = m.Body
             };
         }
 
@@ -94,7 +95,7 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("ForUser")]
-        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false, int typeId = 0,string fileId = null)
+        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false, int typeId = 0,string fileId = null,string body = null)
         {
             Vessage vessage = null;
             Tuple<ObjectId, ObjectId> result = null;
@@ -122,7 +123,8 @@ namespace VessageRESTfulServer.Controllers
                     SendTime = DateTime.UtcNow,
                     ExtraInfo = extraInfo,
                     IsGroup = isGroup,
-                    TypeId = typeId
+                    TypeId = typeId,
+                    Body = body
                 };
                 result = await vessageService.SendVessage(receiverOId, vessage, isGroup);
             }
