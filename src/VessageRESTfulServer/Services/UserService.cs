@@ -207,17 +207,20 @@ namespace VessageRESTfulServer.Services
             {
                 var userOId = new ObjectId(userId);
                 var collection = UserDb.GetCollection<ChatImageInfo>("UserChatImage");
-                var newChatImage = new ChatImageInfo
+                var update = new UpdateDefinitionBuilder<ChatImageInfo>().Set(f => f.ImageFileId, image);
+                var newChatImage = await collection.FindOneAndUpdateAsync<ChatImageInfo>(ci => ci.UserId == userOId && ci.ImageType == imageType, update);
+                if (newChatImage == null)
                 {
-                    UserId = userOId,
-                    ImageFileId = image,
-                    ImageType = imageType
-                };
-
-                var op = new FindOneAndReplaceOptions<ChatImageInfo>();
-                op.IsUpsert = true;
-                newChatImage = await collection.FindOneAndReplaceAsync<ChatImageInfo>(ci => ci.UserId == userOId && ci.ImageType == imageType, newChatImage, op);
-                return newChatImage != null;
+                    newChatImage = new ChatImageInfo
+                    {
+                        UserId = userOId,
+                        ImageFileId = image,
+                        ImageType = imageType
+                    };
+                    await collection.InsertOneAsync(newChatImage);
+                    return newChatImage.Id != ObjectId.Empty;
+                }
+                return newChatImage.ImageFileId == image;
             }
             catch (Exception)
             {
