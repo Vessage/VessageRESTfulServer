@@ -208,10 +208,10 @@ namespace VessageRESTfulServer.Services
                 var userOId = new ObjectId(userId);
                 var collection = UserDb.GetCollection<ChatImageInfo>("UserChatImage");
                 var update = new UpdateDefinitionBuilder<ChatImageInfo>().Set(f => f.ImageFileId, image);
-                var newChatImage = await collection.FindOneAndUpdateAsync<ChatImageInfo>(ci => ci.UserId == userOId && ci.ImageType == imageType, update);
-                if (newChatImage == null)
+                var result = await collection.UpdateOneAsync(ci => ci.UserId == userOId && ci.ImageType == imageType, update);
+                if (!result.IsModifiedCountAvailable || result.ModifiedCount == 0)
                 {
-                    newChatImage = new ChatImageInfo
+                   var newChatImage = new ChatImageInfo
                     {
                         UserId = userOId,
                         ImageFileId = image,
@@ -220,7 +220,10 @@ namespace VessageRESTfulServer.Services
                     await collection.InsertOneAsync(newChatImage);
                     return newChatImage.Id != ObjectId.Empty;
                 }
-                return newChatImage.ImageFileId == image;
+                else
+                {
+                    return true;
+                }
             }
             catch (Exception)
             {
