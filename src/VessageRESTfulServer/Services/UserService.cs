@@ -106,8 +106,8 @@ namespace VessageRESTfulServer.Services
                 var userOId = new ObjectId(userId);
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.MainChatImage, image);
-                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
-                return user != null;
+                var result = await collection.UpdateOneAsync(u => u.Id == userOId, update);
+                return result.IsModifiedCountAvailable && result.ModifiedCount > 0;
             }
             catch (Exception)
             {
