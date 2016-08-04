@@ -220,7 +220,7 @@ namespace VessageRESTfulServer.Controllers
                     NotifyType = "NewVessageNotify",
                     ToUser = toUser.ToString()
                 };
-                AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
+                AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
             }
         }
 

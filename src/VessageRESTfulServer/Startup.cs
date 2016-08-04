@@ -22,20 +22,30 @@ namespace VessageRESTfulServer
 {
     public class Program
     {
+        public static IConfiguration ArgsConfig { get; private set; }
         public static void Main(string[] args)
         {
-            var configuration = new ConfigurationBuilder()
-            .AddCommandLine(args)
-            .Build();
-
-            var host = new WebHostBuilder()
+            ArgsConfig = new ConfigurationBuilder().AddCommandLine(args).Build();
+            var configFile = ArgsConfig["config"];
+            if (string.IsNullOrEmpty(configFile))
+            {
+                Console.WriteLine("No Config File");
+            }
+            else
+            {
+                var hostBuilder = new WebHostBuilder()
                 .UseKestrel()
-                .UseConfiguration(configuration)
+                .UseConfiguration(ArgsConfig)
                 .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseStartup<Startup>()
-                .Build();
+                .UseStartup<Startup>();
 
-            host.Run();
+                var appConfig = new ConfigurationBuilder()
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile(configFile).Build();
+                var urls = appConfig["Data:App:urls"].Split(new char[] { ';', ',', ' ' });
+                hostBuilder.UseUrls(urls);
+                hostBuilder.Build().Run();
+            }
         }
     }
 
@@ -59,6 +69,7 @@ namespace VessageRESTfulServer
         public static int ChicagoServerPort { get { return int.Parse(Configuration["Data:ChicagoServer:port"]); } }
 
         public static IDictionary<string, string> ValidatedUsers { get; private set; }
+        
         public static bool IsProduction
         {
             get
@@ -78,15 +89,13 @@ namespace VessageRESTfulServer
         private static void ReadConfig(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)            
-                .AddJsonFile("appsettings.json",true,true);
-            var configFile = "config_debug.json";
+                .SetBasePath(env.ContentRootPath);
+            var configFile = Program.ArgsConfig["config"];
+            var baseConfig = builder.AddJsonFile(configFile, true, true).Build();
+            var logConfig = baseConfig["Data:LogConfig"];
+            builder.AddJsonFile(configFile, true, true);
+            builder.AddJsonFile(logConfig, true, true);
             ServerHostingEnvironment = env;
-            if (env.IsProduction())
-            {
-                configFile = "/etc/bahamut/vege/vessage.json";
-            }
-            builder.AddJsonFile(configFile,true,true);
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
         }
@@ -142,7 +151,7 @@ namespace VessageRESTfulServer
             Startup.ServicesProvider = app.ApplicationServices;
             //Log
             var logConfig = new LoggingConfiguration();
-            LoggerLoaderHelper.LoadLoggerToLoggingConfig(logConfig, Configuration, "Data:Log:fileLoggers");
+            LoggerLoaderHelper.LoadLoggerToLoggingConfig(logConfig, Configuration, "Logger:fileLoggers");
 
             if (env.IsDevelopment())
             {
@@ -171,9 +180,6 @@ namespace VessageRESTfulServer
             {
                 LogManager.GetLogger("Main").Error(ex, "Unable To Regist App Instance");
             }
-            
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
 
             //Authentication
             var openRoutes = new string[]
@@ -228,6 +234,14 @@ namespace VessageRESTfulServer
         public static BahamutPubSubService GetBahamutPubSubService(this IServiceProvider provider)
         {
             return provider.GetService<BahamutPubSubService>();
+        }
+    }
+
+    public static class IPubSubServiceExtension
+    {
+        public static void PublishVegeNotifyMessage(this BahamutPubSubService service,BahamutPublishModel message)
+        {
+            service.PublishBahamutUserNotifyMessage("Vege", message);
         }
     }
 }

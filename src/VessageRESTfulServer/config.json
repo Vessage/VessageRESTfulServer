@@ -3,9 +3,13 @@
     "App": {
       "appname": "VessageRESTfulServer",
       "appkey": "7f9e267b33231abe16ea4b6c5fabae11b6103791",
-      "url": "http://vessageapi.bahamut.cn:8188",
+      "urls": "http://vessageapi.bahamut.cn:8188",
       "region": "default"
     },
+
+    "ConfigRoot": "/etc/bahamut/vege",
+
+    "LogConfig": "/etc/bahamut/vege/logsettings.json",
 
     "MobSMSAppKey": "xxx",
 
@@ -39,47 +43,6 @@
 
     "FileServer": {
       "url": "http://file.sharelink.online:8089"
-    },
-
-    "Log": {
-      "fileLoggers": [
-        {
-          "name": "Main",
-          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${level:uppercase=true}:${message};${exception}",
-          "namePattern": "Main",
-          "minLevel": "Debug",
-          "fileName": "/home/deployment/logs/VessageRESTful/8188/main.log"
-        },
-        {
-          "name": "Route",
-          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
-          "namePattern": "Route",
-          "logLevel": "Info",
-          "fileName": "/home/deployment/logs/VessageRESTful/8188/route.log"
-        },
-        {
-          "name": "Error",
-          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}->${exception}",
-          "namePattern": "*",
-          "minLevel": "Error",
-          "fileName": "/home/deployment/logs/VessageRESTful/8188/error.log"
-        },
-        {
-          "name": "Info",
-          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
-          "namePattern": "Info",
-          "logLevel": "Info",
-          "fileName": "/home/deployment/logs/VessageRESTful/8188/info.log"
-        },
-        {
-          "name": "Warning",
-          "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}",
-          "namePattern": "*",
-          "logLevel": "Warn",
-          "fileName": "/home/deployment/logs/VessageRESTful/8188/warning.log"
-        }
-      ]
     }
   }
-  
 }

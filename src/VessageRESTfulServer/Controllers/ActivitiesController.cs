@@ -21,11 +21,8 @@ namespace VessageRESTfulServer.Controllers
                 var result = ActivityBadgeDataToJsonObject(data);
                 return result;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-#if DEBUG
-                Console.WriteLine(ex.Message);
-#endif
                 return new object[0];
             }
             

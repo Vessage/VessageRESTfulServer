@@ -12,13 +12,47 @@ namespace VessageRESTfulServer.Services
     public class VessageService
     {
         protected IMongoClient Client { get; set; }
-        private IMongoDatabase VessageDb { get { return Client.GetDatabase("Vessage"); } }
+        public IMongoDatabase VessageDb { get { return Client.GetDatabase("Vessage"); } }
 
         public VessageService(IMongoClient Client)
         {
             this.Client = Client;
         }
 
+        public async Task<ObjectId> SendVessagesToUser(ObjectId userId, IEnumerable<Vessage> vessages)
+        {
+            foreach (var vsg in vessages)
+            {
+                if (vsg.Id == ObjectId.Empty)
+                {
+                    vsg.Id = ObjectId.GenerateNewId();
+                }
+            }
+            var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
+            var update = new UpdateDefinitionBuilder<VessageBox>().PushEach(vb => vb.Vessages, vessages);
+            try
+            {
+                var result = await collection.FindOneAndUpdateAsync(vb => vb.UserId == userId, update);
+                if (result == null)
+                {
+                    var newVb = new VessageBox()
+                    {
+                        UserId = userId,
+                        Vessages = vessages.ToArray(),
+                        LastGetMessageTime = DateTime.UtcNow.AddMinutes(-2),
+                        LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2),
+                        IsGroup = false
+                    };
+                    await collection.InsertOneAsync(newVb);
+                    result = newVb;
+                }
+                return result.Id;
+            }
+            catch (Exception)
+            {
+                return ObjectId.Empty;
+            }
+        }
 
         public async Task<Tuple<ObjectId, ObjectId>> SendVessage(ObjectId receicerId, Vessage vessage,bool isGroup)
         {
@@ -156,7 +190,7 @@ namespace VessageRESTfulServer.Services
             return result.ModifiedCount > 0;
         }
 
-        internal async Task<bool> UpdateGotMessageTime(string userId)
+        public async Task<bool> UpdateGotMessageTime(string userId)
         {
             var userOId = new ObjectId(userId);
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
@@ -166,7 +200,9 @@ namespace VessageRESTfulServer.Services
                 if (vb != null)
                 {
                     var updateGotTime = new UpdateDefinitionBuilder<VessageBox>().Set(v => v.LastGotMessageTime, vb.LastGetMessageTime);
-                    var result = await collection.UpdateOneAsync(v => v.UserId == userOId, updateGotTime);
+                    var updateVessages = new UpdateDefinitionBuilder<VessageBox>().PullFilter(v => v.Vessages, st => st.VideoReady && st.SendTime < vb.LastGetMessageTime);
+                    var update = new UpdateDefinitionBuilder<VessageBox>().Combine(updateGotTime, updateVessages);
+                    var result = await collection.UpdateOneAsync(v => v.UserId == userOId, update);
                     return result.ModifiedCount > 0;
                 }
                 return false;

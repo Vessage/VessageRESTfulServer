@@ -87,11 +87,8 @@ namespace VessageRESTfulServer.Controllers
                 IEnumerable<object> result = from m in msgs select PaperMessageToJsonObject(m, UserSessionData.UserId);
                 return result;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-#if DEBUG
-                Console.WriteLine(ex.Message);
-#endif
                 return new object[0];
             }
         }
@@ -185,7 +182,7 @@ namespace VessageRESTfulServer.Controllers
                 NotifyType = "ActivityUpdatedNotify",
                 ToUser = user
             };
-            AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
+            AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
         }
 
         [HttpPut("PostMessage")]

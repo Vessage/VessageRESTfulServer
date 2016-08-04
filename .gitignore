@@ -229,5 +229,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-src/VessageRESTfulServer/config_debug.json
+*_debug.json
 *.lock.json
