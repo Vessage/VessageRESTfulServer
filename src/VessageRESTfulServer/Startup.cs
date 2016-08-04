@@ -102,7 +102,7 @@ namespace VessageRESTfulServer
 
         private static void SetServerConfig()
         {
-            Server = Configuration["Data:App:url"];
+            Server = Configuration["Data:App:urls"].Split(new char[]{';',',',' '})[0];
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
             APIUrl = Server + "/api";
@@ -164,7 +164,7 @@ namespace VessageRESTfulServer
             var appInstance = new BahamutAppInstance()
             {
                 Appkey = Appkey,
-                InstanceServiceUrl = Configuration["Data:App:url"],
+                InstanceServiceUrl = Configuration["Data:App:urls"].Split(new char[] { ';', ',', ' ' })[0],
                 Region = Configuration["Data:App:region"]
             };
             try
