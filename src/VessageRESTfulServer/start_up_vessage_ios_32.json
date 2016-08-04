@@ -92,7 +92,7 @@
     "SendTime": "$date",
     "VideoReady": true,
     "Sender": "57a2dec3886cf4287cd19e3d",
-    "Body": "{\"textMessage\":\"邀请好朋友加入VG，一起玩才开心~\",\"endEventCmd\":\"c2hvd0ludml0ZUZyaWVuZHNBbGVydCgp\"}",
+    "Body": "{\"textMessage\":\"群聊更好玩！赶快告诉好朋友，一般人我不告诉Ta\",\"endEventCmd\":\"c2hvd0ludml0ZUZyaWVuZHNBbGVydCgp\"}",
     "ExtraInfo": "{}"
   },
   {
@@ -104,7 +104,7 @@
     "SendTime": "$date",
     "VideoReady": true,
     "Sender": "57a2dec3886cf4287cd19e3d",
-    "Body": "{\"textMessage\":\"现在返回主页去找好友聊天吧！找我聊也可以哦~~~\"}",
+    "Body": "{\"textMessage\":\"给Ta发一条VG消息吧^^,ps:发给未注册的手机好友，Ta绑定手机后也能收到消息哦~\"}",
     "ExtraInfo": "{}"
   }
 ]
