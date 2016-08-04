@@ -1,0 +1,41 @@
+﻿{
+	"Logger": {
+	  "fileLoggers": [
+		{
+		  "name": "Main",
+		  "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${level:uppercase=true}:${message};${exception}",
+		  "namePattern": "Main",
+		  "minLevel": "Debug",
+		  "fileName": "/home/deployment/logs/VessageRESTful/8188/main.log"
+		},
+		{
+		  "name": "Route",
+		  "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
+		  "namePattern": "Route",
+		  "logLevel": "Info",
+		  "fileName": "/home/deployment/logs/VessageRESTful/8188/route.log"
+		},
+		{
+		  "name": "Error",
+		  "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}->${exception}",
+		  "namePattern": "*",
+		  "minLevel": "Error",
+		  "fileName": "/home/deployment/logs/VessageRESTful/8188/error.log"
+		},
+		{
+		  "name": "Info",
+		  "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${message}",
+		  "namePattern": "Info",
+		  "logLevel": "Info",
+		  "fileName": "/home/deployment/logs/VessageRESTful/8188/info.log"
+		},
+		{
+		  "name": "Warning",
+		  "layoutFormat": "${date:format=yyyy-MM-dd HH\\:mm\\:ss} ${logger}:${message}",
+		  "namePattern": "*",
+		  "logLevel": "Warn",
+		  "fileName": "/home/deployment/logs/VessageRESTful/8188/warning.log"
+		}
+	  ]
+	}
+}
