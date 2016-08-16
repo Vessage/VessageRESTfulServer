@@ -13,7 +13,6 @@ using System.Text;
 using System.IO;
 using System.Net.Security;
 using BahamutService.Service;
-using MongoDB.Driver.GeoJsonObjectModel;
 using Newtonsoft.Json;
 using BahamutService.Model;
 using System.Net.Http;
@@ -31,7 +30,7 @@ namespace VessageRESTfulServer.Controllers
         public async Task<object> Get()
         {
             var userService = Startup.ServicesProvider.GetUserService();
-            var user = await userService.GetUserOfUserId(UserSessionData.UserId);
+            var user = await userService.GetUserOfUserId(UserObjectId);
             return VessageUserToJsonObject(user);
         }
 
@@ -58,7 +57,7 @@ namespace VessageRESTfulServer.Controllers
             if (users.Count() == 0)
             {
                 var userService = Startup.ServicesProvider.GetUserService();
-                var user = await userService.GetUserOfUserId(UserSessionData.UserId);
+                var user = await userService.GetUserOfUserId(UserObjectId);
                 if (!string.IsNullOrEmpty(user.AccountId) && !string.IsNullOrEmpty(user.Mobile))
                 {                    
                     ActiveUsers.Enqueue(user);
@@ -83,7 +82,7 @@ namespace VessageRESTfulServer.Controllers
         public async Task<object> Get(string userId)
         {
             var userService = Startup.ServicesProvider.GetUserService();
-            var user = await userService.GetUserOfUserId(userId);
+            var user = await userService.GetUserOfUserId(new ObjectId(userId));
             return VessageUserToJsonObject(user);
         }
 
@@ -132,7 +131,8 @@ namespace VessageRESTfulServer.Controllers
                 mainChatImage = user.MainChatImage,
                 avatar = user.Avartar,
                 nickName = user.Nick,
-                mobile = UserSessionData.UserId == user.Id.ToString() ? user.Mobile : StringUtil.Md5String(user.Mobile)
+                mobile = UserObjectId == user.Id ? user.Mobile : StringUtil.Md5String(user.Mobile),
+                sex = user.Sex
             };
 
             return jsonResultObj;
@@ -168,7 +168,7 @@ namespace VessageRESTfulServer.Controllers
             var notifyMsg = new BahamutPublishModel
             {
                 NotifyType = "RemoveUserDevice",
-                Info = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                Info = JsonConvert.SerializeObject(new
                 {
                     AccountId = UserSessionData.AccountId,
                     Appkey = UserSessionData.Appkey,
@@ -215,7 +215,7 @@ namespace VessageRESTfulServer.Controllers
                  Stream dataStream = response.GetResponseStream();
                  StreamReader reader = new StreamReader(dataStream);
                  string responseFromServer = reader.ReadToEnd();
-                 dynamic responseObj = Newtonsoft.Json.JsonConvert.DeserializeObject(responseFromServer);
+                 dynamic responseObj = JsonConvert.DeserializeObject(responseFromServer);
                  try
                  {
                      return responseObj.status;
@@ -261,14 +261,14 @@ namespace VessageRESTfulServer.Controllers
             }
             var sessionData = UserSessionData;
             var userId = sessionData.UserId;
-            var userOId = new ObjectId(userId);
+            var userOId = UserObjectId;
             var userService = Startup.ServicesProvider.GetUserService();
             try
             {
-                var registedUser = await userService.BindExistsUserOnRegist(userId, mobile);
+                var registedUser = await userService.BindExistsUserOnRegist(userOId, mobile);
                 if (registedUser == null)
                 {
-                    bool suc = await userService.UpdateMobileOfUser(userId, mobile);
+                    bool suc = await userService.UpdateMobileOfUser(userOId, mobile);
                     if (suc)
                     {
                         UpdateBahamutAccountMobile(sessionData, mobile);
@@ -307,7 +307,7 @@ namespace VessageRESTfulServer.Controllers
                 new KeyValuePair<string, string>("appkey", Startup.Appkey),
                 new KeyValuePair<string, string>("appToken", UserSessionData.AppToken),
                 new KeyValuePair<string, string>("accountId", UserSessionData.AccountId),
-                new KeyValuePair<string, string>("userId", UserSessionData.UserId),
+                new KeyValuePair<string, string>("userId", sessionData.UserId),
                 new KeyValuePair<string, string>("newMobile", newMobile)
             };
             await client.PutAsync(url, new FormUrlEncodedContent(kvList));
@@ -319,7 +319,7 @@ namespace VessageRESTfulServer.Controllers
             if (string.IsNullOrWhiteSpace(nick) == false)
             {
                 var userService = Startup.ServicesProvider.GetUserService();
-                bool suc = await userService.ChangeNickOfUser(UserSessionData.UserId, nick);
+                bool suc = await userService.ChangeNickOfUser(UserObjectId, nick);
                 if (suc)
                 {
                     return new { msg = "SUCCESS" };
@@ -337,13 +337,29 @@ namespace VessageRESTfulServer.Controllers
             }
         }
 
+        [HttpPut("SexValue")]
+        public async Task<object> ChangeSexValue(int value)
+        {
+            var userService = Startup.ServicesProvider.GetUserService();
+            bool suc = await userService.ChangeSexValue(UserObjectId, value);
+            if (suc)
+            {
+                return new { msg = "SUCCESS" };
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                return new { msg = "SERVER_ERROR" };
+            }
+        }
+
         [HttpPut("Avatar")]
         public async Task<object> ChangeAvatar(string avatar)
         {
             if (string.IsNullOrWhiteSpace(avatar) == false)
             {
                 var userService = Startup.ServicesProvider.GetUserService();
-                bool suc = await userService.ChangeAvatarOfUser(UserSessionData.UserId, avatar);
+                bool suc = await userService.ChangeAvatarOfUser(UserObjectId, avatar);
                 if (suc)
                 {
                     return new { msg = "SUCCESS" };
@@ -383,7 +399,7 @@ namespace VessageRESTfulServer.Controllers
             if (string.IsNullOrWhiteSpace(image) == false)
             {
                 var userService = Startup.ServicesProvider.GetUserService();
-                bool suc = await userService.UpdateChatImageOfUser(UserSessionData.UserId, image, imageType);
+                bool suc = await userService.UpdateChatImageOfUser(UserObjectId, image, imageType);
                 if (suc)
                 {
                     return new { msg = "SUCCESS" };
@@ -407,7 +423,7 @@ namespace VessageRESTfulServer.Controllers
             if (string.IsNullOrWhiteSpace(image) == false)
             {
                 var userService = Startup.ServicesProvider.GetUserService();
-                bool suc = await userService.ChangeMainChatImageOfUser(UserSessionData.UserId, image);
+                bool suc = await userService.ChangeMainChatImageOfUser(UserObjectId, image);
                 if (suc)
                 {
                     return new { msg = "SUCCESS" };

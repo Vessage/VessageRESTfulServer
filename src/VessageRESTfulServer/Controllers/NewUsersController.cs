@@ -17,7 +17,7 @@ namespace VessageRESTfulServer.Controllers
 
         // POST api/values
         [HttpPost]
-        public async Task<object> Post(string accountId, string accessToken, string nickName, string motto, string region = "us")
+        public async Task<object> Post(string accountId, string accessToken, string nickName, string motto,string mobile = null, string region = "cn")
         {
             var userService = Startup.ServicesProvider.GetUserService();
             var test = await userService.GetUserOfAccountId(accountId);
@@ -35,7 +35,9 @@ namespace VessageRESTfulServer.Controllers
                 {
                     AccountId = accountId,
                     CreateTime = DateTime.UtcNow,
-                    Nick = nickName
+                    Nick = nickName,
+                    Sex = 0,
+                    Mobile = mobile
                 };
 
                 newUser = await userService.CreateNewUser(newUser);

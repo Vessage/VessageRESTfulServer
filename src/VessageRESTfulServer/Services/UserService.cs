@@ -33,13 +33,12 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task<VessageUser> GetUserOfUserId(string userId)
+        public async Task<VessageUser> GetUserOfUserId(ObjectId userId)
         {
             try
             {
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
-                var userOId = new ObjectId(userId);
-                var user = await collection.Find(u => u.Id == userOId).SingleAsync();
+                var user = await collection.Find(u => u.Id == userId).SingleAsync();
                 return user;
             }
             catch (Exception)
@@ -99,14 +98,13 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task<bool> ChangeMainChatImageOfUser(string userId, string image)
+        public async Task<bool> ChangeMainChatImageOfUser(ObjectId userId, string image)
         {
             try
             {
-                var userOId = new ObjectId(userId);
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.MainChatImage, image);
-                var result = await collection.UpdateOneAsync(u => u.Id == userOId, update);
+                var result = await collection.UpdateOneAsync(u => u.Id == userId, update);
                 return result.IsModifiedCountAvailable && result.ModifiedCount > 0;
             }
             catch (Exception)
@@ -115,14 +113,13 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task<bool> ChangeAvatarOfUser(string userId, string avatar)
+        public async Task<bool> ChangeAvatarOfUser(ObjectId userId, string avatar)
         {
             try
             {
-                var userOId = new ObjectId(userId);
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Avartar, avatar);
-                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
+                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userId, update);
                 return user != null;
             }
             catch (Exception)
@@ -131,14 +128,13 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task<bool> ChangeNickOfUser(string userId, string nick)
+        public async Task<bool> ChangeNickOfUser(ObjectId userId, string nick)
         {
             try
             {
-                var userOId = new ObjectId(userId);
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Nick, nick);
-                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
+                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userId, update);
                 return user != null;
             }
             catch (Exception)
@@ -147,13 +143,12 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task<VessageUser> BindExistsUserOnRegist(string userId, string mobile)
+        public async Task<VessageUser> BindExistsUserOnRegist(ObjectId userId, string mobile)
         {
             try
             {
-                var userOId = new ObjectId(userId);
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
-                var user = await collection.Find(u => u.Id == userOId && u.Mobile == null).FirstAsync();
+                var user = await collection.Find(u => u.Id == userId && u.Mobile == null).FirstAsync();
                 if (user != null)
                 {
                     var mobileUser = await collection.Find(u => u.Mobile == mobile && u.AccountId == null).FirstAsync();
@@ -178,14 +173,13 @@ namespace VessageRESTfulServer.Services
             return null;
         }
 
-        public async Task<bool> UpdateMobileOfUser(string userId, string mobile)
+        public async Task<bool> UpdateMobileOfUser(ObjectId userId, string mobile)
         {
             try
             {
-                var userOId = new ObjectId(userId);
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Mobile, mobile);
-                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userOId, update);
+                var user = await collection.FindOneAndUpdateAsync(u => u.Id == userId, update);
                 return user != null;
             }
             catch (Exception)
@@ -194,26 +188,25 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task<IEnumerable<ChatImageInfo>> GetUserChatImages(ObjectId userObjectId)
+        public async Task<IEnumerable<ChatImageInfo>> GetUserChatImages(ObjectId userId)
         {
             var collection = UserDb.GetCollection<ChatImageInfo>("UserChatImage");
-            var result = await collection.Find(f => f.UserId == userObjectId).ToListAsync();
+            var result = await collection.Find(f => f.UserId == userId).ToListAsync();
             return result;
         }
 
-        public async Task<bool> UpdateChatImageOfUser(string userId, string image, string imageType)
+        public async Task<bool> UpdateChatImageOfUser(ObjectId userId, string image, string imageType)
         {
             try
             {
-                var userOId = new ObjectId(userId);
                 var collection = UserDb.GetCollection<ChatImageInfo>("UserChatImage");
                 var update = new UpdateDefinitionBuilder<ChatImageInfo>().Set(f => f.ImageFileId, image);
-                var result = await collection.UpdateOneAsync(ci => ci.UserId == userOId && ci.ImageType == imageType, update);
+                var result = await collection.UpdateOneAsync(ci => ci.UserId == userId && ci.ImageType == imageType, update);
                 if (!result.IsModifiedCountAvailable || result.ModifiedCount == 0)
                 {
                    var newChatImage = new ChatImageInfo
                     {
-                        UserId = userOId,
+                        UserId = userId,
                         ImageFileId = image,
                         ImageType = imageType
                     };
@@ -224,6 +217,21 @@ namespace VessageRESTfulServer.Services
                 {
                     return true;
                 }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> ChangeSexValue(ObjectId userId, int value)
+        {
+            try
+            {
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+                var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Sex, value);
+                var res = await collection.UpdateOneAsync(u => u.Id == userId, update);
+                return res.ModifiedCount > 0;
             }
             catch (Exception)
             {

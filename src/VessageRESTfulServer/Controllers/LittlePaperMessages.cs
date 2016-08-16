@@ -303,7 +303,7 @@ namespace VessageRESTfulServer.Controllers
             {
                 var msgCollection = LittlePaperDb.GetCollection<LittlePaperMessage>("LittlePaperMessage");
                 var msg = await msgCollection.Find(m => m.Id == paperOId).FirstAsync();
-                var reader = await this.AppServiceProvider.GetUserService().GetUserOfUserId(readerId);
+                var reader = await AppServiceProvider.GetUserService().GetUserOfUserId(readerOId);
                 if (string.IsNullOrWhiteSpace(msg.Receiver) == false)
                 {
                     Response.StatusCode = (int)HttpStatusCode.Forbidden;

@@ -23,6 +23,7 @@ namespace VessageRESTfulServer.Models
         public string MainChatImage { get; set; }
         public string Avartar { get; set; }
         public DateTime CreateTime { get; set; }
+        public int Sex { get; set; }
     }
 
     public class Vessage
