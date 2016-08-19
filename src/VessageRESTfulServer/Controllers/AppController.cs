@@ -18,7 +18,7 @@ namespace VessageRESTfulServer.Controllers
     public class AppController : APIControllerBase
     {
         [HttpPost("FirstLaunch")]
-        public async Task Post(string platform, int buildVersion)
+        public async Task Post(string platform, int buildVersion,int oldBuildVersion)
         {
             try
             {
