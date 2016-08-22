@@ -14,7 +14,7 @@ using Newtonsoft.Json.Linq;
 namespace VessageRESTfulServer.Controllers
 {
     [Route("api/[controller]")]
-    public class NiceFaceClubController : Controller
+    public class NiceFaceClubController : APIControllerBase
     {
         [HttpGet("FaceScoreTest")]
         public async Task<object> FaceScoreTest(string imageUrl)
@@ -27,7 +27,7 @@ namespace VessageRESTfulServer.Controllers
                 var time = (long)DateTimeUtil.UnixTimeSpan.TotalSeconds;
                 
                 var paras = new KeyValuePair<string, string>[] {
-                    new KeyValuePair<string, string>("MsgId",time.ToString() + "023"),
+                    new KeyValuePair<string, string>("MsgId",IDUtil.GenerateLongId().ToString()),
                     new KeyValuePair<string, string>("CreateTime",time.ToString()),
                     new KeyValuePair<string, string>("Content[imageUrl]",imageUrl)
                 };
@@ -37,7 +37,14 @@ namespace VessageRESTfulServer.Controllers
                 var resultContent = await result.Content.ReadAsStringAsync();
                 dynamic obj = JsonConvert.DeserializeObject(resultContent);
                 var metadata = (JObject)obj.content.metadata;
-                var fbrCnt = (int)metadata["FBR_Cnt"];
+                var fbrCnt = 0;
+                try
+                {
+                    fbrCnt = (int)metadata["FBR_Cnt"];
+                }
+                catch (Exception)
+                {
+                }
                 var highScore = 0.0f;
                 var msg = (string)obj.content.text;
                 for (int i = 0; i < fbrCnt; i++)
@@ -50,16 +57,13 @@ namespace VessageRESTfulServer.Controllers
                 }
                 return new
                 {
+                    resultId = (string)obj.msgId,
                     highScore = highScore,
                     msg = msg
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                string msg = ex.Message;
-#if DEBUG
-                Console.WriteLine(ex.Message);
-#endif
                 Response.StatusCode = 400;
                 return null;
             }
