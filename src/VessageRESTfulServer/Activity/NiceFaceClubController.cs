@@ -98,21 +98,58 @@ namespace VessageRESTfulServer.Activity
             if (user.Nick != profile.Nick )
             {
                 update = update.Set(p => p.Sex, user.Sex);
+                profile.Nick = user.Nick;
             }
             if (user.Sex != profile.Sex)
             {
                 update = update.Set(p => p.Nick, user.Nick);
+                profile.Sex = user.Sex;
             }
             await collection.UpdateOneAsync(p => p.Id == profile.Id, update);
+            return MemberProfileToJsonObject(profile);
+        }
+
+        object MemberProfileToJsonObject(NFCMemberProfile profile)
+        {
+            var isSelf = profile.UserId.ToString() == UserSessionData.UserId;
             return new
             {
-                profileId = UserSessionData.UserId,
-                nick = user.Nick,
-                sex = user.Sex,
-                faceImage = profile.FaceImageId,
+                id = isSelf ? UserSessionData.UserId : profile.Id.ToString(),
+                nick = profile.Nick,
+                sex = profile.Sex,
+                faceId = profile.FaceImageId,
                 score = profile.FaceScore,
-                puzzles = profile.Puzzles
+                puzzles = isSelf ? profile.Puzzles : RandomPuzzleForVisitor(profile.Puzzles)
             };
+        }
+
+        static private string RandomPuzzleForVisitor(string puzzles)
+        {
+            dynamic memberPuzzle = JsonConvert.DeserializeObject(puzzles);
+            int leastCnt = memberPuzzle.leastCnt;
+            JArray puzzleArr = memberPuzzle.puzzles;
+            var arr = puzzleArr.ToArray();
+            var resArr = ArrayUtil.GetRandomArray(arr).Take(leastCnt);
+            var resultBuilder = new StringBuilder();
+            foreach (var item in resArr)
+            {
+                var obj = item as JObject;
+                var correctAnswers = (string)obj["correct"];
+                var incorrectAnswers = (string)obj["incorrect"];
+                var cans = correctAnswers.Split(',');
+                var icans = correctAnswers.Split(',');
+                var ca = cans[random.Next() % cans.Count()];
+                var ica = icans[random.Next() % icans.Count()];
+                if (random.Next() % 2 == 0)
+                {
+                    resultBuilder.Append(string.Format("{0},{1}", ca, ica));
+                }
+                else
+                {
+                    resultBuilder.Append(string.Format("{0},{1}", ica, ca));
+                }
+            }
+            return resultBuilder.ToString();
         }
 
         [HttpGet("NiceFaces")]
@@ -121,26 +158,17 @@ namespace VessageRESTfulServer.Activity
             //TODO:
             var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
             var res = collection.AsQueryable().Where(p=>p.Sex * preferSex >= 0).OrderByDescending(p => p.CreateTime).Take(10).Select(p => p);
-            
-            var objs = from r in res
-                       select new
-                       {
-                           profileId = r.Id.ToString(),
-                           nick = r.Nick,
-                           sex = r.Sex,
-                           faceImage = r.FaceImageId,
-                           score = r.FaceScore,
-                           puzzles = r.Puzzles
-                       };
+
+            var objs = from r in res select MemberProfileToJsonObject(r);
 
             return objs.ToArray();
         }
 
         [HttpPut("PuzzleAnswer")]
-        public async Task<object> SetPuzzleAnswer(string answer,string allAnswer)
+        public async Task<object> SetPuzzleAnswer(string puzzle)
         {
             var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.Puzzles, answer);
+            var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.Puzzles, puzzle);
             var result = await collection.UpdateOneAsync(p => p.UserId == UserObjectId, update);
             return new { msg = "SUCCESS" };
         }
@@ -198,9 +226,9 @@ namespace VessageRESTfulServer.Activity
             {
                 id = profileId,
                 pass = pass,
-                memberUserId = userId,
+                userId = userId,
                 msg = msg,
-                memberNick = nick
+                nick = nick
             };
         }
 
@@ -256,10 +284,10 @@ namespace VessageRESTfulServer.Activity
                 var resultId = GenerateResultId(time, highScore, UserSessionData.UserId);
                 return new
                 {
-                    resultId = GenerateResultId(time,highScore,UserSessionData.UserId),
-                    highScore = ((int)(highScore * 0.92 * 10)) / 10f,
+                    rId = GenerateResultId(time,highScore,UserSessionData.UserId),
+                    hs = ((int)(highScore * 0.92 * 10)) / 10f,
                     msg = msg,
-                    timeSpan = time
+                    ts = time
                 };
             }
             catch (Exception)
