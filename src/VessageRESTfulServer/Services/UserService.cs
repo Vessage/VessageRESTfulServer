@@ -238,6 +238,21 @@ namespace VessageRESTfulServer.Services
                 return false;
             }
         }
+
+        public async Task<bool> ChangeMottoOfUser(ObjectId userObjectId, string motto)
+        {
+            try
+            {
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+                var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Motto, motto);
+                var res = await collection.UpdateOneAsync(u => u.Id == userObjectId, update);
+                return res.ModifiedCount > 0;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 
     public static class GetUserServiceExtension

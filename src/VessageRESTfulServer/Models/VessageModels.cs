@@ -24,6 +24,7 @@ namespace VessageRESTfulServer.Models
         public string Avartar { get; set; }
         public DateTime CreateTime { get; set; }
         public int Sex { get; set; }
+        public string Motto { get; set; }
     }
 
     public class Vessage

@@ -30,7 +30,7 @@ namespace VessageRESTfulServer.Activity
         public int Sex { get; set; }
         public DateTime CreateTime { get; set; }
         public DateTime ActiveTime { get; set; }
-        public GeoJson3DGeographicCoordinates Location { get; set; }
+        public GeoJson2DGeographicCoordinates Location { get; set; }
     }
 
     [Route("api/[controller]")]
@@ -59,11 +59,11 @@ namespace VessageRESTfulServer.Activity
 
         private static readonly object[][] FACE_TEST_MSGS = new object[][] 
         {
-            new object[] { 0.0f,7.6f,new string[] { "抱歉，测试没有达到要求。分享给你的好友，说不定Ta能加入哦！","没有通过测试，邀请朋友过来看看身边多少人能加入吧" } },
-            new object[] { 7.6f,8.0f,new string[] { "别泄气，换个角度再测一次说不定就能过哦，我们期待你的加入!","AI嘛，有时不准，再来测一次说不定就过了" } },
-            new object[] { 8.0f,8.3f,new string[] { "你的颜值达到组织的要求，赶快进来，组织需要你", "恭喜你通过测试！俱乐部有很多帅哥美女在等着你哦~~" } },
-            new object[] { 8.3f,9.0f,new string[] { "轻松通过测试,NFC欢迎你！","测试通过，欢迎加入NFC！"} },
-            new object[] { 9.0f,9.6f,new string[] { "颜值要爆表啊，AI君看后久久不能平复..." } },
+            new object[] { 0.0f,7.0f,new string[] { "抱歉，测试没有达到要求。分享给你的好友，说不定Ta能加入哦！","没有通过测试，邀请朋友过来看看身边多少人能加入吧" } },
+            new object[] { 7.0f,7.9f,new string[] { "别泄气，换个角度再测一次说不定就能过哦，我们期待你的加入!","AI嘛，有时不准，换个角度再来测一次说不定就过了" } },
+            new object[] { 7.9f,8.3f,new string[] { "你的颜值达到组织的要求，赶快进来，组织需要你！！", "恭喜你通过测试！俱乐部有很多帅哥美女在等着你哦~~" } },
+            new object[] { 8.3f,9.0f,new string[] { "轻松通过测试,NFC欢迎你！赶快确认加入俱乐部吧~","测试通过，欢迎来到NFC！确认后立即加入俱乐部~"} },
+            new object[] { 9.0f,9.6f,new string[] { "颜值要爆表啊，AI君看后久久不能平复...","AI君:我是不是看到明星了??!!!" } },
             new object[] { 9.6f,10.0f,new string[] { "请问你是谁？这颜值要逆天啊！！！","OMG，这世界竟然有如此高颜值的人，这个俱乐部为你而生","！！！！！！！！！(不知道说什么，怎么办！)" } }
         };
 
@@ -80,33 +80,57 @@ namespace VessageRESTfulServer.Activity
         [HttpGet("MyNiceFace")]
         public async Task<object> GetMyNiceFace(string location = null)
         {
-            var userService = AppServiceProvider.GetUserService();
             var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            var profile = await collection.Find(p => p.UserId == UserObjectId).FirstAsync();
-            var user = await userService.GetUserOfUserId(UserObjectId);
-            
+            try
+            {
+                var profile = await collection.Find(p => p.UserId == UserObjectId).FirstAsync();
+                var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.ActiveTime, DateTime.UtcNow);
+                if (!string.IsNullOrWhiteSpace(location))
+                {
+                    var c = LocationStringToLocation(location); 
+                    update = update.Set(p => p.Location, c);
+                }
+                await collection.UpdateOneAsync(p => p.Id == profile.Id, update);
+                return MemberProfileToJsonObject(profile);
+            }
+            catch (Exception)
+            {
+                var tmpProfile = new NFCMemberProfile
+                {
+                    UserId = UserObjectId,
+                    FaceScore = 0,
+                    Id = UserObjectId,
+                    Nick = "VGer",
+                    Sex = 0,
+
+                };
+                return MemberProfileToJsonObject(tmpProfile);
+            }            
+        }
+
+        [HttpPut("MyProfileValues")]
+        public async Task<object> UpdateMyMemberProfile(string nick = null, int sex = int.MaxValue)
+        {
             var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.ActiveTime, DateTime.UtcNow);
-            if (!string.IsNullOrWhiteSpace(location))
+            if (!string.IsNullOrWhiteSpace(nick))
             {
-                var loc = JsonConvert.DeserializeObject<JObject>(location);
-                var longitude = (double)loc["long"];
-                var latitude = (double)loc["lati"];
-                var altitude = (double)loc["alti"];
-                var c = new GeoJson3DGeographicCoordinates(longitude, latitude, altitude);
-                update = update.Set(p => p.Location, c);
+                update = update.Set(p => p.Nick, nick);
             }
-            if (user.Nick != profile.Nick )
+            if (sex != int.MaxValue)
             {
-                update = update.Set(p => p.Sex, user.Sex);
-                profile.Nick = user.Nick;
+                update = update.Set(p => p.Sex, sex);
             }
-            if (user.Sex != profile.Sex)
+            var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
+            var result = await collection.UpdateOneAsync(p => p.UserId == UserObjectId, update);
+            if (result.ModifiedCount > 0)
             {
-                update = update.Set(p => p.Nick, user.Nick);
-                profile.Sex = user.Sex;
+                return new { msg = "SUCCESS" };
             }
-            await collection.UpdateOneAsync(p => p.Id == profile.Id, update);
-            return MemberProfileToJsonObject(profile);
+            else
+            {
+                Response.StatusCode = 304;
+                return new { msg = "NOT_MODIFIED" };
+            }
         }
 
         object MemberProfileToJsonObject(NFCMemberProfile profile)
@@ -128,49 +152,86 @@ namespace VessageRESTfulServer.Activity
             dynamic memberPuzzle = JsonConvert.DeserializeObject(puzzles);
             int leastCnt = memberPuzzle.leastCnt;
             JArray puzzleArr = memberPuzzle.puzzles;
-            var arr = puzzleArr.ToArray();
-            var resArr = ArrayUtil.GetRandomArray(arr).Take(leastCnt);
-            var resultBuilder = new StringBuilder();
-            foreach (var item in resArr)
+            var arr = puzzleArr.ToArray().Take(leastCnt);
+            var resultBuilder = new StringBuilder("[");
+            var separator = "";
+            foreach (var obj in arr)
             {
-                var obj = item as JObject;
-                var correctAnswers = (string)obj["correct"];
-                var incorrectAnswers = (string)obj["incorrect"];
-                var cans = correctAnswers.Split(',');
-                var icans = correctAnswers.Split(',');
-                var ca = cans[random.Next() % cans.Count()];
-                var ica = icans[random.Next() % icans.Count()];
+                var qs = (string)obj["question"];
+                var cans = (JArray)obj["correct"];
+                var icans = (JArray)obj["incorrect"];
+                var ca = (string)cans[random.Next() % cans.Count()];
+                var ica = (string)icans[random.Next() % icans.Count()];
+                var format = "\"qs\":\"{0}\",\"l\":\"{1}\",\"r\":\"{2}\"";
+                resultBuilder.Append(separator);
+                resultBuilder.Append("{");
                 if (random.Next() % 2 == 0)
                 {
-                    resultBuilder.Append(string.Format("{0},{1}", ca, ica));
+                    resultBuilder.Append(string.Format(format, qs, ca, ica));
                 }
                 else
                 {
-                    resultBuilder.Append(string.Format("{0},{1}", ica, ca));
+                    resultBuilder.Append(string.Format(format, qs, ica, ca));
                 }
+                resultBuilder.Append("}");
+                separator = ",";
             }
+            resultBuilder.Append("]");
             return resultBuilder.ToString();
         }
 
+
+
         [HttpGet("NiceFaces")]
-        public IEnumerable<object> GetNiceFaces(int preferSex)
+        public async Task<IEnumerable<object>> GetNiceFaces(int preferSex, string location = null)
         {
             //TODO:
+            //var c = LocationStringToLocation(location);
             var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            var res = collection.AsQueryable().Where(p=>p.Sex * preferSex >= 0).OrderByDescending(p => p.CreateTime).Take(10).Select(p => p);
-
+            var filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null && p.Sex > 0);
+            if (preferSex < 0)
+            {
+                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null && p.Sex < 0);
+            }
+            else if(preferSex == 0)
+            {
+                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null);
+            }
+            var res = await collection.Find(filter).SortByDescending(p => p.ActiveTime).Limit(20).ToListAsync();
             var objs = from r in res select MemberProfileToJsonObject(r);
 
             return objs.ToArray();
         }
 
+        static private GeoJson2DGeographicCoordinates LocationStringToLocation(string location)
+        {
+            var loc = JsonConvert.DeserializeObject<JObject>(location);
+            var longitude = (double)loc["long"];
+            var latitude = (double)loc["lati"];
+            var altitude = (double)loc["alti"];
+            return new GeoJson2DGeographicCoordinates(longitude, latitude);
+        }
+
         [HttpPut("PuzzleAnswer")]
         public async Task<object> SetPuzzleAnswer(string puzzle)
         {
+            if (string.IsNullOrWhiteSpace(puzzle))
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return new { msg = "FAIL" };
+            }
             var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
             var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.Puzzles, puzzle);
             var result = await collection.UpdateOneAsync(p => p.UserId == UserObjectId, update);
-            return new { msg = "SUCCESS" };
+            if (result.ModifiedCount > 0)
+            {
+                return new { msg = "SUCCESS" };
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotFound;
+                return new { msg = "FAIL" };
+            }
         }
 
         [HttpPost("Like")]
@@ -190,24 +251,24 @@ namespace VessageRESTfulServer.Activity
         [HttpPost("Puzzle")]
         public async Task<object> GuessPuzzle(string profileId,string answer)
         {
-            var answers = from a in answer.Split(new char[] { ',' }) where !string.IsNullOrWhiteSpace(a) select a;
+            
             var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            var profile = await collection.Find(p => p.UserId == UserObjectId).FirstAsync();
-            var correctAnswer = profile.Puzzles;
+            var profile = await collection.Find(p => p.Id == new ObjectId(profileId)).FirstAsync();
+            var psJson = profile.Puzzles;
+            var answerArr = from a in (JArray)JsonConvert.DeserializeObject(answer) select (string)a;
+            JObject puzzle = (JObject)JsonConvert.DeserializeObject(psJson);
             var pass = false;
-            if (answers.Count() > 0)
+            var puzzles = (JArray)puzzle["puzzles"];
+
+            var correctAnswers = from p in puzzles from a in (JArray)p["correct"] select (string)a;
+            if (correctAnswers.Count() > 0 && answerArr.Count() > 0)
             {
-                pass = true;
-                foreach (var a in answers)
+                var result = correctAnswers.Intersect(answerArr);
+                if (result.Count() == answerArr.Count())
                 {
-                    if (!correctAnswer.Contains(a))
-                    {
-                        pass = false;
-                        break;
-                    }
+                    pass = true;
                 }
             }
-
             string nick = null;
             string msg = null;
             string userId = null;
@@ -237,6 +298,7 @@ namespace VessageRESTfulServer.Activity
         {
             try
             {
+                var userId = UserSessionData.UserId;
                 var apiUrl = "http://kan.msxiaobing.com/Api/ImageAnalyze/Process?service=beauty";
                 var client = new HttpClient();
                 client.DefaultRequestHeaders.Add("user-agent", "Mozilla/5.0");
@@ -277,15 +339,17 @@ namespace VessageRESTfulServer.Activity
                     addition = FACE_SCORE_MAX_ADDTION;
                 }
 
+                highScore *= 0.91f;
                 highScore += addition;
 
+                highScore = ((int)highScore * 10f) / 10f;
+                
                 var msg = GetScoreString(highScore);
 
-                var resultId = GenerateResultId(time, highScore, UserSessionData.UserId);
                 return new
                 {
-                    rId = GenerateResultId(time,highScore,UserSessionData.UserId),
-                    hs = ((int)(highScore * 0.92 * 10)) / 10f,
+                    rId = GenerateResultId(time,highScore,userId),
+                    hs = highScore,
                     msg = msg,
                     ts = time
                 };
@@ -316,7 +380,7 @@ namespace VessageRESTfulServer.Activity
         [HttpPost("NiceFace")]
         public async Task<object> SetNiceFace(string testResultId, string imageId, long timeSpan, float score)
         {
-            if (score <= NFC_BASE_FACE_SCORE)
+            if (score < NFC_BASE_FACE_SCORE)
             {
                 Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 return new { msg = "LESS_THAN_BASE_SCORE" };
@@ -362,7 +426,9 @@ namespace VessageRESTfulServer.Activity
 
         private static string GenerateResultId(long timeSpan, float score,string userId)
         {
-            return StringUtil.Md5String(string.Format("{0}:{1}:{2}:{3}", userId, timeSpan, score, TEST_RESULT_SK));
+            var scoreInt = (int)(score * 10);
+            var sign = StringUtil.Md5String(string.Format("{0}:{1}:{2}:{3}", userId, timeSpan, scoreInt, TEST_RESULT_SK));
+            return sign;
         }
     }
 }

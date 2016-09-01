@@ -132,7 +132,8 @@ namespace VessageRESTfulServer.Controllers
                 avatar = user.Avartar,
                 nickName = user.Nick,
                 mobile = UserObjectId == user.Id ? user.Mobile : StringUtil.Md5String(user.Mobile),
-                sex = user.Sex
+                sex = user.Sex,
+                motto = user.Motto
             };
 
             return jsonResultObj;
@@ -320,6 +321,30 @@ namespace VessageRESTfulServer.Controllers
             {
                 var userService = Startup.ServicesProvider.GetUserService();
                 bool suc = await userService.ChangeNickOfUser(UserObjectId, nick);
+                if (suc)
+                {
+                    return new { msg = "SUCCESS" };
+                }
+                else
+                {
+                    Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    return new { msg = "SERVER_ERROR" };
+                }
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return new { msg = "INVALID_VALUE" };
+            }
+        }
+
+        [HttpPut("Motto")]
+        public async Task<object> ChangeMotto(string motto)
+        {
+            if (string.IsNullOrWhiteSpace(motto) == false)
+            {
+                var userService = Startup.ServicesProvider.GetUserService();
+                bool suc = await userService.ChangeMottoOfUser(UserObjectId, motto);
                 if (suc)
                 {
                     return new { msg = "SUCCESS" };
