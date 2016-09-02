@@ -188,12 +188,16 @@ namespace VessageRESTfulServer.Activity
             //TODO:
             //var c = LocationStringToLocation(location);
             var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            var filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null && p.Sex > 0);
-            if (preferSex < 0)
+            FilterDefinition<NFCMemberProfile> filter = null;
+            if (preferSex > 0)
             {
-                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null && p.Sex < 0);
+                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null && p.Sex >= 0);
             }
-            else if(preferSex == 0)
+            else if (preferSex < 0)
+            {
+                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null && p.Sex <= 0);
+            }
+            else
             {
                 filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null);
             }
