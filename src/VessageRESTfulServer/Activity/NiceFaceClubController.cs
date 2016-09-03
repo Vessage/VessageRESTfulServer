@@ -338,16 +338,15 @@ namespace VessageRESTfulServer.Activity
                     }
                 }
 
+                highScore *= 0.91f;
+
+                highScore = ((int)highScore * 10f) / 10f;
+                
                 if (addition > FACE_SCORE_MAX_ADDTION)
                 {
                     addition = FACE_SCORE_MAX_ADDTION;
                 }
-
-                highScore *= 0.91f;
                 highScore += addition;
-
-                highScore = ((int)highScore * 10f) / 10f;
-                
                 var msg = GetScoreString(highScore);
 
                 return new
