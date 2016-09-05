@@ -84,7 +84,7 @@ namespace VessageRESTfulServer.Controllers
                 var tokenService = Startup.ServicesProvider.GetTokenService();
                 Startup.ValidatedUsers.Remove(userId);
                 var suc = tokenService.ReleaseAppToken(appkey, userId, appToken);
-                return new { msg = suc ? "TOKEN_RELEASE" : "RELEASE_TOKEN_ERROR" };
+                return new { msg = suc ? "TOKEN_RELEASED" : "RELEASE_TOKEN_ERROR" };
             });
         }
     }
