@@ -77,13 +77,14 @@ namespace VessageRESTfulServer.Controllers
 
         // DELETE api/values/5
         [HttpDelete]
-        public async Task<bool> Delete(string appkey, string userId, string appToken)
+        public async Task<object> Delete(string appkey, string userId, string appToken)
         {
             return await Task.Run(() =>
             {
                 var tokenService = Startup.ServicesProvider.GetTokenService();
                 Startup.ValidatedUsers.Remove(userId);
-                return tokenService.ReleaseAppToken(appkey, userId, appToken);
+                var suc = tokenService.ReleaseAppToken(appkey, userId, appToken);
+                return new { msg = suc ? "TOKEN_RELEASE" : "RELEASE_TOKEN_ERROR" };
             });
         }
     }
