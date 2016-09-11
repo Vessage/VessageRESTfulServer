@@ -48,7 +48,7 @@ namespace VessageRESTfulServer.Controllers
                     succeed = true,
                     appToken = sessionData.UserSessionData.AppToken,
                     userId = sessionData.UserSessionData.UserId,
-                    apiServer = Startup.APIUrl,
+                    apiServer = Startup.ServiceApiUrlRoute,
                     fileAPIServer = Startup.FileApiUrl,
                     chicagoServer = string.Format("{0}:{1}", Startup.ChicagoServerAddress, Startup.ChicagoServerPort)
                 };

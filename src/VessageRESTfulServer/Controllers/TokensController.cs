@@ -36,7 +36,7 @@ namespace VessageRESTfulServer.Controllers
                         LogInfo("Account:{0} Registing", accountId);
                         return new
                         {
-                            registAPIServer = Startup.Server
+                            registAPIServer = Startup.RegistNewUserApiUrl
                         };
                     }
                     LogManager.GetLogger("Warning").Warn("Validate Failed:Account:{0} Token:{1} Appkey:{2}", appkey, accountId, accessToken);
@@ -52,7 +52,7 @@ namespace VessageRESTfulServer.Controllers
                     {
                         appToken = tokenResult.UserSessionData.AppToken,
                         userId = userId,
-                        apiServer = Startup.APIUrl,
+                        apiServer = Startup.ServiceApiUrlRoute,
                         fileAPIServer = Startup.FileApiUrl,
                         chicagoServer = string.Format("{0}:{1}", Startup.ChicagoServerAddress, Startup.ChicagoServerPort)
                     };

@@ -7,6 +7,9 @@
       "region": "default"
     },
 
+    "RegistNewUserApiUrl": "http://vessageapi.bahamut.cn:8188",
+    "ServiceApiUrl": "http://vessageapi.bahamut.cn:8188",
+
     "ConfigRoot": "/etc/bahamut/vege",
 
     "LogConfig": "/etc/bahamut/vege/logsettings.json",

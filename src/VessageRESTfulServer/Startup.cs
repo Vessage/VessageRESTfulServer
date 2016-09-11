@@ -57,11 +57,13 @@ namespace VessageRESTfulServer
         public static IServiceProvider ServicesProvider { get; private set; }
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
 
-        public static string Appkey { get; private set; }
-        public static string Appname { get; private set; }
-        public static string Server { get; set; }
-        public static string APIUrl { get; private set; }
+        public static string Appkey { get { return Configuration["Data:App:appkey"]; } }
+        public static string Appname { get { return Configuration["Data:App:appname"]; } }
+        public static string RegistNewUserApiUrl { get { return Configuration["Data:RegistNewUserApiUrl"]; } }
+        public static string ServiceApiUrl { get { return Configuration["Data:ServiceApiUrl"]; } }
+        public static string ServiceApiUrlRoute { get { return ServiceApiUrl + "/api"; } }
 
+        
         public static string AuthServerUrl { get { return Configuration["Data:AuthServer:url"]; } }
         public static string FileApiUrl { get { return Configuration["Data:FileServer:url"]; } }
         public static string VessageDBServer { get { return Configuration["Data:VessageDBServer:url"]; } }
@@ -83,7 +85,6 @@ namespace VessageRESTfulServer
             // Set up configuration sources.
             ValidatedUsers = new Dictionary<string, string>();
             ReadConfig(env);
-            SetServerConfig();
         }
 
         private static void ReadConfig(IHostingEnvironment env)
@@ -98,14 +99,6 @@ namespace VessageRESTfulServer
             ServerHostingEnvironment = env;
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
-        }
-
-        private static void SetServerConfig()
-        {
-            Server = Configuration["Data:App:urls"].Split(new char[]{';',',',' '})[0];
-            Appkey = Configuration["Data:App:appkey"];
-            Appname = Configuration["Data:App:appname"];
-            APIUrl = Server + "/api";
         }
 
         // This method gets called by the runtime. Use this method to add services to the container
@@ -164,7 +157,7 @@ namespace VessageRESTfulServer
             var appInstance = new BahamutAppInstance()
             {
                 Appkey = Appkey,
-                InstanceServiceUrl = Configuration["Data:App:urls"].Split(new char[] { ';', ',', ' ' })[0],
+                InstanceServiceUrl = ServiceApiUrl,
                 Region = Configuration["Data:App:region"]
             };
             try
