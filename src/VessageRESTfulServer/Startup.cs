@@ -17,6 +17,7 @@ using BahamutCommon;
 using BahamutService.Service;
 using System.IO;
 using Newtonsoft.Json.Serialization;
+using DataLevelDefines;
 
 namespace VessageRESTfulServer
 {
@@ -63,10 +64,8 @@ namespace VessageRESTfulServer
         public static string ServiceApiUrl { get { return Configuration["Data:ServiceApiUrl"]; } }
         public static string ServiceApiUrlRoute { get { return ServiceApiUrl + "/api"; } }
 
-        
         public static string AuthServerUrl { get { return Configuration["Data:AuthServer:url"]; } }
         public static string FileApiUrl { get { return Configuration["Data:FileServer:url"]; } }
-        public static string VessageDBServer { get { return Configuration["Data:VessageDBServer:url"]; } }
         public static string ChicagoServerAddress { get { return Configuration["Data:ChicagoServer:host"]; } }
         public static int ChicagoServerPort { get { return int.Parse(Configuration["Data:ChicagoServer:port"]); } }
 
@@ -105,11 +104,8 @@ namespace VessageRESTfulServer
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
-
-            var tokenServerUrl = Configuration["Data:TokenServer:url"].Replace("redis://", "");
-            var TokenServerClientManager = new PooledRedisClientManager(tokenServerUrl);
-            var serverControlUrl = Configuration["Data:ControlServiceServer:url"].Replace("redis://", "");
-            var ControlServerServiceClientManager = new PooledRedisClientManager(serverControlUrl);
+            var TokenServerClientManager = DBClientManagerBuilder.GenerateRedisClientManager(Configuration.GetSection("Data:TokenServer"));
+            var ControlServerServiceClientManager = DBClientManagerBuilder.GenerateRedisClientManager(Configuration.GetSection("Data:ControlServiceServer"));
             services.AddSingleton(new ServerControlManagementService(ControlServerServiceClientManager));
             services.AddSingleton(new TokenService(TokenServerClientManager));
 
@@ -121,18 +117,15 @@ namespace VessageRESTfulServer
             });
 
             //business services
-            services.AddSingleton(new UserService(new MongoClient(MongoUrl.Create(VessageDBServer))));
-            services.AddSingleton(new VessageService(new MongoClient(MongoUrl.Create(VessageDBServer))));
-            services.AddSingleton(new SharedService(new MongoClient(MongoUrl.Create(VessageDBServer))));
-            services.AddSingleton(new ActivityService(new MongoClient(MongoUrl.Create(VessageDBServer))));
-            services.AddSingleton(new GroupChatService(new MongoClient(MongoUrl.Create(VessageDBServer))));
+            var mongoClient = DBClientManagerBuilder.GeneratePoolMongodbClient(Configuration.GetSection("Data:VessageDBServer"));
+            services.AddSingleton(new UserService(mongoClient));
+            services.AddSingleton(new VessageService(mongoClient));
+            services.AddSingleton(new SharedService(mongoClient));
+            services.AddSingleton(new ActivityService(mongoClient));
+            services.AddSingleton(new GroupChatService(mongoClient));
 
             //pubsub manager
-            var pubsubServerUrl = Configuration["Data:MessagePubSubServer:url"].Replace("redis://", "");
-            var pbClientManager = new PooledRedisClientManager(pubsubServerUrl);
-
-            var messageCacheServerUrl = Configuration["Data:MessageCacheServer:url"].Replace("redis://", "");
-            var mcClientManager = new PooledRedisClientManager(messageCacheServerUrl);
+            var pbClientManager = DBClientManagerBuilder.GenerateRedisClientManager(Configuration.GetSection("Data:MessagePubSubServer"));
 
             var pbService = new BahamutPubSubService(pbClientManager);
             services.AddSingleton(pbService);
@@ -181,13 +174,6 @@ namespace VessageRESTfulServer
                 "/NewUsers"
             };
             app.UseMiddleware<BahamutAspNetCommon.TokenAuthentication>(Appkey, ServicesProvider.GetTokenService(), openRoutes);
-
-#if OPEN_HTTPS
-            //HTTPS
-            var certPath = "cert.pfx";
-            var signingCertificate = new X509Certificate2(certPath, "test");
-            app.UseKestrelHttps(signingCertificate);
-#endif
 
             //Route
             app.UseStaticFiles();

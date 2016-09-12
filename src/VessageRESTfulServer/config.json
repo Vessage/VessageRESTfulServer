@@ -17,22 +17,78 @@
     "MobSMSAppKey": "xxx",
 
     "VessageDBServer": {
-      "url": "mongodb://$usr:$psw@vsgdb.bahamut.cn:27017"
+      "minPoolSize": 10,
+      "maxPoolSize": 10,
+      "masters": [
+        {
+          "url": "mongodb://$usr:$psw@vsgdb.bahamut.cn:27017"
+        }
+      ],
+      "slaves": [
+        {
+          "url": "mongodb://$usr:$psw@vsgdb.bahamut.cn:27017"
+        }
+      ]
     },
+
     "TokenServer": {
-      "url": "redis://$psw@vsgtoken.bahamut.cn:6379"
+      "minPoolSize": 10,
+      "maxPoolSize": 10,
+      "masters": [
+        {
+          "url": "redis://$psw@vsgtoken.bahamut.cn:6379"
+        }
+      ],
+      "slaves": [
+        {
+          "url": "redis://$psw@vsgtoken.bahamut.cn:6379"
+        }
+      ]
     },
 
     "ControlServiceServer": {
-      "url": "redis://$psw@app.sharelink.online:6379"
+      "minPoolSize": 10,
+      "maxPoolSize": 10,
+      "masters": [
+        {
+          "url": "redis://$psw@app.sharelink.online:6379"
+        }
+      ],
+      "slaves": [
+        {
+          "url": "redis://$psw@app.sharelink.online:6379"
+        }
+      ]
     },
 
     "MessagePubSubServer": {
-      "url": "redis://$psw@pubsub.sharelink.online:6379"
+      "minPoolSize": 10,
+      "maxPoolSize": 10,
+      "masters": [
+        {
+          "url": "redis://$psw@pubsub.sharelink.online:6379"
+        }
+      ],
+      "slaves": [
+        {
+          "url": "redis://$psw@pubsub.sharelink.online:6379"
+        }
+      ]
     },
 
     "MessageCacheServer": {
-      "url": "redis://$psw@msg.sharelink.online:6379"
+      "minPoolSize": 10,
+      "maxPoolSize": 10,
+      "masters": [
+        {
+          "url": "redis://$psw@msg.sharelink.online:6379"
+        }
+      ],
+      "slaves": [
+        {
+          "url": "redis://$psw@msg.sharelink.online:6379"
+        }
+      ]
     },
 
     "AuthServer": {
