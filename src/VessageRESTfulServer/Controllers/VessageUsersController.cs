@@ -4,18 +4,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using VessageRESTfulServer.Services;
-using System.Net;
 using VessageRESTfulServer.Models;
 using MongoDB.Bson;
 using BahamutCommon;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.IO;
-using System.Net.Security;
 using BahamutService.Service;
 using Newtonsoft.Json;
 using BahamutService.Model;
+using BahamutService;
+using System.Net;
 using System.Net.Http;
+using System.Net.Security;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -196,23 +197,21 @@ namespace VessageRESTfulServer.Controllers
                 return 200;
             }
 #endif
-            return await Task.Run(() =>
+            return await Task.Run(async () =>
              {
                  WebRequest request = WebRequest.Create("https://webapi.sms.mob.com/sms/verify");
                  request.Proxy = null;
                  request.Credentials = CredentialCache.DefaultCredentials;
 
-                //allows for validation of SSL certificates 
-
-                ServicePointManager.ServerCertificateValidationCallback += new System.Net.Security.RemoteCertificateValidationCallback(ValidateServerCertificate);
                  var data = string.Format("appkey={0}&amp;phone={1}&amp;zone={2}&amp;code={3}", mobSMSAppkey, mobile, zone, code);
                  byte[] bs = Encoding.UTF8.GetBytes(data);
                  request.Method = "Post";
-                 using (Stream reqStream = request.GetRequestStream())
+                 using (Stream reqStream = await request.GetRequestStreamAsync())
                  {
+                     
                      reqStream.Write(bs, 0, bs.Length);
                  }
-                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                 var response = await request.GetResponseAsync();
                  Stream dataStream = response.GetResponseStream();
                  StreamReader reader = new StreamReader(dataStream);
                  string responseFromServer = reader.ReadToEnd();
@@ -226,12 +225,6 @@ namespace VessageRESTfulServer.Controllers
                      return -1;
                  }
              });
-        }
-
-        //for testing purpose only, accept any dodgy certificate... 
-        private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
         }
 
         [HttpPost("NewMobileUser")]
@@ -279,15 +272,22 @@ namespace VessageRESTfulServer.Controllers
                 else
                 {
                     var tokenService = Startup.ServicesProvider.GetTokenService();
-                    tokenService.ReleaseAppToken(sessionData.Appkey, userId, sessionData.AppToken);
                     sessionData.UserId = registedUser.Id.ToString();
-                    tokenService.SetUserSessionData(sessionData);
-                    UpdateBahamutAccountMobile(sessionData, mobile);
-                    return new
+                    if(await tokenService.SetUserSessionDataAsync(sessionData))
                     {
-                        msg = "SUCCESS",
-                        newUserId = sessionData.UserId
-                    };
+                        await tokenService.ReleaseAppTokenAsync(sessionData.Appkey, userId, sessionData.AppToken);
+                        UpdateBahamutAccountMobile(sessionData, mobile);
+                        return new
+                        {
+                            msg = "SUCCESS",
+                            newUserId = sessionData.UserId
+                        };
+                    }
+                    else
+                    {
+                        throw new Exception("Alloc User Session Error");
+                    }
+                    
                 }
             }
             catch (Exception ex)

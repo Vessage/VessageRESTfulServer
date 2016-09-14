@@ -7,10 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ServerControlService.Model;
 using VessageRESTfulServer.Services;
-using MongoDB.Driver;
 using BahamutService;
 using ServerControlService.Service;
-using ServiceStack.Redis;
 using NLog.Config;
 using NLog;
 using BahamutCommon;
@@ -18,6 +16,12 @@ using BahamutService.Service;
 using System.IO;
 using Newtonsoft.Json.Serialization;
 using DataLevelDefines;
+using System.Threading.Tasks;
+using ServerControlService;
+using Newtonsoft.Json;
+using System.Threading;
+using System.Net;
+using System.Text;
 
 namespace VessageRESTfulServer
 {
@@ -53,13 +57,15 @@ namespace VessageRESTfulServer
     public class Startup
     {
         public static IHostingEnvironment ServerHostingEnvironment { get; private set; }
-
         public static IConfiguration Configuration { get; set; }
         public static IServiceProvider ServicesProvider { get; private set; }
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
 
         public static string Appkey { get { return Configuration["Data:App:appkey"]; } }
+        public static string AppChannelId { get { return Configuration[string.Format("AppChannel:{0}:channel", Appkey)]; } }
         public static string Appname { get { return Configuration["Data:App:appname"]; } }
+        public string AppRegion { get { return Configuration["Data:App:region"]; } }
+
         public static string RegistNewUserApiUrl { get { return Configuration["Data:RegistNewUserApiUrl"]; } }
         public static string ServiceApiUrl { get { return Configuration["Data:ServiceApiUrl"]; } }
         public static string ServiceApiUrlRoute { get { return ServiceApiUrl + "/api"; } }
@@ -71,13 +77,7 @@ namespace VessageRESTfulServer
 
         public static IDictionary<string, string> ValidatedUsers { get; private set; }
         
-        public static bool IsProduction
-        {
-            get
-            {
-                return ServerHostingEnvironment.IsProduction();
-            }
-        }
+        public static bool IsProduction { get { return ServerHostingEnvironment.IsProduction(); } }
 
         public Startup(IHostingEnvironment env)
         {
@@ -93,20 +93,24 @@ namespace VessageRESTfulServer
             var configFile = Program.ArgsConfig["config"];
             var baseConfig = builder.AddJsonFile(configFile, true, true).Build();
             var logConfig = baseConfig["Data:LogConfig"];
+            var appChannelConfig = baseConfig["Data:AppChannelConfig"];
             builder.AddJsonFile(configFile, true, true);
             builder.AddJsonFile(logConfig, true, true);
+            builder.AddJsonFile(appChannelConfig, true, true);
             ServerHostingEnvironment = env;
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
+            
         }
 
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
-            var TokenServerClientManager = DBClientManagerBuilder.GenerateRedisClientManager(Configuration.GetSection("Data:TokenServer"));
-            var ControlServerServiceClientManager = DBClientManagerBuilder.GenerateRedisClientManager(Configuration.GetSection("Data:ControlServiceServer"));
-            services.AddSingleton(new ServerControlManagementService(ControlServerServiceClientManager));
+            var TokenServerClientManager = DBClientManagerBuilder.GenerateRedisConnectionMultiplexer(Configuration.GetSection("Data:TokenServer"));
+            var redis = DBClientManagerBuilder.GenerateRedisConnectionMultiplexer(Configuration.GetSection("Data:ControlServiceServer"));
+            BahamutAppInsanceMonitorManager.Instance.InitManager(redis);
+            services.AddSingleton(new ServerControlManagementService(redis));
             services.AddSingleton(new TokenService(TokenServerClientManager));
 
             services.AddMvc(config => {
@@ -125,7 +129,7 @@ namespace VessageRESTfulServer
             services.AddSingleton(new GroupChatService(mongoClient));
 
             //pubsub manager
-            var pbClientManager = DBClientManagerBuilder.GenerateRedisClientManager(Configuration.GetSection("Data:MessagePubSubServer"));
+            var pbClientManager = DBClientManagerBuilder.GenerateRedisConnectionMultiplexer(Configuration.GetSection("Data:MessagePubSubServer"));
 
             var pbService = new BahamutPubSubService(pbClientManager);
             services.AddSingleton(pbService);
@@ -134,38 +138,17 @@ namespace VessageRESTfulServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            Startup.ServicesProvider = app.ApplicationServices;
+            
+            ServicesProvider = app.ApplicationServices;
+
             //Log
             var logConfig = new LoggingConfiguration();
             LoggerLoaderHelper.LoadLoggerToLoggingConfig(logConfig, Configuration, "Logger:fileLoggers");
-
             if (env.IsDevelopment())
             {
                 LoggerLoaderHelper.AddConsoleLoggerToLogginConfig(logConfig);
             }
             LogManager.Configuration = logConfig;
-
-            //Regist App Instance
-            var serverMgrService = ServicesProvider.GetServerControlManagementService();
-            var appInstance = new BahamutAppInstance()
-            {
-                Appkey = Appkey,
-                InstanceServiceUrl = ServiceApiUrl,
-                Region = Configuration["Data:App:region"]
-            };
-            try
-            {
-                BahamutAppInstance = serverMgrService.RegistAppInstance(appInstance);
-                var observer = serverMgrService.StartKeepAlive(BahamutAppInstance);
-                observer.OnExpireError += KeepAliveObserver_OnExpireError;
-                observer.OnExpireOnce += KeepAliveObserver_OnExpireOnce;
-                LogManager.GetLogger("Main").Info("Bahamut App Instance:" + BahamutAppInstance.Id.ToString());
-                LogManager.GetLogger("Main").Info("Keep Server Instance Alive To Server Controller Thread Started!");
-            }
-            catch (Exception ex)
-            {
-                LogManager.GetLogger("Main").Error(ex, "Unable To Regist App Instance");
-            }
 
             //Authentication
             var openRoutes = new string[]
@@ -179,40 +162,21 @@ namespace VessageRESTfulServer
             app.UseStaticFiles();
             app.UseMvc();
 
+            //Regist App Instance
+            BahamutAppInstanceRegister.RegistAppInstance(ServicesProvider.GetServerControlManagementService(), new BahamutAppInstance()
+            {
+                Appkey = Appkey,
+                InstanceServiceUrl = ServiceApiUrl,
+                Region = AppRegion,
+                Channel = AppChannelId,
+                InfoForClient = JsonConvert.SerializeObject(new
+                {
+                    apiUrl = ServiceApiUrl
+                })
+            });
+
             //Startup
-            LogManager.GetLogger("Main").Info("VessageRESTful Server Started!");
-        }
-
-        private void KeepAliveObserver_OnExpireOnce(object sender, KeepAliveObserverEventArgs e)
-        {
-
-        }
-
-        private void KeepAliveObserver_OnExpireError(object sender, KeepAliveObserverEventArgs e)
-        {
-            LogManager.GetLogger("Main").Error(string.Format("Expire Server Error.Instance:{0}", e.Instance.Id), e);
-            var serverMgrService = ServicesProvider.GetServerControlManagementService();
-            BahamutAppInstance.OnlineUsers = ValidatedUsers.Count;
-            serverMgrService.ReActiveAppInstance(BahamutAppInstance);
-        }
-        
-    }
-
-    public static class IGetBahamutServiceExtension
-    {
-        public static ServerControlManagementService GetServerControlManagementService(this IServiceProvider provider)
-        {
-            return provider.GetService<ServerControlManagementService>();
-        }
-
-        public static TokenService GetTokenService(this IServiceProvider provider)
-        {
-            return provider.GetService<TokenService>();
-        }
-
-        public static BahamutPubSubService GetBahamutPubSubService(this IServiceProvider provider)
-        {
-            return provider.GetService<BahamutPubSubService>();
+            LogManager.GetLogger("Main").Info("VG Api Server Started!");
         }
     }
 
@@ -220,7 +184,7 @@ namespace VessageRESTfulServer
     {
         public static void PublishVegeNotifyMessage(this BahamutPubSubService service,BahamutPublishModel message)
         {
-            service.PublishBahamutUserNotifyMessage("Vege", message);
+            service.PublishBahamutUserNotifyMessage(Startup.AppChannelId, message);
         }
     }
 }

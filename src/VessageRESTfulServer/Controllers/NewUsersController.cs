@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using VessageRESTfulServer.Services;
 using VessageRESTfulServer.Models;
+using BahamutService;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -28,7 +29,7 @@ namespace VessageRESTfulServer.Controllers
             }
 
             var tokenService = Startup.ServicesProvider.GetTokenService();
-            var userSession = await tokenService.ValidateToGetSessionData(Startup.Appkey, accountId, accessToken);
+            var userSession = await tokenService.ValidateToGetSessionDataAsync(Startup.Appkey, accountId, accessToken);
             if (userSession != null)
             {
                 var newUser = new VessageUser()
@@ -42,7 +43,7 @@ namespace VessageRESTfulServer.Controllers
 
                 newUser = await userService.CreateNewUser(newUser);
                 var userId = newUser.Id.ToString();
-                var sessionData = await tokenService.ValidateAccessToken(Startup.Appkey, accountId, accessToken, userId);
+                var sessionData = await tokenService.ValidateAccessTokenAsync(Startup.Appkey, accountId, accessToken, userId);
                 return new
                 {
                     succeed = true,

@@ -30,7 +30,7 @@ namespace VessageRESTfulServer.Controllers
                 string userId = user == null ? null : user.Id.ToString();
                 if (userId == null)
                 {
-                    var tr = await tokenService.ValidateToGetSessionData(appkey, accountId, accessToken);
+                    var tr = await tokenService.ValidateToGetSessionDataAsync(appkey, accountId, accessToken);
                     if (tr != null)
                     {
                         LogInfo("Account:{0} Registing", accountId);
@@ -43,7 +43,7 @@ namespace VessageRESTfulServer.Controllers
                     Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     return "Validate Failed";
                 }
-                var tokenResult = await tokenService.ValidateAccessToken(appkey, accountId, accessToken, userId);
+                var tokenResult = await tokenService.ValidateAccessTokenAsync(appkey, accountId, accessToken, userId);
                 if (tokenResult.Succeed)
                 {
                     LogInfo("User:{0} Validate Success", userId);
@@ -79,13 +79,10 @@ namespace VessageRESTfulServer.Controllers
         [HttpDelete]
         public async Task<object> Delete(string appkey, string userId, string appToken)
         {
-            return await Task.Run(() =>
-            {
-                var tokenService = Startup.ServicesProvider.GetTokenService();
-                Startup.ValidatedUsers.Remove(userId);
-                var suc = tokenService.ReleaseAppToken(appkey, userId, appToken);
-                return new { msg = suc ? "TOKEN_RELEASED" : "RELEASE_TOKEN_ERROR" };
-            });
+            var tokenService = Startup.ServicesProvider.GetTokenService();
+            Startup.ValidatedUsers.Remove(userId);
+            var suc = await tokenService.ReleaseAppTokenAsync(appkey, userId, appToken);
+            return new { msg = suc ? "TOKEN_RELEASED" : "RELEASE_TOKEN_ERROR" };
         }
     }
 }

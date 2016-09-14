@@ -15,12 +15,15 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "web": {
-      "commandName": "web",
+
+    "VGApi": {
+      "commandName": "Project",
+      "launchUrl": "http://localhost:5008",
       "commandLineArgs": "--config config_debug.json",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
+
   }
 }

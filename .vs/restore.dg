@@ -1,14 +1,3 @@
-#:F:\Git\bahamut\BahamutZero\src\DataLevelDefines\DataLevelDefines.xproj
-#:F:\Git\bahamut\BahamutZero\src\BahamutService\BahamutService.xproj
-F:\Git\bahamut\BahamutZero\src\BahamutService\BahamutService.xproj|F:\Git\bahamut\BahamutZero\src\BahamutCommon\BahamutCommon.xproj
-F:\Git\bahamut\BahamutZero\src\BahamutService\BahamutService.xproj|F:\Git\bahamut\BahamutZero\src\DataLevelDefines\DataLevelDefines.xproj
-#:F:\Git\bahamut\BahamutZero\src\BahamutAspNetCommon\BahamutAspNetCommon.xproj
-F:\Git\bahamut\BahamutZero\src\BahamutAspNetCommon\BahamutAspNetCommon.xproj|F:\Git\bahamut\BahamutZero\src\BahamutService\BahamutService.xproj
-F:\Git\bahamut\BahamutZero\src\BahamutService\BahamutService.xproj|F:\Git\bahamut\BahamutZero\src\BahamutCommon\BahamutCommon.xproj
-F:\Git\bahamut\BahamutZero\src\BahamutService\BahamutService.xproj|F:\Git\bahamut\BahamutZero\src\DataLevelDefines\DataLevelDefines.xproj
-#:F:\Git\bahamut\ServerControl\src\ServerControlService\ServerControlService.xproj
-F:\Git\bahamut\ServerControl\src\ServerControlService\ServerControlService.xproj|F:\Git\bahamut\BahamutZero\src\BahamutCommon\BahamutCommon.xproj
-F:\Git\bahamut\ServerControl\src\ServerControlService\ServerControlService.xproj|F:\Git\bahamut\BahamutZero\src\DataLevelDefines\DataLevelDefines.xproj
 #:F:\Git\bahamut\VessageRESTfulServer\src\VessageRESTfulServer\VessageRESTfulServer.xproj
 F:\Git\bahamut\VessageRESTfulServer\src\VessageRESTfulServer\VessageRESTfulServer.xproj|F:\Git\bahamut\BahamutZero\src\BahamutAspNetCommon\BahamutAspNetCommon.xproj
 F:\Git\bahamut\VessageRESTfulServer\src\VessageRESTfulServer\VessageRESTfulServer.xproj|F:\Git\bahamut\ServerControl\src\ServerControlService\ServerControlService.xproj
