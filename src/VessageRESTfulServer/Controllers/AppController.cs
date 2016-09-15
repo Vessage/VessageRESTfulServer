@@ -96,7 +96,7 @@ namespace VessageRESTfulServer.Controllers
                         Custom = "NewVessageNotify",
                         Text = "",
                         LocKey = "NEW_VMSG_NOTIFICATION"
-                    }),
+                    }, Formatting.None),
                     NotifyType = "NewVessageNotify",
                     ToUser = UserId.ToString()
                 };

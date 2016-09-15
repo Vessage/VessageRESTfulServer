@@ -7,7 +7,6 @@ using VessageRESTfulServer.Services;
 using VessageRESTfulServer.Models;
 using MongoDB.Bson;
 using BahamutCommon;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.IO;
 using BahamutService.Service;
@@ -16,7 +15,6 @@ using BahamutService.Model;
 using BahamutService;
 using System.Net;
 using System.Net.Http;
-using System.Net.Security;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -151,13 +149,13 @@ namespace VessageRESTfulServer.Controllers
             var notifyMsg = new BahamutPublishModel
             {
                 NotifyType = "RegistUserDevice",
-                Info = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                Info = JsonConvert.SerializeObject(new
                 {
                     AccountId = UserSessionData.AccountId,
                     Appkey = UserSessionData.Appkey,
                     DeviceToken = deviceToken,
                     DeviceType = deviceType
-                }),
+                }, Formatting.None),
                 ToUser = UserSessionData.UserId
             };
             AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
@@ -175,7 +173,7 @@ namespace VessageRESTfulServer.Controllers
                     AccountId = UserSessionData.AccountId,
                     Appkey = UserSessionData.Appkey,
                     DeviceToken = deviceToken
-                }),
+                }, Formatting.None),
                 ToUser = UserSessionData.UserId
             };
             AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
@@ -246,6 +244,16 @@ namespace VessageRESTfulServer.Controllers
         [HttpPost("ValidateMobileVSMS")]
         public async Task<object> ValidateMobileVSMS(string smsAppkey,string mobile, string zone, string code)
         {
+            
+            var sessionData = UserSessionData;
+            var userId = sessionData.UserId;
+            var userOId = UserObjectId;
+            var userService = Startup.ServicesProvider.GetUserService();
+            var profile = await userService.GetUserOfUserId(UserObjectId);
+            if (!string.IsNullOrWhiteSpace(profile.Mobile) && profile.Mobile == mobile)
+            {
+                return new { msg = "SUCCESS" };
+            }
             var mobSMSAppkey = string.IsNullOrEmpty(smsAppkey) ? Startup.Configuration["Data:MobSMSAppKey"] : smsAppkey;
             var res = await ValidateMobSMSCode(mobSMSAppkey, mobile, zone, code);
             if (res != 200)
@@ -253,13 +261,14 @@ namespace VessageRESTfulServer.Controllers
                 Response.StatusCode = res;
                 return new { msg = res.ToString() };
             }
-            var sessionData = UserSessionData;
-            var userId = sessionData.UserId;
-            var userOId = UserObjectId;
-            var userService = Startup.ServicesProvider.GetUserService();
+
             try
             {
-                var registedUser = await userService.BindExistsUserOnRegist(userOId, mobile);
+                VessageUser registedUser = null;
+                if (profile.Mobile == null)
+                {
+                    registedUser = await userService.BindExistsUserOnRegist(userOId, mobile);
+                }
                 if (registedUser == null)
                 {
                     bool suc = await userService.UpdateMobileOfUser(userOId, mobile);

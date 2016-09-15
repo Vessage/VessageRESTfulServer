@@ -64,7 +64,9 @@ namespace VessageRESTfulServer
         public static string Appkey { get { return Configuration["Data:App:appkey"]; } }
         public static string AppChannelId { get { return Configuration[string.Format("AppChannel:{0}:channel", Appkey)]; } }
         public static string Appname { get { return Configuration["Data:App:appname"]; } }
-        public string AppRegion { get { return Configuration["Data:App:region"]; } }
+        public static string AppRegion { get { return Configuration["Data:App:region"]; } }
+
+        public static string ConfigRoot { get { return Configuration["Data:ConfigRoot"]; } }
 
         public static string RegistNewUserApiUrl { get { return Configuration["Data:RegistNewUserApiUrl"]; } }
         public static string ServiceApiUrl { get { return Configuration["Data:ServiceApiUrl"]; } }
@@ -118,6 +120,8 @@ namespace VessageRESTfulServer
             }).AddJsonOptions(op =>
             {
                 op.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                op.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                op.SerializerSettings.Formatting = Formatting.None;
             });
 
             //business services
@@ -172,7 +176,7 @@ namespace VessageRESTfulServer
                 InfoForClient = JsonConvert.SerializeObject(new
                 {
                     apiUrl = ServiceApiUrl
-                })
+                }, Formatting.None)
             });
 
             //Startup
