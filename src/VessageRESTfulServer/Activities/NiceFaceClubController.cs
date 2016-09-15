@@ -364,17 +364,7 @@ namespace VessageRESTfulServer.Activities
                         highScore = s;
                     }
                 }
-
-                highScore *= 0.91f;
-
-                highScore = ((int)(highScore * 10f)) / 10f;
-                var maxAddtion = NiceFaceClubConfigCenter.FaceTestMaxAddtion;
-                if (addition > maxAddtion)
-                {
-                    addition = maxAddtion;
-                }
-                highScore += addition;
-                var msg = NiceFaceClubConfigCenter.GetScoreString(highScore);
+                var msg = NiceFaceClubConfigCenter.GetScoreString(AdjustScore(highScore, addition));
 
                 return new
                 {
@@ -390,6 +380,15 @@ namespace VessageRESTfulServer.Activities
                 return null;
             }
             
+        }
+
+        private static float AdjustScore(float highScore,float addition)
+        {
+            var maxAddtion = NiceFaceClubConfigCenter.FaceTestMaxAddtion;
+            addition = addition > maxAddtion ? maxAddtion : addition;
+            highScore = highScore >= 8.6 ? 8.0f + 2.123333f * (highScore - 8.6f) / 1.4f : 8.0f - 8.6f * (1f - highScore / 8.6f);
+            highScore = addition + ((int)(highScore * 10f)) / 10f;
+            return highScore > 10f ? 10f : highScore < 3 ? 0f : highScore;
         }
 
         [HttpPost("NiceFace")]
