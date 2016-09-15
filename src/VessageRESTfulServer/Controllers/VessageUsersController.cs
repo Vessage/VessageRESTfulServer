@@ -158,7 +158,7 @@ namespace VessageRESTfulServer.Controllers
                 }, Formatting.None),
                 ToUser = UserSessionData.UserId
             };
-            AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
+            AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
             return new { msg = "OK" };
         }
 
@@ -176,7 +176,7 @@ namespace VessageRESTfulServer.Controllers
                 }, Formatting.None),
                 ToUser = UserSessionData.UserId
             };
-            AppServiceProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage("Vege", notifyMsg);
+            AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
             return new { msg = "OK" };
         }
 
