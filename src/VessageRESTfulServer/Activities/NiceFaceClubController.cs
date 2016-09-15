@@ -364,7 +364,9 @@ namespace VessageRESTfulServer.Activities
                         highScore = s;
                     }
                 }
-                var msg = NiceFaceClubConfigCenter.GetScoreString(AdjustScore(highScore, addition));
+
+                highScore = AdjustScore(highScore, addition);
+                var msg = NiceFaceClubConfigCenter.GetScoreString(highScore);
 
                 return new
                 {
