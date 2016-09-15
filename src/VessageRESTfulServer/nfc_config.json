@@ -1,0 +1,6 @@
+﻿{
+  "ActId": "1002",
+  "FaceTestSignPrivateKey": "nfc_is_wonderful",
+  "FaceTestMaxAddtionScore": 0.2,
+  "NFCBaseFaceScore": 8.0
+}
