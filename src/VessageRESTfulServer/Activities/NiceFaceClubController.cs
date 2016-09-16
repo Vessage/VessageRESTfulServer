@@ -38,6 +38,7 @@ namespace VessageRESTfulServer.Activities
     public class NiceFaceClubConfigCenter
     {
         private static Random random = new Random(DateTime.Now.Millisecond);
+		public static Random Random { get { return random; } }
         private static IConfiguration _nfcConfig;
         private static IConfiguration NFCConfig
         {
@@ -388,8 +389,11 @@ namespace VessageRESTfulServer.Activities
         {
             var maxAddtion = NiceFaceClubConfigCenter.FaceTestMaxAddtion;
             addition = addition > maxAddtion ? maxAddtion : addition;
-            highScore = highScore >= 8.6 ? 8.0f + 2.123333f * (highScore - 8.6f) / 1.4f : 8.0f - 8.6f * (1f - highScore / 8.6f);
-            highScore = addition + ((int)(highScore * 10f)) / 10f;
+            var random = NiceFaceClubConfigCenter.Random;
+            var ad = addition * random.Next(66, 88) / 100f;
+            highScore = highScore >= 8.6 ? 8.0f + (highScore - 8.6f) / (0.9f - ad) : 8.0f - 8.6f * (1f - highScore / (8.6f - ad));
+            highScore += addition * 0.4f;
+            highScore = ((int)(highScore * 10f)) / 10f;
             return highScore > 10f ? 10f : highScore < 3 ? 0f : highScore;
         }
 
