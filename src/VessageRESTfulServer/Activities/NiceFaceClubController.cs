@@ -180,11 +180,15 @@ namespace VessageRESTfulServer.Activities
             dynamic memberPuzzle = JsonConvert.DeserializeObject(puzzles);
             int leastCnt = memberPuzzle.leastCnt;
             JArray puzzleArr = memberPuzzle.puzzles;
-            var arr = puzzleArr.ToArray().Take(leastCnt);
             var resultBuilder = new StringBuilder("[");
             var separator = "";
-            foreach (var obj in arr)
+            var sum = 0;
+            foreach (var obj in puzzleArr.ToArray())
             {
+                if (sum == leastCnt)
+                {
+                    break;
+                }
                 var qs = (string)obj["question"];
                 var cans = (JArray)obj["correct"];
                 var icans = (JArray)obj["incorrect"];
@@ -194,9 +198,8 @@ namespace VessageRESTfulServer.Activities
                 }
                 var ca = (string)cans[random.Next() % cans.Count()];
                 var ica = (string)icans[random.Next() % icans.Count()];
-                var format = "\"qs\":\"{0}\",\"l\":\"{1}\",\"r\":\"{2}\"";
+                var format = "{\"qs\":\"{0}\",\"l\":\"{1}\",\"r\":\"{2}\"}";
                 resultBuilder.Append(separator);
-                resultBuilder.Append("{");
                 if (random.Next() % 2 == 0)
                 {
                     resultBuilder.Append(string.Format(format, qs, ca, ica));
@@ -205,14 +208,12 @@ namespace VessageRESTfulServer.Activities
                 {
                     resultBuilder.Append(string.Format(format, qs, ica, ca));
                 }
-                resultBuilder.Append("}");
                 separator = ",";
+                sum++;
             }
             resultBuilder.Append("]");
             return resultBuilder.ToString();
         }
-
-
 
         [HttpGet("NiceFaces")]
         public async Task<IEnumerable<object>> GetNiceFaces(int preferSex, string location = null)
