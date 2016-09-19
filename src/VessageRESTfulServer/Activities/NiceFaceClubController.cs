@@ -198,7 +198,7 @@ namespace VessageRESTfulServer.Activities
                 }
                 var ca = (string)cans[random.Next() % cans.Count()];
                 var ica = (string)icans[random.Next() % icans.Count()];
-                var format = "{\"qs\":\"{0}\",\"l\":\"{1}\",\"r\":\"{2}\"}";
+                var format = "{{\"qs\":\"{0}\",\"l\":\"{1}\",\"r\":\"{2}\"}}";
                 resultBuilder.Append(separator);
                 if (random.Next() % 2 == 0)
                 {
