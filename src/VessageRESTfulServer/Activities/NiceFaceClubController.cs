@@ -188,6 +188,10 @@ namespace VessageRESTfulServer.Activities
                 var qs = (string)obj["question"];
                 var cans = (JArray)obj["correct"];
                 var icans = (JArray)obj["incorrect"];
+                if (cans.Count == 0|| icans.Count == 0)
+                {
+                    continue;
+                }
                 var ca = (string)cans[random.Next() % cans.Count()];
                 var ica = (string)icans[random.Next() % icans.Count()];
                 var format = "\"qs\":\"{0}\",\"l\":\"{1}\",\"r\":\"{2}\"";
