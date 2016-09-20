@@ -33,6 +33,7 @@ namespace VessageRESTfulServer.Activities
         public DateTime CreateTime { get; set; }
         public DateTime ActiveTime { get; set; }
         public GeoJson2DGeographicCoordinates Location { get; set; }
+        public bool InBlackList { get; set; }
     }
 
     public class NiceFaceClubConfigCenter
@@ -112,6 +113,11 @@ namespace VessageRESTfulServer.Activities
             try
             {
                 var profile = await collection.Find(p => p.UserId == UserObjectId).FirstAsync();
+                if (profile.InBlackList)
+                {
+                    Response.StatusCode = 500;
+                    return null;
+                }
                 var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.ActiveTime, DateTime.UtcNow);
                 if (!string.IsNullOrWhiteSpace(location))
                 {
@@ -221,18 +227,32 @@ namespace VessageRESTfulServer.Activities
             //TODO:
             //var c = LocationStringToLocation(location);
             var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
+            NFCMemberProfile profile = null;
+            try
+            {
+                profile = await collection.Find(p => p.UserId == UserObjectId).FirstAsync();
+            }
+            catch (Exception)
+            {
+            }
+
+            if (profile == null || profile.FaceScore < NiceFaceClubConfigCenter.NFCBaseFaceScore || profile.InBlackList)
+            {
+                return new object[0];
+            }
+
             FilterDefinition<NFCMemberProfile> filter = null;
             if (preferSex > 0)
             {
-                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null && p.Sex >= 0);
+                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.InBlackList == false && p.UserId != UserObjectId && p.Puzzles != null && p.Sex >= 0);
             }
             else if (preferSex < 0)
             {
-                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null && p.Sex <= 0);
+                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.InBlackList == false && p.UserId != UserObjectId && p.Puzzles != null && p.Sex <= 0);
             }
             else
             {
-                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.UserId != UserObjectId && p.Puzzles != null);
+                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.InBlackList == false && p.UserId != UserObjectId && p.Puzzles != null);
             }
             var res = await collection.Find(filter).SortByDescending(p => p.ActiveTime).Limit(20).ToListAsync();
             var objs = from r in res select MemberProfileToJsonObject(r);
@@ -419,6 +439,7 @@ namespace VessageRESTfulServer.Activities
                     .Set(p => p.FaceScore, score)
                     .Set(p => p.Nick, user.Nick)
                     .Set(p => p.Sex, user.Sex)
+                    .Set(p => p.InBlackList, false)
                     .Set(p => p.ActiveTime, DateTime.UtcNow);
                 var result = await collection.UpdateOneAsync(p => p.UserId == UserObjectId, update);
                 if (result.MatchedCount == 0)
@@ -431,6 +452,7 @@ namespace VessageRESTfulServer.Activities
                         UserId = UserObjectId,
                         Nick = user.Nick,
                         Sex = user.Sex,
+                        InBlackList = false,
                         ActiveTime = DateTime.UtcNow
                     };
                     await collection.InsertOneAsync(profile);
