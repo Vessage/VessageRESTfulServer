@@ -21,8 +21,12 @@ using System.IO;
 
 namespace VessageRESTfulServer.Activities
 {
+
     public class NFCMemberProfile
     {
+        public const int STATE_BLACK_LIST = -100;
+        public const int STATE_VALIDATING = 1;
+        public const int STATE_VALIDATED = 2;
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
         public string Nick { get; set; }
@@ -33,6 +37,8 @@ namespace VessageRESTfulServer.Activities
         public DateTime CreateTime { get; set; }
         public DateTime ActiveTime { get; set; }
         public GeoJson2DGeographicCoordinates Location { get; set; }
+        public int ProfileState { get; set; }
+        public int Likes { get; set; }
         public bool InBlackList { get; set; }
     }
 
@@ -136,7 +142,8 @@ namespace VessageRESTfulServer.Activities
                     Id = UserObjectId,
                     Nick = "VGer",
                     Sex = 0,
-
+                    Likes = 0,
+                    ProfileState = NFCMemberProfile.STATE_VALIDATED
                 };
                 return MemberProfileToJsonObject(tmpProfile);
             }            
@@ -177,7 +184,8 @@ namespace VessageRESTfulServer.Activities
                 sex = profile.Sex,
                 faceId = profile.FaceImageId,
                 score = profile.FaceScore,
-                puzzles = isSelf ? profile.Puzzles : RandomPuzzleForVisitor(profile.Puzzles)
+                mbAcpt = profile.ProfileState == NFCMemberProfile.STATE_VALIDATED,
+                puzzles = "[]"//isSelf ? profile.Puzzles : RandomPuzzleForVisitor(profile.Puzzles)
             };
         }
 
@@ -453,6 +461,8 @@ namespace VessageRESTfulServer.Activities
                         Nick = user.Nick,
                         Sex = user.Sex,
                         InBlackList = false,
+                        Likes = 0,
+                        ProfileState = NFCMemberProfile.STATE_VALIDATING,
                         ActiveTime = DateTime.UtcNow
                     };
                     await collection.InsertOneAsync(profile);
