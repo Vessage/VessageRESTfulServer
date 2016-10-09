@@ -152,7 +152,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 UpdateTs = nowTs,
                 Type = poster.State == NFCMemberProfile.STATE_VALIDATED ? NFCPost.TYPE_NORMAL : NFCPost.TYPE_NEW_MEMBER,
                 UserId = UserObjectId,
-                State = NFCPost.TYPE_NORMAL
+                State = NFCPost.STATE_NORMAL
             };
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
             await postCol.InsertOneAsync(newPost);
@@ -199,14 +199,14 @@ namespace VessageRESTfulServer.Activities.NFC
             {
                 var post = await postCol.FindOneAndUpdateAsync(p => p.Id == new ObjectId(postId) && p.State > 0, new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds));
                 var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
-                var updateLike = new UpdateDefinitionBuilder<NFCPostLike>().Set(f => f.Ts, nowTs).Set(l => l.PostId, post.Id).Set(l => l.UserId, UserObjectId);
                 var opt = new FindOneAndUpdateOptions<NFCPostLike, NFCPostLike>();
                 opt.ReturnDocument = ReturnDocument.Before;
                 opt.IsUpsert = true;
                 opt.Projection = new ProjectionDefinitionBuilder<NFCPostLike>().Include(l => l.Ts);
                 var filter = new FilterDefinitionBuilder<NFCPostLike>().Where(l => l.PostId == post.Id && l.UserId == UserObjectId);
+                var updateLike = new UpdateDefinitionBuilder<NFCPostLike>().Set(f => f.Ts, nowTs).Set(l => l.PostId, post.Id).Set(l => l.UserId, UserObjectId);
                 var like = await likeCol.FindOneAndUpdateAsync(filter, updateLike, opt);
-                if (like.Ts != nowTs)
+                if (like == null)
                 {
                     var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Inc(p => p.Likes, likesCount).Inc(p => p.NewLikes, likesCount);
                     var usrOpt = new FindOneAndUpdateOptions<NFCMemberProfile, NFCMemberProfile>

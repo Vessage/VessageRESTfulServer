@@ -38,7 +38,7 @@ namespace VessageRESTfulServer.Activities.NFC
         public const int STATE_REMOVED = -1;
         public const int STATE_DELETED = -2;
 
-        public const int NORMAL = 1;
+        public const int STATE_NORMAL = 1;
 
         public const int TYPE_NORMAL = 0;
         public const int TYPE_NEW_MEMBER = 1;
