@@ -38,8 +38,13 @@ namespace VessageRESTfulServer.Activities
         public DateTime ActiveTime { get; set; }
         public GeoJson2DGeographicCoordinates Location { get; set; }
         public int ProfileState { get; set; }
+
+        //Post State
         public int Likes { get; set; }
-        public bool InBlackList { get; set; }
+        public int NewLikes { get; set; }
+        public int NewCmts { get; set; }
+
+        //public bool InBlackList { get; set; } //Use ProfileState Instead
     }
 
     public class NiceFaceClubConfigCenter
@@ -62,11 +67,13 @@ namespace VessageRESTfulServer.Activities
                 return _nfcConfig;
             }
         }
-
+        public static float NFCAnnounce { get { return float.Parse(NFCConfig["NFCAnnounce"]); } }
         public static float FaceTestMaxAddtion { get { return float.Parse(NFCConfig["FaceTestMaxAddtionScore"]); } }
         public static float NFCBaseFaceScore { get { return float.Parse(NFCConfig["NFCBaseFaceScore"]); } }
         public static string ActivityId { get { return NFCConfig["ActId"]; } }
         public static string TestResultSignKey { get { return NFCConfig["FaceTestSignPrivateKey"]; } }
+
+        public static int BaseLikeJoinNFC { get { return 10; } }
 
         public static string GetScoreString(float highScore)
         {
@@ -99,7 +106,7 @@ namespace VessageRESTfulServer.Activities
     }
 
     [Route("api/[controller]")]
-    public class NiceFaceClubController : APIControllerBase
+    public partial class NiceFaceClubController : APIControllerBase
     {
         private static Random random = new Random(DateTime.Now.Millisecond);
         private IMongoDatabase NiceFaceClubDb
@@ -119,7 +126,7 @@ namespace VessageRESTfulServer.Activities
             try
             {
                 var profile = await collection.Find(p => p.UserId == UserObjectId).FirstAsync();
-                if (profile.InBlackList)
+                if (profile.ProfileState == NFCMemberProfile.STATE_BLACK_LIST)
                 {
                     Response.StatusCode = 500;
                     return null;
@@ -174,7 +181,7 @@ namespace VessageRESTfulServer.Activities
             }
         }
 
-        object MemberProfileToJsonObject(NFCMemberProfile profile)
+        public object MemberProfileToJsonObject(NFCMemberProfile profile)
         {
             var isSelf = profile.UserId.ToString() == UserSessionData.UserId;
             return new
@@ -185,88 +192,11 @@ namespace VessageRESTfulServer.Activities
                 faceId = profile.FaceImageId,
                 score = profile.FaceScore,
                 mbAcpt = profile.ProfileState == NFCMemberProfile.STATE_VALIDATED,
+                likes = profile.Likes,
                 puzzles = "[]"//isSelf ? profile.Puzzles : RandomPuzzleForVisitor(profile.Puzzles)
             };
         }
 
-        static private string RandomPuzzleForVisitor(string puzzles)
-        {
-            dynamic memberPuzzle = JsonConvert.DeserializeObject(puzzles);
-            int leastCnt = memberPuzzle.leastCnt;
-            JArray puzzleArr = memberPuzzle.puzzles;
-            var resultBuilder = new StringBuilder("[");
-            var separator = "";
-            var sum = 0;
-            foreach (var obj in puzzleArr.ToArray())
-            {
-                if (sum == leastCnt)
-                {
-                    break;
-                }
-                var qs = (string)obj["question"];
-                var cans = (JArray)obj["correct"];
-                var icans = (JArray)obj["incorrect"];
-                if (cans.Count == 0|| icans.Count == 0)
-                {
-                    continue;
-                }
-                var ca = (string)cans[random.Next() % cans.Count()];
-                var ica = (string)icans[random.Next() % icans.Count()];
-                var format = "{{\"qs\":\"{0}\",\"l\":\"{1}\",\"r\":\"{2}\"}}";
-                resultBuilder.Append(separator);
-                if (random.Next() % 2 == 0)
-                {
-                    resultBuilder.Append(string.Format(format, qs, ca, ica));
-                }
-                else
-                {
-                    resultBuilder.Append(string.Format(format, qs, ica, ca));
-                }
-                separator = ",";
-                sum++;
-            }
-            resultBuilder.Append("]");
-            return resultBuilder.ToString();
-        }
-
-        [HttpGet("NiceFaces")]
-        public async Task<IEnumerable<object>> GetNiceFaces(int preferSex, string location = null)
-        {
-            //TODO:
-            //var c = LocationStringToLocation(location);
-            var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            NFCMemberProfile profile = null;
-            try
-            {
-                profile = await collection.Find(p => p.UserId == UserObjectId).FirstAsync();
-            }
-            catch (Exception)
-            {
-            }
-
-            if (profile == null || profile.FaceScore < NiceFaceClubConfigCenter.NFCBaseFaceScore || profile.InBlackList)
-            {
-                return new object[0];
-            }
-
-            FilterDefinition<NFCMemberProfile> filter = null;
-            if (preferSex > 0)
-            {
-                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.InBlackList == false && p.UserId != UserObjectId && p.Puzzles != null && p.Sex >= 0);
-            }
-            else if (preferSex < 0)
-            {
-                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.InBlackList == false && p.UserId != UserObjectId && p.Puzzles != null && p.Sex <= 0);
-            }
-            else
-            {
-                filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p => p.InBlackList == false && p.UserId != UserObjectId && p.Puzzles != null);
-            }
-            var res = await collection.Find(filter).SortByDescending(p => p.ActiveTime).Limit(20).ToListAsync();
-            var objs = from r in res select MemberProfileToJsonObject(r);
-
-            return objs.ToArray();
-        }
 
         static private GeoJson2DGeographicCoordinates LocationStringToLocation(string location)
         {
@@ -277,27 +207,6 @@ namespace VessageRESTfulServer.Activities
             return new GeoJson2DGeographicCoordinates(longitude, latitude);
         }
 
-        [HttpPut("PuzzleAnswer")]
-        public async Task<object> SetPuzzleAnswer(string puzzle)
-        {
-            if (string.IsNullOrWhiteSpace(puzzle))
-            {
-                Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                return new { msg = "FAIL" };
-            }
-            var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.Puzzles, puzzle);
-            var result = await collection.UpdateOneAsync(p => p.UserId == UserObjectId, update);
-            if (result.ModifiedCount > 0)
-            {
-                return new { msg = "SUCCESS" };
-            }
-            else
-            {
-                Response.StatusCode = (int)HttpStatusCode.NotFound;
-                return new { msg = "FAIL" };
-            }
-        }
 
         [HttpPost("Like")]
         public object LikeMember(string profileId)
@@ -311,51 +220,6 @@ namespace VessageRESTfulServer.Activities
         {
             Response.StatusCode = (int)HttpStatusCode.Gone;
             return null;
-        }
-
-        [HttpPost("Puzzle")]
-        public async Task<object> GuessPuzzle(string profileId,string answer)
-        {
-            
-            var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            var profile = await collection.Find(p => p.Id == new ObjectId(profileId)).FirstAsync();
-            var psJson = profile.Puzzles;
-            var answerArr = from a in (JArray)JsonConvert.DeserializeObject(answer) select (string)a;
-            JObject puzzle = (JObject)JsonConvert.DeserializeObject(psJson);
-            var pass = false;
-            var puzzles = (JArray)puzzle["puzzles"];
-
-            var correctAnswers = from p in puzzles from a in (JArray)p["correct"] select (string)a;
-            if (correctAnswers.Count() > 0 && answerArr.Count() > 0)
-            {
-                var result = correctAnswers.Intersect(answerArr);
-                if (result.Count() == answerArr.Count())
-                {
-                    pass = true;
-                }
-            }
-            string nick = null;
-            string msg = null;
-            string userId = null;
-            
-            if (pass)
-            {
-                msg = NiceFaceClubConfigCenter.GetRandomPuzzlePassMessage();
-                userId = profile.UserId.ToString();
-                nick = profile.Nick;
-            }
-            else
-            {
-                msg = NiceFaceClubConfigCenter.GetRandomPuzzleNotPassMessage();
-            }
-            return new
-            {
-                id = profileId,
-                pass = pass,
-                userId = userId,
-                msg = msg,
-                nick = nick
-            };
         }
 
         [HttpGet("FaceScoreTest")]
@@ -447,7 +311,6 @@ namespace VessageRESTfulServer.Activities
                     .Set(p => p.FaceScore, score)
                     .Set(p => p.Nick, user.Nick)
                     .Set(p => p.Sex, user.Sex)
-                    .Set(p => p.InBlackList, false)
                     .Set(p => p.ActiveTime, DateTime.UtcNow);
                 var result = await collection.UpdateOneAsync(p => p.UserId == UserObjectId, update);
                 if (result.MatchedCount == 0)
@@ -460,7 +323,6 @@ namespace VessageRESTfulServer.Activities
                         UserId = UserObjectId,
                         Nick = user.Nick,
                         Sex = user.Sex,
-                        InBlackList = false,
                         Likes = 0,
                         ProfileState = NFCMemberProfile.STATE_VALIDATING,
                         ActiveTime = DateTime.UtcNow
