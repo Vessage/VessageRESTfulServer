@@ -123,7 +123,8 @@ namespace VessageRESTfulServer.Activities.NFC
         public async Task<object> GetMyPost(long ts, int cnt)
         {
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
-            var posts = await postCol.Find(f => f.UserId == UserObjectId && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
+            var usrOId = UserObjectId;
+            var posts = await postCol.Find(f => f.UserId == usrOId && f.State > 0 && f.UpdateTs < ts).SortByDescending(p => p.UpdateTs).Limit(cnt).ToListAsync();
             return from p in posts select NFCPostToJsonObject(p, NFCPost.TYPE_MY_POST);
         }
 
