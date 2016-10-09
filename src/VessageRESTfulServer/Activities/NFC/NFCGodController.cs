@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VessageRESTfulServer.Services;
 
-namespace VessageRESTfulServer.Activities
+namespace VessageRESTfulServer.Activities.NFC
 {
     public partial class NiceFaceClubController
     {

@@ -8,53 +8,9 @@ using MongoDB.Driver;
 using MongoDB.Bson;
 using VessageRESTfulServer.Services;
 
-namespace VessageRESTfulServer.Activities
+namespace VessageRESTfulServer.Activities.NFC
 {
-    public class NFCPost
-    {
-        public const int STATE_REMOVED = -1;
-        public const int STATE_DELETED = -2;
-
-        public const int NORMAL = 1;
-
-        public const int TYPE_NORMAL = 0;
-        public const int TYPE_NEW_MEMBER = 1;
-        public const int TYPE_MY_POST = 2;
-
-        public ObjectId Id { get; set; }
-        public ObjectId MemberId { get; set; }
-        public ObjectId UserId { get; set; }
-        public string Image { get; set; }
-
-        public long PostTs { get; set; }
-
-        public long UpdateTs { get; set; }
-
-        public int Likes { get; set; }
-        public int Cmts { get; set; }
-        public string PosterNick { get; set; }
-        public int Type { get; set; }
-        public int State { get; set; }
-    }
-
-    public class NFCPostLike
-    {
-        public ObjectId Id { get; set; }
-        public ObjectId PostId { get; set; }
-        public ObjectId UserId { get; set; }
-        public long Ts { get; set; }
-    }
-
-    public class NFCPostComment
-    {
-        public ObjectId Id { get; set; }
-        public ObjectId PostId { get; set; }
-        public string Content { get; set; }
-        public long PostTs { get; set; }
-        public string PosterNick { get; set; }
-        public ObjectId Poster { get; set; }
-    }
-
+    
     public partial class NiceFaceClubController
     {
         private static DateTime lastTimeCheckNewMember = DateTime.MinValue;
@@ -71,19 +27,26 @@ namespace VessageRESTfulServer.Activities
             }
             
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
-            var posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL).SortByDescending(p => p.PostTs).Limit(23).ToListAsync();
+            IEnumerable<NFCPost> posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL).SortByDescending(p => p.PostTs).Limit(23).ToListAsync();
+
             NFCMemberProfile profile = null;
             try
             {
+                
                 var pd = new ProjectionDefinitionBuilder<NFCMemberProfile>().Include(p => p.Likes).Include(p => p.NewLikes).Include(p => p.NewCmts);
                 var opt = new FindOneAndUpdateOptions<NFCMemberProfile, NFCMemberProfile>
                 {
                     ReturnDocument = ReturnDocument.Before,
-                    Projection = pd
+                    Projection = pd,
+                    IsUpsert = false
                 };
                 var filter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(f => f.UserId == UserObjectId);
                 var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.NewLikes, 0).Set(p => p.NewCmts, 0);
                 profile = await usrCol.FindOneAndUpdateAsync(filter, update, opt);
+                if (profile == null || profile.Id == ObjectId.Empty)
+                {
+                    throw new NullReferenceException();
+                }
             }
             catch (Exception)
             {

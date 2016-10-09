@@ -19,34 +19,8 @@ using System.IO;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace VessageRESTfulServer.Activities
+namespace VessageRESTfulServer.Activities.NFC
 {
-
-    public class NFCMemberProfile
-    {
-        public const int STATE_BLACK_LIST = -100;
-        public const int STATE_VALIDATING = 1;
-        public const int STATE_VALIDATED = 2;
-        public ObjectId Id { get; set; }
-        public ObjectId UserId { get; set; }
-        public string Nick { get; set; }
-        public float FaceScore { get; set; }
-        public string FaceImageId { get; set; }
-        public string Puzzles { get; set; }
-        public int Sex { get; set; }
-        public DateTime CreateTime { get; set; }
-        public DateTime ActiveTime { get; set; }
-        public GeoJson2DGeographicCoordinates Location { get; set; }
-        public int ProfileState { get; set; }
-
-        //Post State
-        public int Likes { get; set; }
-        public int NewLikes { get; set; }
-        public int NewCmts { get; set; }
-
-        //public bool InBlackList { get; set; } //Use ProfileState Instead
-    }
-
     public class NiceFaceClubConfigCenter
     {
         private static Random random = new Random(DateTime.Now.Millisecond);
@@ -67,7 +41,7 @@ namespace VessageRESTfulServer.Activities
                 return _nfcConfig;
             }
         }
-        public static float NFCAnnounce { get { return float.Parse(NFCConfig["NFCAnnounce"]); } }
+        public static string NFCAnnounce { get { return NFCConfig["NFCAnnounce"]; } }
         public static float FaceTestMaxAddtion { get { return float.Parse(NFCConfig["FaceTestMaxAddtionScore"]); } }
         public static float NFCBaseFaceScore { get { return float.Parse(NFCConfig["NFCBaseFaceScore"]); } }
         public static string ActivityId { get { return NFCConfig["ActId"]; } }

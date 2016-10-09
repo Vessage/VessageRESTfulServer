@@ -10,7 +10,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VessageRESTfulServer.Activities
+namespace VessageRESTfulServer.Activities.NFC
 {
     public partial class NiceFaceClubController
     {
