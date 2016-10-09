@@ -17,7 +17,7 @@ namespace VessageRESTfulServer.Activities.NFC
         private static long NewMember = 0;
 
         [HttpGet("NFCMainBoardData")]
-        public async Task<object> GetNFCMainBoardData()
+        public async Task<object> GetNFCMainBoardData(int postCnt)
         {
             var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
             if (NewMember == 0 || (DateTime.UtcNow - lastTimeCheckNewMember).TotalMinutes > 10)
@@ -27,7 +27,7 @@ namespace VessageRESTfulServer.Activities.NFC
             }
             
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
-            IEnumerable<NFCPost> posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL).SortByDescending(p => p.PostTs).Limit(23).ToListAsync();
+            IEnumerable<NFCPost> posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL).SortByDescending(p => p.PostTs).Limit(postCnt).ToListAsync();
 
             NFCMemberProfile profile = null;
             try
@@ -197,7 +197,7 @@ namespace VessageRESTfulServer.Activities.NFC
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
             try
             {
-                var post = await postCol.FindOneAndUpdateAsync(p => p.Id == new ObjectId(postId) && p.State > 0, new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds));
+                var post = await postCol.Find(p => p.Id == new ObjectId(postId) && p.State > 0).FirstAsync();
                 var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
                 var opt = new FindOneAndUpdateOptions<NFCPostLike, NFCPostLike>();
                 opt.ReturnDocument = ReturnDocument.Before;
@@ -216,12 +216,18 @@ namespace VessageRESTfulServer.Activities.NFC
                     };
                     var usrFilter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(f => f.Id == post.MemberId);
                     var usr = await usrCol.FindOneAndUpdateAsync(usrFilter, update, usrOpt);
+                        
+                    var updatePost = new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, 1);
                     if (usr.Likes > NiceFaceClubConfigCenter.BaseLikeJoinNFC && usr.ProfileState > 0 && usr.ProfileState != NFCMemberProfile.STATE_VALIDATED)
                     {
                         await usrCol.UpdateOneAsync(f => f.Id == post.MemberId, new UpdateDefinitionBuilder<NFCMemberProfile>().Set(f => f.ProfileState, NFCMemberProfile.STATE_VALIDATED));
-                        await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), new UpdateDefinitionBuilder<NFCPost>().Set(p => p.Type, NFCPost.TYPE_NORMAL));
+                        updatePost.Set(p => p.Type, NFCPost.TYPE_NORMAL);
                     }
-                    AppServiceProvider.GetActivityService().AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, usr.UserId.ToString(), 1);
+                    await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
+                    if(post.MemberId != usr.Id)
+                    {
+                        AppServiceProvider.GetActivityService().AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, usr.UserId.ToString(), 1);
+                    }
                 }
                 return true;
             }
@@ -257,7 +263,9 @@ namespace VessageRESTfulServer.Activities.NFC
 
             var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Inc(p => p.NewCmts, 1);
             await usrCol.UpdateOneAsync(x => x.Id == post.MemberId, update);
-            AppServiceProvider.GetActivityService().AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, post.UserId.ToString(), 1);
+            if(cmtPoster.Id != post.MemberId){
+                AppServiceProvider.GetActivityService().AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, post.UserId.ToString(), 1);
+            }
             return new
             {
                 msg = "SUCCESS"

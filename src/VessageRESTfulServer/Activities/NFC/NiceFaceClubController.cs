@@ -167,6 +167,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 score = profile.FaceScore,
                 mbAcpt = profile.ProfileState == NFCMemberProfile.STATE_VALIDATED,
                 likes = profile.Likes,
+                mbId = isSelf ? profile.Id.ToString() : null,
                 puzzles = "[]"//isSelf ? profile.Puzzles : RandomPuzzleForVisitor(profile.Puzzles)
             };
         }
