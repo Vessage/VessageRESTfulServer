@@ -244,7 +244,6 @@ namespace VessageRESTfulServer.Activities.NFC
             var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
 
-            var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
             var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
 
             var post = await postCol.FindOneAndUpdateAsync(p => p.Id == new ObjectId(postId) && p.State > 0, new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, nowTs).Inc(p => p.Cmts, 1));
@@ -260,6 +259,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 PostTs = nowTs
             };
 
+            var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
             await postCmtCol.InsertOneAsync(newCmt);
 
             var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Inc(p => p.NewCmts, 1);

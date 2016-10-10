@@ -16,6 +16,7 @@ using MongoDB.Bson;
 using MongoDB.Driver.GeoJsonObjectModel;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using VessageRESTfulServer.Models;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -290,19 +291,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 var result = await collection.UpdateOneAsync(p => p.UserId == UserObjectId, update);
                 if (result.MatchedCount == 0)
                 {
-                    var profile = new NFCMemberProfile
-                    {
-                        CreateTime = DateTime.UtcNow,
-                        FaceImageId = imageId,
-                        FaceScore = score,
-                        UserId = UserObjectId,
-                        Nick = user.Nick,
-                        Sex = user.Sex,
-                        Likes = 0,
-                        ProfileState = NFCMemberProfile.STATE_VALIDATING,
-                        ActiveTime = DateTime.UtcNow
-                    };
-                    await collection.InsertOneAsync(profile);
+                    await NewNFCMemberProfile(collection, user, imageId, score);
                 }
                 return new { msg = "SUCCESS" };
             }
@@ -311,6 +300,49 @@ namespace VessageRESTfulServer.Activities.NFC
                 Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 return new { msg = "VALIDATE_SCORE_FAIL" };
             }
+        }
+
+        private async Task NewNFCMemberProfile(IMongoCollection<NFCMemberProfile> collection, VessageUser user, string imageId, float score)
+        {
+            var profile = new NFCMemberProfile
+            {
+                CreateTime = DateTime.UtcNow,
+                FaceImageId = imageId,
+                FaceScore = score,
+                UserId = UserObjectId,
+                Nick = user.Nick,
+                Sex = user.Sex,
+                Likes = 0,
+                ProfileState = NFCMemberProfile.STATE_VALIDATING,
+                ActiveTime = DateTime.UtcNow
+            };
+            await collection.InsertOneAsync(profile);
+            var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
+            var newPost = new NFCPost
+            {
+                Image = imageId,
+                Cmts = 0,
+                Likes = 0,
+                PosterNick = user.Nick,
+                State = NFCPost.STATE_NORMAL,
+                Type = NFCPost.TYPE_NEW_MEMBER,
+                MemberId = profile.Id,
+                UserId = user.Id,
+                PostTs = nowTs,
+                UpdateTs = nowTs
+            };
+            var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
+            await postCol.InsertOneAsync(newPost);
+            var newCmt = new NFCPostComment
+            {
+                Content = "新人报道",
+                Poster = profile.Id,
+                PosterNick = user.Nick,
+                PostId = newPost.Id,
+                PostTs = nowTs
+            };
+            var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
+            await postCmtCol.InsertOneAsync(newCmt);
         }
 
         private static bool TestResultId(long timeSpan,float score,string userId,string resultId)
