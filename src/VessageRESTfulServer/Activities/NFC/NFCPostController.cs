@@ -218,7 +218,7 @@ namespace VessageRESTfulServer.Activities.NFC
                     var usrFilter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(f => f.Id == post.MemberId);
                     var usr = await usrCol.FindOneAndUpdateAsync(usrFilter, update, usrOpt);
                         
-                    var updatePost = new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, 1);
+                    var updatePost = new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
                     if (usr.Likes > NiceFaceClubConfigCenter.BaseLikeJoinNFC && usr.ProfileState > 0 && usr.ProfileState != NFCMemberProfile.STATE_VALIDATED)
                     {
                         await usrCol.UpdateOneAsync(f => f.Id == post.MemberId, new UpdateDefinitionBuilder<NFCMemberProfile>().Set(f => f.ProfileState, NFCMemberProfile.STATE_VALIDATED));
