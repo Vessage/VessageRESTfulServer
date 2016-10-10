@@ -12,11 +12,13 @@ namespace VessageRESTfulServer.Activities.NFC
 {
     public partial class NiceFaceClubController
     {
+        private const string AccountRegexPattern = "^1\\d{4}$";
+
         [HttpDelete("GodDeletePost")]
         public async void GodDeletePost(string pstId)
         {
             var user = await AppServiceProvider.GetUserService().GetUserOfUserId(UserObjectId);
-            if (Regex.IsMatch(user.AccountId, "$1\\d{4}"))
+            if (Regex.IsMatch(user.AccountId, AccountRegexPattern))
             {
                 var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
                 await postCol.UpdateOneAsync(p => p.Id == new ObjectId(pstId) && p.State > 0, new UpdateDefinitionBuilder<NFCPost>().Set(p => p.State, NFCPost.STATE_DELETED));
@@ -27,7 +29,7 @@ namespace VessageRESTfulServer.Activities.NFC
         public async void GodLikePost(string pstId)
         {
             var user = await AppServiceProvider.GetUserService().GetUserOfUserId(UserObjectId);
-            if (Regex.IsMatch(user.AccountId, "$1\\d{4}"))
+            if (Regex.IsMatch(user.AccountId, AccountRegexPattern))
             {
                 await LikePost(pstId, 10);
             }
@@ -37,12 +39,11 @@ namespace VessageRESTfulServer.Activities.NFC
         public async void GodBlockMember(string mbId)
         {
             var user = await AppServiceProvider.GetUserService().GetUserOfUserId(UserObjectId);
-            if (Regex.IsMatch(user.AccountId, "$1\\d{4}"))
+            if (Regex.IsMatch(user.AccountId, AccountRegexPattern))
             {
                 var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
                 await usrCol.UpdateOneAsync(p => p.Id == new ObjectId(mbId), new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.ProfileState, NFCMemberProfile.STATE_BLACK_LIST));
             }
-            
         }
     }
 }
