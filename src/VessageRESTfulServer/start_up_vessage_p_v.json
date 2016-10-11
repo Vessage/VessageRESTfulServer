@@ -1,14 +1,32 @@
-[
-  {
-    "_id": "$newObjectId",
-    "Video": "demo_group_video_chat.mp4",
-    "TypeId": 0,
-    "IsRead": false,
-    "IsGroup": false,
-    "SendTime": "$date",
-    "VideoReady": true,
-    "Sender": "$sender",
-    "Body": "{\"textMessage\":\"Message Content\",\"videoStartedEvent\":\"bWF4VmlkZW9QbGF5ZXIoKQ\",\"videoEndedEvent\":\"bWluVmlkZW9QbGF5ZXIoKQ\",\"endEventCmd\":\"c2hvd0ludml0ZUZyaWVuZHNBbGVydCgp\",\"textMessageShownEvent\":\"cGxheU5leHRCdXR0b25BbmltYXRpb24oKQ\"}",
-    "ExtraInfo": "{}"
+{
+  "vessages": {
+    "install": [
+      {
+        "_id": "$newObjectId",
+        "Video": "demo_group_video_chat.mp4",
+        "TypeId": 0,
+        "IsRead": false,
+        "IsGroup": false,
+        "SendTime": "$date",
+        "VideoReady": true,
+        "Sender": "$sender",
+        "Body": "{\"textMessage\":\"Message Content\",\"videoStartedEvent\":\"bWF4VmlkZW9QbGF5ZXIoKQ\",\"videoEndedEvent\":\"bWluVmlkZW9QbGF5ZXIoKQ\",\"endEventCmd\":\"c2hvd0ludml0ZUZyaWVuZHNBbGVydCgp\",\"textMessageShownEvent\":\"cGxheU5leHRCdXR0b25BbmltYXRpb24oKQ\"}",
+        "ExtraInfo": "{}"
+      }
+    ],
+    "upgrade": [
+      {
+        "_id": "$newObjectId",
+        "Video": "demo_group_video_chat.mp4",
+        "TypeId": 0,
+        "IsRead": false,
+        "IsGroup": false,
+        "SendTime": "$date",
+        "VideoReady": true,
+        "Sender": "$sender",
+        "Body": "{\"textMessage\":\"Message Content\",\"videoStartedEvent\":\"bWF4VmlkZW9QbGF5ZXIoKQ\",\"videoEndedEvent\":\"bWluVmlkZW9QbGF5ZXIoKQ\",\"endEventCmd\":\"c2hvd0ludml0ZUZyaWVuZHNBbGVydCgp\",\"textMessageShownEvent\":\"cGxheU5leHRCdXR0b25BbmltYXRpb24oKQ\"}",
+        "ExtraInfo": "{}"
+      }
+    ]
   }
-]
+}

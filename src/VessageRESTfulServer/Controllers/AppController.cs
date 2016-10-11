@@ -9,6 +9,7 @@ using BahamutService.Service;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VessageRESTfulServer.Models;
+using Microsoft.Extensions.Configuration;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,12 +18,14 @@ namespace VessageRESTfulServer.Controllers
     [Route("api/[controller]")]
     public class AppController : APIControllerBase
     {
+        private static Dictionary<string,JObject> VersionVessage = new Dictionary<string, JObject>();
+
         [HttpPost("FirstLaunch")]
         public async Task Post(string platform, int buildVersion,int oldBuildVersion)
         {
             try
             {
-                if (!await SendFirstLaunchVessage(UserObjectId, platform, buildVersion))
+                if (!await SendVersionVessages(UserObjectId, platform, buildVersion, oldBuildVersion))
                 {
                     Response.StatusCode = 403;
                 }
@@ -33,13 +36,13 @@ namespace VessageRESTfulServer.Controllers
             }
         }
 
-        private static Dictionary<string,JArray> FirstLaunchVessages = new Dictionary<string,JArray>();
-        public static JArray Get1stLaunchVessages(string platform, int buildVersion)
+        
+        public static JObject LoadVersionVessageConfig(string platform, int buildVersion)
         {
             var key = string.Format("{0}_{1}", platform, buildVersion);
             try
             {
-                var result = FirstLaunchVessages[key];
+                var result = VersionVessage[key];
                 return result;
             }
             catch (Exception)
@@ -48,10 +51,10 @@ namespace VessageRESTfulServer.Controllers
                 {
                     var configRoot = Startup.Configuration["Data:ConfigRoot"];
                     var path = string.Format("{0}/start_up_vessage_{1}.json", configRoot, key);
-                    var jsonArrString = System.IO.File.ReadAllText(path);
-                    var jsonArr = JArray.Parse(jsonArrString);
-                    FirstLaunchVessages[key] = jsonArr;
-                    return jsonArr;
+                    var jsonObj = System.IO.File.ReadAllText(path);
+                    var jobj = JObject.Parse(jsonObj);
+                    VersionVessage[key] = jobj;
+                    return jobj;
                 }
                 catch (Exception)
                 {
@@ -61,13 +64,23 @@ namespace VessageRESTfulServer.Controllers
             return null;
         }
 
-        private async Task<bool> SendFirstLaunchVessage(ObjectId UserId,string platform, int buildVersion)
+        private async Task<bool> SendVersionVessages(ObjectId UserId,string platform, int buildVersion, int oldBuildVersion)
         {
-            var jsonArr = Get1stLaunchVessages(platform, buildVersion);
-            if (jsonArr == null)
+            var jsonObj = LoadVersionVessageConfig(platform, buildVersion);
+            if (jsonObj == null)
             {
                 return false;
             }
+            JArray jsonArr = null;
+            if (oldBuildVersion == 0)
+            {
+                jsonArr = jsonObj["vessages"]["install"] as JArray;
+            }
+            else
+            {
+                jsonArr = jsonObj["vessages"]["upgrade"] as JArray;
+            }
+
             var now = DateTime.UtcNow;
             var i = 0;
             var vsgs = from JObject u in jsonArr
@@ -84,6 +97,10 @@ namespace VessageRESTfulServer.Controllers
                            Video = u["Video"].ToObject<string>(),
                            VideoReady = u["VideoReady"].ToObject<bool>()
                        };
+            if (vsgs.Count() == 0)
+            {
+                return true;
+            }
             var id = await AppServiceProvider.GetVessageService().SendVessagesToUser(UserId, vsgs);
             if (id != ObjectId.Empty)
             {
