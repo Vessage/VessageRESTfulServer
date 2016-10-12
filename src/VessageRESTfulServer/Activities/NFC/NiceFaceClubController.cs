@@ -127,7 +127,7 @@ namespace VessageRESTfulServer.Activities.NFC
                     Nick = "VGer",
                     Sex = 0,
                     Likes = 0,
-                    ProfileState = NFCMemberProfile.STATE_VALIDATED
+                    ProfileState = NFCMemberProfile.STATE_ANONYMOUS
                 };
                 return MemberProfileToJsonObject(tmpProfile);
             }            

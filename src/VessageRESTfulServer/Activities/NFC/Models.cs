@@ -11,8 +11,10 @@ namespace VessageRESTfulServer.Activities.NFC
     public class NFCMemberProfile
     {
         public const int STATE_BLACK_LIST = -100;
+        public const int STATE_ANONYMOUS = 0;
         public const int STATE_VALIDATING = 1;
         public const int STATE_VALIDATED = 2;
+
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
         public string Nick { get; set; }
