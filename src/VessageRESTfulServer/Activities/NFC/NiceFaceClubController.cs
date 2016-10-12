@@ -48,7 +48,9 @@ namespace VessageRESTfulServer.Activities.NFC
         public static string ActivityId { get { return NFCConfig["ActId"]; } }
         public static string TestResultSignKey { get { return NFCConfig["FaceTestSignPrivateKey"]; } }
 
-        public static int BaseLikeJoinNFC { get { return 10; } }
+        public static int BaseLikeJoinNFC { get { return int.Parse(NFCConfig["BaseLikeJoinNFC"]); } }
+
+        public static string NFCHelloMessage { get { return NFCConfig["NFCHello"]; } }
 
         public static string GetScoreString(float highScore)
         {

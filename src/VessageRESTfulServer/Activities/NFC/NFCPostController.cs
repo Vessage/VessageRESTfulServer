@@ -7,6 +7,8 @@ using BahamutCommon;
 using MongoDB.Driver;
 using MongoDB.Bson;
 using VessageRESTfulServer.Services;
+using BahamutService.Service;
+using Newtonsoft.Json;
 
 namespace VessageRESTfulServer.Activities.NFC
 {
@@ -219,10 +221,11 @@ namespace VessageRESTfulServer.Activities.NFC
                     var usr = await usrCol.FindOneAndUpdateAsync(usrFilter, update, usrOpt);
                         
                     var updatePost = new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
-                    if (usr.Likes > NiceFaceClubConfigCenter.BaseLikeJoinNFC && usr.ProfileState > 0 && usr.ProfileState != NFCMemberProfile.STATE_VALIDATED)
+                    if (usr.Likes >= NiceFaceClubConfigCenter.BaseLikeJoinNFC && usr.ProfileState > 0 && usr.ProfileState != NFCMemberProfile.STATE_VALIDATED)
                     {
                         await usrCol.UpdateOneAsync(f => f.Id == post.MemberId, new UpdateDefinitionBuilder<NFCMemberProfile>().Set(f => f.ProfileState, NFCMemberProfile.STATE_VALIDATED));
                         updatePost.Set(p => p.Type, NFCPost.TYPE_NORMAL);
+                        PublishActivityNotify(usr.UserId.ToString(), NiceFaceClubConfigCenter.NFCHelloMessage);
                     }
                     await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
                     if(post.MemberId != usr.Id)
@@ -236,6 +239,24 @@ namespace VessageRESTfulServer.Activities.NFC
             {
                 return false;
             }
+        }
+
+        private void PublishActivityNotify(string user,string msgLocKey)
+        {
+            var notifyMsg = new BahamutPublishModel
+            {
+                NotifyInfo = JsonConvert.SerializeObject(new
+                {
+                    BuilderId = 2,
+                    AfterOpen = "go_custom",
+                    Custom = "ActivityUpdatedNotify",
+                    Text = UserSessionData.UserId,
+                    LocKey = "ACTIVITY_UPDATED_NOTIFICATION"
+                }, Formatting.None),
+                NotifyType = msgLocKey,
+                ToUser = user
+            };
+            AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
         }
 
         [HttpPost("PostComments")]
