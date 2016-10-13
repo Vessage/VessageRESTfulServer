@@ -251,9 +251,9 @@ namespace VessageRESTfulServer.Activities.NFC
                     AfterOpen = "go_custom",
                     Custom = "ActivityUpdatedNotify",
                     Text = UserSessionData.UserId,
-                    LocKey = "ACTIVITY_UPDATED_NOTIFICATION"
+                    LocKey = msgLocKey
                 }, Formatting.None),
-                NotifyType = msgLocKey,
+                NotifyType = "ActivityUpdatedNotify",
                 ToUser = user
             };
             AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
