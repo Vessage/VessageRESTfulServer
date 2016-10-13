@@ -133,6 +133,27 @@ namespace VessageRESTfulServer.Activities.NFC
             }            
         }
 
+        [HttpGet("Profiles")]
+        public async Task<object> GetMemberProfile(string profileId)
+        {
+            var collection = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
+            try
+            {
+                var profile = await collection.Find(p => p.Id == new ObjectId(profileId)).FirstAsync();
+                if (profile.ProfileState == NFCMemberProfile.STATE_BLACK_LIST)
+                {
+                    Response.StatusCode = 500;
+                    return null;
+                }
+                return MemberProfileToJsonObject(profile);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 404;
+                return null;
+            }            
+        }
+
         [HttpPut("MyProfileValues")]
         public async Task<object> UpdateMyMemberProfile(string nick = null, int sex = int.MaxValue)
         {
