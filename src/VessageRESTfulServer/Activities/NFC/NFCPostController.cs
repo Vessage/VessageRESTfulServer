@@ -63,6 +63,7 @@ namespace VessageRESTfulServer.Activities.NFC
             {
                 tlks = profile.Likes,
                 annc = NiceFaceClubConfigCenter.NFCAnnounce,
+                newMemAnnc = NiceFaceClubConfigCenter.NFCJoinRuleAnnounce,
                 nMemCnt = NewMember,
                 nlks = profile.NewLikes,
                 ncmt = profile.NewCmts,

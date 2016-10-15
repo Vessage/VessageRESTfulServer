@@ -43,6 +43,9 @@ namespace VessageRESTfulServer.Activities.NFC
             }
         }
         public static string NFCAnnounce { get { return NFCConfig["NFCAnnounce"]; } }
+
+        public static string NFCJoinRuleAnnounce { get { return NFCConfig["NFCJoinRuleAnnounce"]; } }
+        
         public static float FaceTestMaxAddtion { get { return float.Parse(NFCConfig["FaceTestMaxAddtionScore"]); } }
         public static float NFCBaseFaceScore { get { return float.Parse(NFCConfig["NFCBaseFaceScore"]); } }
         public static string ActivityId { get { return NFCConfig["ActId"]; } }

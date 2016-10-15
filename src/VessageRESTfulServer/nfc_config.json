@@ -4,5 +4,6 @@
   "FaceTestMaxAddtionScore": 0.2,
   "NFCBaseFaceScore": 8.0,
   "BaseLikeJoinNFC": 10,
-  "NFCAnnounce": "Announce"
+  "NFCAnnounce": "Announce",
+  "NFCJoinRuleAnnounce":null
 }
