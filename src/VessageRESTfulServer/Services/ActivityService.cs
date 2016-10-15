@@ -25,22 +25,21 @@ namespace VessageRESTfulServer.Services
             this.Client = Client;
         }
 
-        public async void AddActivityBadge(string activityId, string userId, int addiction)
+        public async void AddActivityBadge(string activityId, ObjectId userId, int addiction)
         {
-            var userOId = new ObjectId(userId);
             var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("ActivityBadgeData");
             try
             {
 
                 var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Push(d => d.BadgeValueActivity, string.Format("{0}:{1}", activityId, addiction));
-                var res = await collection.FindOneAndUpdateAsync(a => a.UserId == userOId, update);
-                if (res == null)
+                var res = await collection.UpdateOneAsync(a => a.UserId == userId, update);
+                if (res.MatchedCount == 0)
                 {
                     var data = new ActivityBadgeData
                     {
                         BadgeValueActivity = new string[] { string.Format("{0}:{1}", activityId, addiction) },
                         MiniBadgeActivity = new string[0],
-                        UserId = userOId
+                        UserId = userId
                     };
                     await collection.InsertOneAsync(data);
                 }
@@ -52,21 +51,20 @@ namespace VessageRESTfulServer.Services
             
         }
 
-        public async void SetActivityMiniBadge(string activityId, string userId)
+        public async void SetActivityMiniBadge(string activityId, ObjectId userId)
         {
-            var userOId = new ObjectId(userId);
             var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("ActivityBadgeData");
             try
             {
                 var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Push(d => d.MiniBadgeActivity, activityId);
-                var res = await collection.FindOneAndUpdateAsync(a => a.UserId == userOId, update);
-                if (res == null)
+                var res = await collection.UpdateOneAsync(a => a.UserId == userId, update);
+                if (res.MatchedCount == 0)
                 {
                     var data = new ActivityBadgeData
                     {
                         BadgeValueActivity = new string[0],
                         MiniBadgeActivity = new string[] { activityId },
-                        UserId = userOId
+                        UserId = userId
                     };
                     await collection.InsertOneAsync(data);
                 }
