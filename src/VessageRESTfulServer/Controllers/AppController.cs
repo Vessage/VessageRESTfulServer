@@ -36,7 +36,6 @@ namespace VessageRESTfulServer.Controllers
             }
         }
 
-        
         public static JObject LoadVersionVessageConfig(string platform, int buildVersion)
         {
             var key = string.Format("{0}_{1}", platform, buildVersion);

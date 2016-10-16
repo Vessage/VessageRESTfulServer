@@ -34,10 +34,10 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpGet("Near")]
-        public Task<IEnumerable<object>> GetNearUsers(string location)
+        public IEnumerable<object> GetNearUsers(string location)
         {
             Response.StatusCode = (int)HttpStatusCode.Gone;
-            return null;
+            return new object[0];
         }
 
         [HttpGet("Active")]
@@ -49,7 +49,7 @@ namespace VessageRESTfulServer.Controllers
                 if (System.IO.File.Exists(vegeActiveUserLock))
                 {
                     Response.StatusCode = (int)HttpStatusCode.Gone;
-                    return null;
+                    return new object[0];
                 }
             }
             var users = from au in ActiveUsers where au.Id == UserObjectId select au;
