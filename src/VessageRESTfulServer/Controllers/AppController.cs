@@ -55,9 +55,9 @@ namespace VessageRESTfulServer.Controllers
                     VersionVessage[key] = jobj;
                     return jobj;
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    
+                    NLog.LogManager.GetLogger("Warn").Warn("Load Platform {0} Version {1} Hello Vessages Exception:{2}", platform, buildVersion, e.Message);
                 }
             }
             return null;
