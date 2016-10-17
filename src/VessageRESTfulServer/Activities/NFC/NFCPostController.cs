@@ -163,26 +163,64 @@ namespace VessageRESTfulServer.Activities.NFC
             return NFCPostToJsonObject(newPost, newPost.Type);
         }
 
-        [HttpGet("PostComments")]
-        public async Task<IEnumerable<object>> GetPostComments(string postId, long ts)
+        [HttpGet("ReceivedLikes")]
+        public async Task<IEnumerable<object>> GetReceivedLikes(long ts,int cnt)
         {
-            var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
-            var cmts = await postCmtCol.Find(c => c.PostId == new ObjectId(postId) && c.PostTs > ts).SortBy(c => c.PostTs).Limit(30).ToListAsync();
-            var res = from c in cmts
-                      select new
-                      {
-                          cmt = c.Content,
-                          ts = c.PostTs,
-                          psterNk = c.PosterNick,
-                          pster = c.Poster.ToString()
-                      };
+            var likeCol = NiceFaceClubDb.GetCollection<NFCPostLike>("NFCPostLike");
+            var likes = await likeCol.Find(lc=>lc.NFCPostUserId == UserObjectId && lc.Ts < ts).SortByDescending(l=>l.Ts).Limit(cnt).ToListAsync();
+            var res = from l in likes select new 
+            {
+                ts = l.Ts,
+                usrId = l.UserId,
+                nick = l.Nick,
+                mbId = l.MemberId == ObjectId.Empty ? null : l.MemberId.ToString(),
+                img = l.NFCPostImage
+            };
             return res;
         }
 
-        [HttpPost("LikePost")]
-        public async Task<object> LikePost(string postId)
+        [HttpGet("MyComments")]
+        public async Task<IEnumerable<object>> GetMyComments(long ts,int cnt)
         {
-            if (await LikePost(postId,1))
+            var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
+            var member = await usrCol.Find(p => p.UserId == UserObjectId).Project(t => new { Id = t.Id }).FirstAsync();
+            if(member == null)
+            {
+                Response.StatusCode = 404;
+                return null;
+            }
+            var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
+            var cmts = await postCmtCol.Find(c => (c.AtMemberId == member.Id || c.NFCPostPoster == member.Id || c.Poster == member.Id) && c.PostTs < ts).SortByDescending(c => c.PostTs).Limit(cnt).ToListAsync();
+            var res = from c in cmts select NFCPostCommentToJsonObject(c,true);
+            return res;
+        }
+
+        [HttpGet("PostComments")]
+        public async Task<IEnumerable<object>> GetPostComments(string postId, long ts,int cnt = 30)
+        {
+            var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
+            var cmts = await postCmtCol.Find(c => c.PostId == new ObjectId(postId) && c.PostTs > ts).SortBy(c => c.PostTs).Limit(cnt).ToListAsync();
+            var res = from c in cmts select NFCPostCommentToJsonObject(c);
+            return res;
+        }
+
+        private object NFCPostCommentToJsonObject(NFCPostComment c,bool includeImage = false){
+            return new
+                      {
+                          postId = c.PostId.ToString(),
+                          cmt = c.Content,
+                          ts = c.PostTs,
+                          psterNk = c.PosterNick,
+                          pster = c.Poster.ToString(),
+                          atNick = c.AtNick,
+                          img = includeImage ? c.NFCPostImage : null
+                      };
+        }
+
+        [HttpPost("LikePost")]
+        public async Task<object> LikePost(string postId,string mbId = null,string nick = null)
+        {
+            if (await LikePost(postId,1,mbId,nick))
             {
                 return new { msg = "SUCCESS" };
             }
@@ -191,16 +229,18 @@ namespace VessageRESTfulServer.Activities.NFC
                 Response.StatusCode = 400;
                 return null;
             }
-            
         }
 
-        private async Task<bool> LikePost(string postId, int likesCount)
+        private async Task<bool> LikePost(string postId, int likesCount,string memberId,string nick)
         {
             var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
             var likeCol = NiceFaceClubDb.GetCollection<NFCPostLike>("NFCPostLike");
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
             try
             {
+                if(string.IsNullOrWhiteSpace(nick)){
+                    nick = "NFCer";
+                }
                 var post = await postCol.Find(p => p.Id == new ObjectId(postId) && p.State > 0).FirstAsync();
                 var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
                 var opt = new FindOneAndUpdateOptions<NFCPostLike, NFCPostLike>();
@@ -208,7 +248,17 @@ namespace VessageRESTfulServer.Activities.NFC
                 opt.IsUpsert = true;
                 opt.Projection = new ProjectionDefinitionBuilder<NFCPostLike>().Include(l => l.Ts);
                 var filter = new FilterDefinitionBuilder<NFCPostLike>().Where(l => l.PostId == post.Id && l.UserId == UserObjectId);
-                var updateLike = new UpdateDefinitionBuilder<NFCPostLike>().Set(f => f.Ts, nowTs).Set(l => l.PostId, post.Id).Set(l => l.UserId, UserObjectId);
+                var updateLike = new UpdateDefinitionBuilder<NFCPostLike>()
+                                    .Set(f => f.Ts, nowTs)
+                                    .Set(l => l.PostId, post.Id)
+                                    .Set(l => l.NFCPostUserId,post.UserId)
+                                    .Set(l => l.Nick,nick)
+                                    .Set(l => l.NFCPostImage,post.Image)
+                                    .Set(l => l.UserId, UserObjectId);
+                ObjectId mbId;
+                if(ObjectId.TryParse(memberId,out mbId)){
+                    updateLike.Set(l=>l.MemberId,mbId);
+                }
                 var like = await likeCol.FindOneAndUpdateAsync(filter, updateLike, opt);
                 if (like == null)
                 {
@@ -261,7 +311,7 @@ namespace VessageRESTfulServer.Activities.NFC
         }
 
         [HttpPost("PostComments")]
-        public async Task<object> NewPostComment(string postId, string comment)
+        public async Task<object> NewPostComment(string postId, string comment,string atMember = null,string atNick = null)
         {
             var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
 
@@ -271,7 +321,7 @@ namespace VessageRESTfulServer.Activities.NFC
             var postOpt = new FindOneAndUpdateOptions<NFCPost, NFCPost>
             {
                 ReturnDocument = ReturnDocument.After,
-                Projection = new ProjectionDefinitionBuilder<NFCPost>().Include(p => p.Id).Include(p => p.MemberId).Include(p => p.UserId)
+                Projection = new ProjectionDefinitionBuilder<NFCPost>().Include(p => p.Id).Include(p => p.MemberId).Include(p => p.UserId).Include(p=>p.Image)
             };
             var post = await postCol.FindOneAndUpdateAsync(postFilter, postUpdate ,postOpt);
 
@@ -284,16 +334,46 @@ namespace VessageRESTfulServer.Activities.NFC
                 Poster = cmtPoster.Id,
                 PosterNick = cmtPoster.Nick,
                 PostId = post.Id,
-                PostTs = nowTs
+                PostTs = nowTs,
+                NFCPostPoster = post.MemberId,
+                NFCPostImage = post.Image
             };
+
+            var badgedUserId = ObjectId.Empty;
+            var activityService = AppServiceProvider.GetActivityService();
+            if(!string.IsNullOrWhiteSpace(atMember)){
+                ObjectId atMemberId;
+                if(ObjectId.TryParse(atMember,out atMemberId)){
+                    try {
+                        var updateAtMember = new UpdateDefinitionBuilder<NFCMemberProfile>().Inc(p=>p.NewCmts,1);
+                        var updateAtMemberOpt = new FindOneAndUpdateOptions<NFCMemberProfile, NFCMemberProfile>
+                        {
+                            ReturnDocument = ReturnDocument.After,
+                            Projection = new ProjectionDefinitionBuilder<NFCMemberProfile>().Include(p => p.Id).Include(p => p.Nick).Include(p => p.UserId)
+                        };
+                        var updateAtMemberFilter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(p=>p.Id == atMemberId);
+                        var atMemberObj = await usrCol.FindOneAndUpdateAsync(updateAtMemberFilter,updateAtMember,updateAtMemberOpt);
+                        if(atMemberObj != null){
+                            newCmt.AtMemberId = atMemberId;
+                            newCmt.AtNick = string.IsNullOrWhiteSpace(atNick) ? atMemberObj.Nick : atNick;
+                            if(atMemberObj.UserId != UserObjectId){
+                                activityService.AddActivityBadge(NiceFaceClubConfigCenter.ActivityId,atMemberObj.UserId,1);
+                                badgedUserId = atMemberObj.UserId;
+                            }
+                        }
+                    }catch(Exception){}
+                }
+            }
 
             var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
             await postCmtCol.InsertOneAsync(newCmt);
 
-            var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Inc(p => p.NewCmts, 1);
-            await usrCol.UpdateOneAsync(x => x.Id == post.MemberId, update);
             if(cmtPoster.Id != post.MemberId){
-                AppServiceProvider.GetActivityService().AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, post.UserId, 1);
+                var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Inc(p => p.NewCmts, 1);
+                await usrCol.UpdateOneAsync(x => x.Id == post.MemberId, update);
+                if(post.UserId != badgedUserId){
+                    activityService.AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, post.UserId, 1);
+                }
             }
             return new
             {

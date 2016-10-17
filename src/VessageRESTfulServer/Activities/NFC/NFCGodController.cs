@@ -38,7 +38,7 @@ namespace VessageRESTfulServer.Activities.NFC
             var user = await AppServiceProvider.GetUserService().GetUserOfUserId(UserObjectId);
             if (Regex.IsMatch(user.AccountId, AccountRegexPattern))
             {
-                await LikePost(pstId, likesCount);
+                await LikePost(pstId, likesCount, null,user.Nick);
                 NLog.LogManager.GetLogger("Info").Info("Account:{0} Request NFC God Like Method", user.AccountId);
             }
             else

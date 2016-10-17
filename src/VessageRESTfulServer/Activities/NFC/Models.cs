@@ -66,8 +66,13 @@ namespace VessageRESTfulServer.Activities.NFC
     {
         public ObjectId Id { get; set; }
         public ObjectId PostId { get; set; }
-        public ObjectId UserId { get; set; }
+        public ObjectId UserId { get; set; } //Add Like User Id
         public long Ts { get; set; }
+
+        public ObjectId MemberId{ get; set;} //Add Like MemberId
+        public string Nick { get; set; } //Add Like User Nick
+        public ObjectId NFCPostUserId { get; set; } //NFC Post UserId
+        public string NFCPostImage { get; set; }
     }
 
     public class NFCPostComment
@@ -77,7 +82,15 @@ namespace VessageRESTfulServer.Activities.NFC
         public string Content { get; set; }
         public long PostTs { get; set; }
         public string PosterNick { get; set; }
-        public ObjectId Poster { get; set; }
+
+        public ObjectId Poster { get; set; } // Comment Poster
+
+        public ObjectId AtMemberId { get; set; }
+        public string AtNick { get; set; }
+
+        public ObjectId NFCPostPoster { get; set; } //NFC Post Poster
+
+        public string NFCPostImage { get; set; }
     }
 
 }
