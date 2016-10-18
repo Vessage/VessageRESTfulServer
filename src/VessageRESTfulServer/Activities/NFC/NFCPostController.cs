@@ -171,7 +171,7 @@ namespace VessageRESTfulServer.Activities.NFC
             var res = from l in likes select new 
             {
                 ts = l.Ts,
-                usrId = l.UserId,
+                usrId = l.UserId.ToString(),
                 nick = l.Nick,
                 mbId = l.MemberId == ObjectId.Empty ? null : l.MemberId.ToString(),
                 img = l.NFCPostImage
@@ -248,17 +248,16 @@ namespace VessageRESTfulServer.Activities.NFC
                 opt.IsUpsert = true;
                 opt.Projection = new ProjectionDefinitionBuilder<NFCPostLike>().Include(l => l.Ts);
                 var filter = new FilterDefinitionBuilder<NFCPostLike>().Where(l => l.PostId == post.Id && l.UserId == UserObjectId);
+                var mbId = ObjectId.Empty;
+                try{mbId = new ObjectId(memberId);}catch (System.Exception){}
                 var updateLike = new UpdateDefinitionBuilder<NFCPostLike>()
                                     .Set(f => f.Ts, nowTs)
                                     .Set(l => l.PostId, post.Id)
                                     .Set(l => l.NFCPostUserId,post.UserId)
                                     .Set(l => l.Nick,nick)
+                                    .Set(l => l.MemberId,mbId)
                                     .Set(l => l.NFCPostImage,post.Image)
                                     .Set(l => l.UserId, UserObjectId);
-                ObjectId mbId;
-                if(ObjectId.TryParse(memberId,out mbId)){
-                    updateLike.Set(l=>l.MemberId,mbId);
-                }
                 var like = await likeCol.FindOneAndUpdateAsync(filter, updateLike, opt);
                 if (like == null)
                 {
