@@ -29,7 +29,7 @@ namespace VessageRESTfulServer.Activities.NFC
             }
             
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
-            IEnumerable<NFCPost> posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL).SortByDescending(p => p.PostTs).Limit(postCnt).ToListAsync();
+            IEnumerable<NFCPost> posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL && f.State > 0).SortByDescending(p => p.PostTs).Limit(postCnt).ToListAsync();
 
             NFCMemberProfile profile = null;
             try
