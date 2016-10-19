@@ -269,14 +269,16 @@ namespace VessageRESTfulServer.Activities.NFC
                     };
                     var usrFilter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(f => f.Id == post.MemberId);
                     var usr = await usrCol.FindOneAndUpdateAsync(usrFilter, update, usrOpt);
-                        
-                    var updatePost = new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
+                    var updatePostNormal = false;
                     if (usr.Likes >= NiceFaceClubConfigCenter.BaseLikeJoinNFC && usr.ProfileState > 0 && usr.ProfileState != NFCMemberProfile.STATE_VALIDATED)
                     {
                         await usrCol.UpdateOneAsync(f => f.Id == post.MemberId, new UpdateDefinitionBuilder<NFCMemberProfile>().Set(f => f.ProfileState, NFCMemberProfile.STATE_VALIDATED));
-                        updatePost.Set(p => p.Type, NFCPost.TYPE_NORMAL);
+                        updatePostNormal = true;
                         PublishActivityNotify(usr.UserId.ToString(), NiceFaceClubConfigCenter.NFCHelloMessage);
                     }
+                    var updatePost = updatePostNormal ?  
+                    new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount).Set(p=>p.Type, NFCPost.TYPE_NORMAL) : 
+                    new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
                     await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
                     if(post.UserId != UserObjectId)
                     {
