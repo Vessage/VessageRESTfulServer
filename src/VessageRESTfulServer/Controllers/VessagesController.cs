@@ -205,23 +205,20 @@ namespace VessageRESTfulServer.Controllers
 
         private void PostBahamutNotification(IEnumerable<String> toUsers, string sender)
         {
-            foreach (var toUser in toUsers)
+            var notifyMsg = new BahamutPublishModel
             {
-                var notifyMsg = new BahamutPublishModel
+                NotifyInfo = JsonConvert.SerializeObject(new
                 {
-                    NotifyInfo = JsonConvert.SerializeObject(new
-                    {
-                        BuilderId = 1,
-                        AfterOpen = "go_custom",
-                        Custom = "NewVessageNotify",
-                        Text = sender,
-                        LocKey = "NEW_VMSG_NOTIFICATION"
-                    }, Formatting.None),
-                    NotifyType = "NewVessageNotify",
-                    ToUser = toUser.ToString()
-                };
-                AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
-            }
+                    BuilderId = 1,
+                    AfterOpen = "go_custom",
+                    Custom = "NewVessageNotify",
+                    Text = sender,
+                    LocKey = "NEW_VMSG_NOTIFICATION"
+                }, Formatting.None),
+                NotifyType = "NewVessageNotify",
+                ToUser = string.Join(",",toUsers)
+            };
+            AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
         }
 
         [HttpPut("CancelSendVessage")]
