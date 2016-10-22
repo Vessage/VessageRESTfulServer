@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using VessageRESTfulServer.Models;
 using MongoDB.Bson;
+using MongoDB.Driver.GeoJsonObjectModel;
 
 namespace VessageRESTfulServer.Services
 {
@@ -65,6 +66,36 @@ namespace VessageRESTfulServer.Services
             {
                 return null;
             }
+        }
+
+        public async Task<bool> UpdateUserActiveInfo(ObjectId userId, GeoJson2DGeographicCoordinates geoLoc)
+        {
+
+            UpdateDefinition<VessageUser> update = null;
+            if (geoLoc == null)
+            {
+                update = new UpdateDefinitionBuilder<VessageUser>().Set(x => x.ActiveTime, DateTime.UtcNow);
+            }
+            else
+            {
+                update = new UpdateDefinitionBuilder<VessageUser>().Set(x => x.ActiveTime, DateTime.UtcNow).Set(x => x.Location, geoLoc);
+            }
+            var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+            var res = await collection.UpdateOneAsync(x => x.Id == userId, update);
+            return res.ModifiedCount > 0;
+        }
+
+        public async Task<IEnumerable<VessageUser>> GetNearUsers(ObjectId userId, GeoJson2DGeographicCoordinates geoLoc)
+        {
+            var update = new UpdateDefinitionBuilder<VessageUser>().Set(x => x.ActiveTime, DateTime.UtcNow).Set(x => x.Location, geoLoc);
+            var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+            var pnt = new GeoJsonPoint<GeoJson2DGeographicCoordinates>(geoLoc);
+            var maxDis = 1000 * 100;
+            var filter = Builders<VessageUser>.Filter.Ne(f=>f.Id,userId);
+            var nearFilter = Builders<VessageUser>.Filter.NearSphere(p => p.Location, pnt, maxDis);
+            var result = await collection.Find(filter&nearFilter).SortByDescending(f=>f.ActiveTime).ToListAsync();
+            await collection.UpdateOneAsync(f=>f.Id == userId,update);
+            return result;
         }
 
         public async Task<VessageUser> CreateNewUser(VessageUser newUser)

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MongoDB.Driver.GeoJsonObjectModel;
 
 namespace VessageRESTfulServer.Models
 {
@@ -25,6 +26,8 @@ namespace VessageRESTfulServer.Models
         public DateTime CreateTime { get; set; }
         public int Sex { get; set; }
         public string Motto { get; set; }
+        public DateTime ActiveTime { get; set; }
+        public GeoJson2DGeographicCoordinates Location { get; set; }
     }
 
     public class Vessage

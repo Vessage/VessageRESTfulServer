@@ -15,6 +15,8 @@ using BahamutService.Model;
 using BahamutService;
 using System.Net;
 using System.Net.Http;
+using Newtonsoft.Json.Linq;
+using MongoDB.Driver.GeoJsonObjectModel;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -34,10 +36,23 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpGet("Near")]
-        public IEnumerable<object> GetNearUsers(string location)
+        public async Task<IEnumerable<object>> GetNearUsers(string location)
         {
-            Response.StatusCode = (int)HttpStatusCode.Gone;
-            return new object[0];
+            if (!string.IsNullOrWhiteSpace(location))
+            {
+                var locationJson = JsonConvert.DeserializeObject<JObject>(location);
+                var coordinates = (JArray)locationJson["coordinates"];
+                var longitude = (double)coordinates.First;
+                var latitude = (double)coordinates.Last;
+                var geoLoc = new GeoJson2DGeographicCoordinates(longitude, latitude);
+                var users = await Startup.ServicesProvider.GetUserService().GetNearUsers(UserObjectId, geoLoc);
+                return users;
+            }
+            else
+            {
+                await Startup.ServicesProvider.GetUserService().UpdateUserActiveInfo(UserObjectId,null);
+                return new object[0];
+            }
         }
 
         [HttpGet("Active")]
