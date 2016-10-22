@@ -87,14 +87,18 @@ namespace VessageRESTfulServer.Services
 
         public async Task<IEnumerable<VessageUser>> GetNearUsers(ObjectId userId, GeoJson2DGeographicCoordinates geoLoc)
         {
-            var update = new UpdateDefinitionBuilder<VessageUser>().Set(x => x.ActiveTime, DateTime.UtcNow).Set(x => x.Location, geoLoc);
             var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+            var update = new UpdateDefinitionBuilder<VessageUser>().Set(x => x.ActiveTime, DateTime.UtcNow).Set(x => x.Location, geoLoc);
+            await collection.UpdateOneAsync(f=>f.Id == userId,update);
             var pnt = new GeoJsonPoint<GeoJson2DGeographicCoordinates>(geoLoc);
             var maxDis = 1000 * 100;
             var filter = Builders<VessageUser>.Filter.Ne(f=>f.Id,userId);
             var nearFilter = Builders<VessageUser>.Filter.NearSphere(p => p.Location, pnt, maxDis);
-            var result = await collection.Find(filter&nearFilter).SortByDescending(f=>f.ActiveTime).ToListAsync();
-            await collection.UpdateOneAsync(f=>f.Id == userId,update);
+#if DEBUG
+            var result = await collection.Find(filter).SortByDescending(f => f.ActiveTime).Limit(30).ToListAsync();
+#else    
+            var result = await collection.Find(filter&nearFilter).SortByDescending(f=>f.ActiveTime).Limit(30).ToListAsync();
+#endif
             return result;
         }
 

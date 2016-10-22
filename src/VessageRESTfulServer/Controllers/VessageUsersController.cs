@@ -46,7 +46,7 @@ namespace VessageRESTfulServer.Controllers
                 var latitude = (double)coordinates.Last;
                 var geoLoc = new GeoJson2DGeographicCoordinates(longitude, latitude);
                 var users = await Startup.ServicesProvider.GetUserService().GetNearUsers(UserObjectId, geoLoc);
-                return users;
+                return from u in users select VessageUserToJsonObject(u);
             }
             else
             {
@@ -147,7 +147,9 @@ namespace VessageRESTfulServer.Controllers
                 nickName = user.Nick,
                 mobile = UserObjectId == user.Id ? user.Mobile : StringUtil.Md5String(user.Mobile),
                 sex = user.Sex,
-                motto = user.Motto
+                motto = user.Motto,
+                acTs = user.ActiveTime == null ? 0 : (long)DateTimeUtil.UnixTimeSpanOfDateTime(user.ActiveTime).TotalMilliseconds,
+                location = user.Location == null ? null : new double[]{ user.Location.Longitude,user.Location.Latitude }
             };
 
             return jsonResultObj;
