@@ -95,6 +95,46 @@ namespace VessageRESTfulServer.Activities.NFC
             return from p in posts select NFCPostToJsonObject(p, NFCPost.TYPE_NORMAL);
         }
 
+        [HttpDelete("Posts")]
+        public async Task<object> DeletePost(string postId)
+        {
+            var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
+            var update = new UpdateDefinitionBuilder<NFCPost>().Set(p=>p.State,NFCPost.STATE_REMOVED);
+            var res = await postCol.UpdateOneAsync(f=>f.UserId == UserObjectId && f.Id == new ObjectId(postId),update);
+            if(res.ModifiedCount > 0)
+            {
+                return new { msg = "SUCCESS" };
+            }else
+            {
+                Response.StatusCode = 500;
+                return new { msg = "FAIL" };
+            }
+            
+        }
+
+        [HttpPut("ObjectionablePosts")]
+        public async Task<object> ObjectionablePosts(string postId)
+        {
+            var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
+            var profileExists = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState == NFCMemberProfile.STATE_VALIDATED).CountAsync();
+            if (profileExists > 0)
+            {
+                Response.StatusCode = 403;
+                return new { msg = "NOT_NFC_MEMBER" };
+            }
+            var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
+            var update = new UpdateDefinitionBuilder<NFCPost>().Set(p=>p.State,NFCPost.STATE_IN_USER_OBJECTION);
+            var res = await postCol.UpdateOneAsync(f=>f.Id == new ObjectId(postId),update);
+            if(res.ModifiedCount > 0)
+            {
+                return new { msg = "SUCCESS" };
+            }else
+            {
+                Response.StatusCode = 500;
+                return new { msg = "FAIL" };
+            }
+        }
+
         [HttpGet("NewMemberPost")]
         public async Task<object> GetNewMemberPost(long ts, int cnt)
         {

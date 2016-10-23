@@ -42,6 +42,8 @@ namespace VessageRESTfulServer.Activities.NFC
 
         public const int STATE_NORMAL = 1;
 
+        public const int STATE_IN_USER_OBJECTION = 2;
+
         public const int TYPE_NORMAL = 0;
         public const int TYPE_NEW_MEMBER = 1;
         public const int TYPE_MY_POST = 2;
