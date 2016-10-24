@@ -339,7 +339,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 Nick = user.Nick,
                 Sex = user.Sex,
                 Likes = 0,
-                ProfileState = NFCMemberProfile.STATE_VALIDATING,
+                ProfileState = NFCMemberProfile.STATE_ANONYMOUS,
                 ActiveTime = DateTime.UtcNow
             };
             await collection.InsertOneAsync(profile);

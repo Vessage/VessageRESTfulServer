@@ -22,13 +22,14 @@ namespace VessageRESTfulServer.Activities.NFC
         public async Task<object> GetNFCMainBoardData(int postCnt)
         {
             var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
+            var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
+
             if (NewMember == 0 || (DateTime.UtcNow - lastTimeCheckNewMember).TotalMinutes > 10)
             {
-                NewMember = await usrCol.Find(x => x.ProfileState == NFCMemberProfile.STATE_VALIDATING).CountAsync();
+                NewMember = await postCol.Find(x => x.Type == NFCPost.TYPE_NEW_MEMBER).CountAsync();
                 lastTimeCheckNewMember = DateTime.UtcNow;
             }
             
-            var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
             IEnumerable<NFCPost> posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL && f.State > 0).SortByDescending(p => p.PostTs).Limit(postCnt).ToListAsync();
 
             NFCMemberProfile profile = null;
