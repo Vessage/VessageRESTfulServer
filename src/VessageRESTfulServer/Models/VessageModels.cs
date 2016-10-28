@@ -42,6 +42,7 @@ namespace VessageRESTfulServer.Models
         public bool IsGroup { get; set; }
         public int TypeId { get; set; }
         public string Body { get; set; }
+        public string GroupSender { get; set; }
     }
 
     public class VessageBox

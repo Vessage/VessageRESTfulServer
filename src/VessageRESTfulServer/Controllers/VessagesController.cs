@@ -38,7 +38,8 @@ namespace VessageRESTfulServer.Controllers
                 sendTime = DateTimeUtil.ToAccurateDateTimeString(m.SendTime),
                 isGroup = m.IsGroup,
                 typeId = m.TypeId,
-                body = m.Body
+                body = m.Body,
+                gSender = m.GroupSender
             };
         }
 
@@ -124,7 +125,8 @@ namespace VessageRESTfulServer.Controllers
                     ExtraInfo = extraInfo,
                     IsGroup = isGroup,
                     TypeId = typeId,
-                    Body = body
+                    Body = body,
+                    GroupSender = isGroup ? UserObjectId.ToString() : null
                 };
                 result = await vessageService.SendVessage(receiverOId, vessage, isGroup);
             }
