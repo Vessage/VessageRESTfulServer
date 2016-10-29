@@ -26,7 +26,7 @@ namespace VessageRESTfulServer.Activities.NFC
 
             if (NewMember == 0 || (DateTime.UtcNow - lastTimeCheckNewMember).TotalMinutes > 10)
             {
-                NewMember = await postCol.Find(x => x.Type == NFCPost.TYPE_NEW_MEMBER).CountAsync();
+                NewMember = await postCol.Find(x => x.Type == NFCPost.TYPE_NEW_MEMBER && x.State > 0).CountAsync();
                 lastTimeCheckNewMember = DateTime.UtcNow;
             }
             
