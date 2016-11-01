@@ -96,7 +96,7 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("ForUser")]
-        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false, int typeId = 0,string fileId = null,string body = null)
+        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false, int typeId = 0,string fileId = null,string body = null,bool ready = false)
         {
             Vessage vessage = null;
             Tuple<ObjectId, ObjectId> result = null;
@@ -109,7 +109,7 @@ namespace VessageRESTfulServer.Controllers
                 if (chatGroup == null)
                 {
                     Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                    return new { msg = "NOT_IN__CHAT_GROUP" };
+                    return new { msg = "NOT_IN_CHAT_GROUP" };
                 }
             }
             if (string.IsNullOrWhiteSpace(receiverId) == false)
@@ -119,7 +119,7 @@ namespace VessageRESTfulServer.Controllers
                     Id = ObjectId.GenerateNewId(),
                     IsRead = false,
                     Sender = isGroup ? receiverOId : UserObjectId,
-                    VideoReady = !string.IsNullOrWhiteSpace(fileId),
+                    VideoReady = ready || !string.IsNullOrWhiteSpace(fileId),
                     Video = string.IsNullOrWhiteSpace(fileId) ? null : fileId,
                     SendTime = DateTime.UtcNow,
                     ExtraInfo = extraInfo,
@@ -139,7 +139,7 @@ namespace VessageRESTfulServer.Controllers
             var vsgId = result.Item2.ToString();
 
             //FileId is available，Post Notification To Receiver
-            if (!string.IsNullOrWhiteSpace(fileId))
+            if (vessage.VideoReady)
             {
                 IEnumerable<string> toUsers = null;
                 string sender = null;

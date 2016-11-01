@@ -85,6 +85,13 @@ namespace VessageRESTfulServer.Services
             return res.ModifiedCount > 0;
         }
 
+        public async Task<IEnumerable<VessageUser>> GetUserProfilesByIds(IEnumerable<ObjectId> ids)
+        {
+            var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+            var filter = new FilterDefinitionBuilder<VessageUser>().In(f => f.Id, ids);
+            return await collection.Find(filter).ToListAsync();
+        }
+
         public async Task<IEnumerable<VessageUser>> GetNearUsers(ObjectId userId, GeoJson2DGeographicCoordinates geoLoc)
         {
             var collection = UserDb.GetCollection<VessageUser>("VessageUser");

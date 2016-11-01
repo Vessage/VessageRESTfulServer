@@ -35,6 +35,22 @@ namespace VessageRESTfulServer.Controllers
             return VessageUserToJsonObject(user);
         }
 
+        [HttpGet("Profiles")]
+        public async Task<IEnumerable<object>> GetUserProfiles(string userIds)
+        {
+            if (string.IsNullOrWhiteSpace(userIds))
+            {
+                Response.StatusCode = 400;
+                return null;
+            }
+            else
+            {
+                var ids = from id in userIds.Split(new char[] { ',', '#', ';' }) select new ObjectId(id);
+                var users = await Startup.ServicesProvider.GetUserService().GetUserProfilesByIds(ids);
+                return from u in users select VessageUserToJsonObject(u);
+            }
+        }
+
         [HttpGet("Near")]
         public async Task<IEnumerable<object>> GetNearUsers(string location)
         {
