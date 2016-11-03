@@ -114,7 +114,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.ActiveTime, DateTime.UtcNow);
                 if (!string.IsNullOrWhiteSpace(location))
                 {
-                    var c = LocationStringToLocation(location); 
+                    var c = Utils.LocationStringToLocation(location); 
                     update = update.Set(p => p.Location, c);
                 }
                 await collection.UpdateOneAsync(p => p.Id == profile.Id, update);
@@ -194,19 +194,8 @@ namespace VessageRESTfulServer.Activities.NFC
                 score = profile.FaceScore,
                 mbAcpt = profile.ProfileState == NFCMemberProfile.STATE_VALIDATED,
                 likes = profile.Likes,
-                mbId = isSelf ? profile.Id.ToString() : null,
-                puzzles = "[]"//isSelf ? profile.Puzzles : RandomPuzzleForVisitor(profile.Puzzles)
+                mbId = isSelf ? profile.Id.ToString() : null
             };
-        }
-
-
-        static private GeoJson2DGeographicCoordinates LocationStringToLocation(string location)
-        {
-            var loc = JsonConvert.DeserializeObject<JObject>(location);
-            var longitude = (double)loc["long"];
-            var latitude = (double)loc["lati"];
-            var altitude = (double)loc["alti"];
-            return new GeoJson2DGeographicCoordinates(longitude, latitude);
         }
 
 
