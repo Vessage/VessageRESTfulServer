@@ -106,6 +106,7 @@ namespace VessageRESTfulServer.Activities.LPM
                 message = openForUser ? m.Content : null,
                 postmen = m.Postmen != null ? ArrayUtil.GetRandomArray(m.Postmen) : new string[0],
                 updatedTime = DateTimeUtil.ToAccurateDateTimeString(m.UpdatedTime),
+                uTs = (long)DateTimeUtil.UnixTimeSpanOfDateTime(m.UpdatedTime).TotalMilliseconds,
                 isOpened = string.IsNullOrWhiteSpace(m.Receiver) == false
             };
         }

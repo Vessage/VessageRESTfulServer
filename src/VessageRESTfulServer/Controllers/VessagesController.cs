@@ -36,6 +36,7 @@ namespace VessageRESTfulServer.Controllers
                 isRead = m.IsRead,
                 extraInfo = m.ExtraInfo,
                 sendTime = DateTimeUtil.ToAccurateDateTimeString(m.SendTime),
+                ts = (long)DateTimeUtil.UnixTimeSpanOfDateTime(m.SendTime).TotalMilliseconds,
                 isGroup = m.IsGroup,
                 typeId = m.TypeId,
                 body = m.Body,
