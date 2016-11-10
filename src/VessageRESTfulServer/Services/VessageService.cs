@@ -200,7 +200,7 @@ namespace VessageRESTfulServer.Services
                 if (vb != null)
                 {
                     var updateGotTime = new UpdateDefinitionBuilder<VessageBox>().Set(v => v.LastGotMessageTime, vb.LastGetMessageTime);
-                    var updateVessages = new UpdateDefinitionBuilder<VessageBox>().PullFilter(v => v.Vessages, st => st.VideoReady && st.SendTime < vb.LastGetMessageTime);
+                    var updateVessages = new UpdateDefinitionBuilder<VessageBox>().PullFilter(v => v.Vessages, st => st.Ready && st.SendTime < vb.LastGetMessageTime);
                     var update = new UpdateDefinitionBuilder<VessageBox>().Combine(updateGotTime, updateVessages);
                     var result = await collection.UpdateOneAsync(v => v.UserId == userOId, update);
                     return result.ModifiedCount > 0;
@@ -221,7 +221,7 @@ namespace VessageRESTfulServer.Services
             var result = new List<Vessage>();
             foreach (var vb in vbs)
             {
-                var vs = from v in vb.Vessages where v.VideoReady && v.SendTime > vb.LastGotMessageTime && v.IsRead == false select v;
+                var vs = from v in vb.Vessages where v.Ready && v.SendTime > vb.LastGotMessageTime && v.IsRead == false select v;
                 result.AddRange(vs);
             }
             var updateGetTime = new UpdateDefinitionBuilder<VessageBox>().Set(vb => vb.LastGetMessageTime, DateTime.UtcNow);

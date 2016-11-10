@@ -31,7 +31,7 @@ namespace VessageRESTfulServer.Controllers
             return new
             {
                 vessageId = m.Id.ToString(),
-                fileId = m.Video,
+                fileId = m.FileId,
                 sender = m.Sender.ToString(),
                 isRead = m.IsRead,
                 extraInfo = m.ExtraInfo,
@@ -50,7 +50,7 @@ namespace VessageRESTfulServer.Controllers
             await AppServiceProvider.GetVessageService().UpdateGotMessageTime(UserSessionData.UserId);
         }
 
-        
+
         [HttpPost("ForMobile")]
         public async Task<object> SendNewVessageForMobile(string receiverMobile, string extraInfo, int typeId = 0)
         {
@@ -66,7 +66,7 @@ namespace VessageRESTfulServer.Controllers
                     IsRead = false,
                     Sender = new ObjectId(UserSessionData.UserId),
                     SendTime = DateTime.UtcNow,
-                    VideoReady = false,
+                    Ready = false,
                     ExtraInfo = extraInfo,
                     IsGroup = false,
                     TypeId = typeId
@@ -97,7 +97,7 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("ForUser")]
-        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false, int typeId = 0,string fileId = null,string body = null,bool ready = false)
+        public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false, int typeId = 0, string fileId = null, string body = null, bool ready = false)
         {
             Vessage vessage = null;
             Tuple<ObjectId, ObjectId> result = null;
@@ -106,7 +106,7 @@ namespace VessageRESTfulServer.Controllers
             ChatGroup chatGroup = null;
             if (isGroup)
             {
-                chatGroup = await AppServiceProvider.GetGroupChatService().GetChatGroupById(UserObjectId,receiverOId);
+                chatGroup = await AppServiceProvider.GetGroupChatService().GetChatGroupById(UserObjectId, receiverOId);
                 if (chatGroup == null)
                 {
                     Response.StatusCode = (int)HttpStatusCode.Forbidden;
@@ -120,8 +120,8 @@ namespace VessageRESTfulServer.Controllers
                     Id = ObjectId.GenerateNewId(),
                     IsRead = false,
                     Sender = isGroup ? receiverOId : UserObjectId,
-                    VideoReady = ready || !string.IsNullOrWhiteSpace(fileId),
-                    Video = string.IsNullOrWhiteSpace(fileId) ? null : fileId,
+                    Ready = ready || !string.IsNullOrWhiteSpace(fileId),
+                    FileId = string.IsNullOrWhiteSpace(fileId) ? null : fileId,
                     SendTime = DateTime.UtcNow,
                     ExtraInfo = extraInfo,
                     IsGroup = isGroup,
@@ -140,7 +140,7 @@ namespace VessageRESTfulServer.Controllers
             var vsgId = result.Item2.ToString();
 
             //FileId is available，Post Notification To Receiver
-            if (vessage.VideoReady)
+            if (vessage.Ready)
             {
                 IEnumerable<string> toUsers = null;
                 string sender = null;
@@ -156,7 +156,8 @@ namespace VessageRESTfulServer.Controllers
                     sender = UserSessionData.UserId;
                     toUsers = new string[] { receiverId };
                 }
-                PostBahamutNotification(toUsers, sender);
+                var notifyText = GenerateVessageNotifyText(vessage);
+                PostBahamutNotification(toUsers, sender, notifyText);
             }
 
             return new
@@ -164,6 +165,32 @@ namespace VessageRESTfulServer.Controllers
                 vessageBoxId = vbId,
                 vessageId = vsgId
             };
+        }
+
+        private static string GenerateVessageNotifyText(Vessage vessage)
+        {
+            string notifyText = null;
+            if (vessage.TypeId == Vessage.TYPE_FACE_TEXT)
+            {
+                try
+                {
+                    var senderNick = Newtonsoft.Json.Linq.JObject.Parse(vessage.ExtraInfo)["nickName"].ToObject<string>();
+                    var msgTips = Newtonsoft.Json.Linq.JObject.Parse(vessage.Body)["textMessage"].ToObject<string>();
+                    if (msgTips.Length > 30)
+                    {
+                        msgTips = msgTips.Substring(0, 30) + "...";
+                    }
+                    if (string.IsNullOrWhiteSpace(senderNick) == false && string.IsNullOrWhiteSpace(msgTips) == false)
+                    {
+                        notifyText = string.Format("{0}:{1}", senderNick, msgTips);
+                    }
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+            return notifyText;
         }
 
         [HttpPut("FinishSendVessage")]
@@ -206,20 +233,25 @@ namespace VessageRESTfulServer.Controllers
             return new { msg = msg };
         }
 
-        private void PostBahamutNotification(IEnumerable<String> toUsers, string sender)
+        private void PostBahamutNotification(IEnumerable<String> toUsers, string sender, string notifyText = null)
         {
+            if (string.IsNullOrWhiteSpace(notifyText))
+            {
+                notifyText = "NEW_VMSG_NOTIFICATION";
+            }
             var notifyMsg = new BahamutPublishModel
             {
+
                 NotifyInfo = JsonConvert.SerializeObject(new
                 {
                     BuilderId = 1,
                     AfterOpen = "go_custom",
                     Custom = "NewVessageNotify",
                     Text = sender,
-                    LocKey = "NEW_VMSG_NOTIFICATION"
+                    LocKey = notifyText
                 }, Formatting.None),
                 NotifyType = "NewVessageNotify",
-                ToUser = string.Join(",",toUsers)
+                ToUser = string.Join(",", toUsers)
             };
             AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
         }

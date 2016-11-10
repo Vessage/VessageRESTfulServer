@@ -32,12 +32,17 @@ namespace VessageRESTfulServer.Models
 
     public class Vessage
     {
+        public const int TYPE_CHAT_VIDEO = 0;
+        public const int TYPE_FACE_TEXT = 1;
+        public const int TYPE_IMAGE = 2;
+        public const int TYPE_LITTLE_VIDEO = 3;
+
         public ObjectId Id { get; set; }
         public ObjectId Sender { get; set; }
-        public string Video{ get; set; }
+        public string FileId { get; set; }
         public DateTime SendTime { get; set; }
         public bool IsRead { get; set; }
-        public bool VideoReady { get; set; }
+        public bool Ready { get; set; }
         public string ExtraInfo { get; set; }
         public bool IsGroup { get; set; }
         public int TypeId { get; set; }
