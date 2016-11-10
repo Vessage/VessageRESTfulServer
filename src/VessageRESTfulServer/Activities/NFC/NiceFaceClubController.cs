@@ -55,6 +55,8 @@ namespace VessageRESTfulServer.Activities.NFC
 
         public static string NFCHelloMessage { get { return NFCConfig["NFCHello"]; } }
 
+        public static string NFCName { get { return "高颜值俱乐部"; } }
+
         public static string GetScoreString(float highScore)
         {
             var resultLevTips = NFCConfig.GetSection("FaceTestResultTips").GetChildren();

@@ -156,8 +156,7 @@ namespace VessageRESTfulServer.Controllers
                     sender = UserSessionData.UserId;
                     toUsers = new string[] { receiverId };
                 }
-                var notifyText = GenerateVessageNotifyText(vessage);
-                PostBahamutNotification(toUsers, sender, notifyText);
+                PostBahamutNotification(toUsers, sender, GenerateVessageNotifyText(vessage));
             }
 
             return new
@@ -167,9 +166,22 @@ namespace VessageRESTfulServer.Controllers
             };
         }
 
-        private static string GenerateVessageNotifyText(Vessage vessage)
+        private class NotificationTips
         {
-            string notifyText = null;
+            public string Nick { get; set; }
+            public string MSGTips { get; set; }
+
+            public string NotifyText
+            {
+                get
+                {
+                    return string.Format("{0}:{1}", Nick, MSGTips);
+                }
+            }
+        }
+
+        private static NotificationTips GenerateVessageNotifyText(Vessage vessage)
+        {
             if (vessage.TypeId == Vessage.TYPE_FACE_TEXT)
             {
                 try
@@ -180,17 +192,18 @@ namespace VessageRESTfulServer.Controllers
                     {
                         msgTips = msgTips.Substring(0, 30) + "...";
                     }
-                    if (string.IsNullOrWhiteSpace(senderNick) == false && string.IsNullOrWhiteSpace(msgTips) == false)
+                    return new NotificationTips
                     {
-                        notifyText = string.Format("{0}:{1}", senderNick, msgTips);
-                    }
+                        Nick = senderNick,
+                        MSGTips = msgTips
+                    };
                 }
                 catch (Exception)
                 {
 
                 }
             }
-            return notifyText;
+            return null;
         }
 
         [HttpPut("FinishSendVessage")]
@@ -233,11 +246,12 @@ namespace VessageRESTfulServer.Controllers
             return new { msg = msg };
         }
 
-        private void PostBahamutNotification(IEnumerable<String> toUsers, string sender, string notifyText = null)
+        private void PostBahamutNotification(IEnumerable<String> toUsers, string sender, NotificationTips tips = null)
         {
-            if (string.IsNullOrWhiteSpace(notifyText))
+            string notifyText = "NEW_VMSG_NOTIFICATION";
+            if (tips != null)
             {
-                notifyText = "NEW_VMSG_NOTIFICATION";
+                notifyText = tips.NotifyText;
             }
             var notifyMsg = new BahamutPublishModel
             {
@@ -248,7 +262,8 @@ namespace VessageRESTfulServer.Controllers
                     AfterOpen = "go_custom",
                     Custom = "NewVessageNotify",
                     Text = sender,
-                    LocKey = notifyText
+                    LocKey = notifyText,
+                    Extra = tips != null ? new { nick = tips.Nick, tips = tips.MSGTips } : null
                 }, Formatting.None),
                 NotifyType = "NewVessageNotify",
                 ToUser = string.Join(",", toUsers)
