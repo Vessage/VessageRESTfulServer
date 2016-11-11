@@ -157,8 +157,8 @@ namespace VessageRESTfulServer.Services
             var filter2_1 = Builders<BsonDocument>.Filter.Eq("IsGroup", true);
             var filter3 = Builders<BsonDocument>.Filter.Eq("Vessages._id", vessageId);
             var filter = filter1 & (filter2_1 | filter2) & filter3;
-            var update1 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.VideoReady", true);
-            var update2 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.Video", fileId);
+            var update1 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.Ready", true);
+            var update2 = new UpdateDefinitionBuilder<BsonDocument>().Set("Vessages.$.FileId", fileId);
             var update = Builders<BsonDocument>.Update.Combine(update1, update2);
             var result = await collection.FindOneAndUpdateAsync(filter, update);
             if (result != null)
