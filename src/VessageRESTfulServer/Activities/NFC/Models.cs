@@ -48,6 +48,8 @@ namespace VessageRESTfulServer.Activities.NFC
         public const int TYPE_NEW_MEMBER = 1;
         public const int TYPE_MY_POST = 2;
 
+        public const int TYPE_NEW_MEMBER_VALIDATED = 3;
+
         public ObjectId Id { get; set; }
         public ObjectId MemberId { get; set; }
         public ObjectId UserId { get; set; }

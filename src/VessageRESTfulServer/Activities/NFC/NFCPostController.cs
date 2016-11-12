@@ -30,7 +30,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 lastTimeCheckNewMember = DateTime.UtcNow;
             }
 
-            IEnumerable<NFCPost> posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL && f.State > 0).SortByDescending(p => p.PostTs).Limit(postCnt).ToListAsync();
+            IEnumerable<NFCPost> posts = await GetPostOrigin(postCol, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds, postCnt);
 
             NFCMemberProfile profile = null;
             try
@@ -92,8 +92,14 @@ namespace VessageRESTfulServer.Activities.NFC
         public async Task<IEnumerable<object>> GetPosts(long ts, int cnt = 20)
         {
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
-            var posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
+            var posts = await GetPostOrigin(postCol, ts, cnt);
             return from p in posts select NFCPostToJsonObject(p, NFCPost.TYPE_NORMAL);
+        }
+
+        private async Task<IEnumerable<NFCPost>> GetPostOrigin(IMongoCollection<NFCPost> postCol, long ts, int cnt)
+        {
+            var posts = await postCol.Find(f => (f.Type == NFCPost.TYPE_NORMAL || f.Type == NFCPost.TYPE_NEW_MEMBER_VALIDATED) && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
+            return posts;
         }
 
         [HttpDelete("Posts")]
@@ -145,10 +151,11 @@ namespace VessageRESTfulServer.Activities.NFC
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
             try
             {
+                var twoDaysAgo = (long)DateTimeUtil.UnixTimeSpanOfDateTime(DateTime.UtcNow.AddDays(-2)).TotalMilliseconds;
                 var profileExists = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState == NFCMemberProfile.STATE_VALIDATED).CountAsync();
                 if (profileExists > 0)
                 {
-                    var posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NEW_MEMBER && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
+                    var posts = await postCol.Find(f => (f.Type == NFCPost.TYPE_NEW_MEMBER || f.Type == NFCPost.TYPE_NEW_MEMBER_VALIDATED && f.PostTs > twoDaysAgo) && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
                     return from p in posts select NFCPostToJsonObject(p, NFCPost.TYPE_NEW_MEMBER);
                 }
                 else
@@ -316,7 +323,7 @@ namespace VessageRESTfulServer.Activities.NFC
                     var usrFilter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(f => f.Id == post.MemberId);
                     var usr = await usrCol.FindOneAndUpdateAsync(usrFilter, update, usrOpt);
                     var updatePostNormal = false;
-                    if (usr.Likes >= NiceFaceClubConfigCenter.BaseLikeJoinNFC && usr.ProfileState > 0 && usr.ProfileState != NFCMemberProfile.STATE_VALIDATED)
+                    if (usr.Likes >= NiceFaceClubConfigCenter.BaseLikeJoinNFC && usr.ProfileState == NFCMemberProfile.STATE_ANONYMOUS)
                     {
                         await usrCol.UpdateOneAsync(f => f.Id == post.MemberId, new UpdateDefinitionBuilder<NFCMemberProfile>().Set(f => f.ProfileState, NFCMemberProfile.STATE_VALIDATED));
                         updatePostNormal = true;
@@ -328,7 +335,7 @@ namespace VessageRESTfulServer.Activities.NFC
                         PublishActivityNotify(usr.UserId.ToString(), extra.acMsg, extra);
                     }
                     var updatePost = updatePostNormal ?
-                    new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount).Set(p => p.Type, NFCPost.TYPE_NORMAL) :
+                    new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount).Set(p => p.Type, NFCPost.TYPE_NEW_MEMBER_VALIDATED) :
                     new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
                     await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
                     if (post.UserId != UserObjectId)
