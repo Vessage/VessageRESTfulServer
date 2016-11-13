@@ -360,7 +360,7 @@ namespace VessageRESTfulServer.Activities.SNS
         }
 
         [HttpPost("PostComments")]
-        public async Task<object> NewPostComment(string postId, string comment,string senderNick,string atUser = null,string atNick = null)
+        public async Task<object> NewPostComment(string postId, string comment,string senderNick = null,string atUser = null,string atNick = null)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
             var cmtPoster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState == SNSMemberProfile.STATE_NORMAL).CountAsync();
@@ -371,6 +371,11 @@ namespace VessageRESTfulServer.Activities.SNS
                 return null;
             }
 
+            if(string.IsNullOrWhiteSpace(senderNick))
+            {
+                senderNick = await this.AppServiceProvider.GetUserService().GetUserNickOfUserId(UserObjectId);
+            }
+        
             var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
             
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");

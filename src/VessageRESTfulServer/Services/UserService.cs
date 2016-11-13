@@ -295,6 +295,19 @@ namespace VessageRESTfulServer.Services
                 return false;
             }
         }
+
+        public async Task<string> GetUserNickOfUserId(ObjectId userId)
+        {
+            try
+            {
+                var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+                return await collection.Find(f=>f.Id == userId).Project(u=>u.Nick).FirstAsync();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
     }
 
     public static class GetUserServiceExtension
