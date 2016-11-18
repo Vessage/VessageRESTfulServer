@@ -217,16 +217,10 @@ namespace VessageRESTfulServer.Services
         {
             var userOId = new ObjectId(userId);
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
-            var vbs = await collection.Find(vb => vb.UserId == userOId).ToListAsync();
-            var result = new List<Vessage>();
-            foreach (var vb in vbs)
-            {
-                var vs = from v in vb.Vessages where v.Ready && v.SendTime > vb.LastGotMessageTime && v.IsRead == false select v;
-                result.AddRange(vs);
-            }
-            var updateGetTime = new UpdateDefinitionBuilder<VessageBox>().Set(vb => vb.LastGetMessageTime, DateTime.UtcNow);
-            await collection.UpdateOneAsync(vb => vb.UserId == userOId, updateGetTime);
-            return result;
+            var updateGetTime = new UpdateDefinitionBuilder<VessageBox>().Set(v => v.LastGetMessageTime, DateTime.UtcNow);
+            var vb = await collection.FindOneAndUpdateAsync(f => f.UserId == userOId,updateGetTime);
+            var vs = from v in vb.Vessages where v.Ready && v.SendTime > vb.LastGotMessageTime && v.IsRead == false select v;
+            return vs;
         }
 
         /// <summary>
