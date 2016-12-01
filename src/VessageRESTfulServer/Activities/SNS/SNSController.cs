@@ -62,11 +62,9 @@ namespace VessageRESTfulServer.Activities.SNS
             var now = DateTime.UtcNow;
             try
             {
-                var pd = new ProjectionDefinitionBuilder<SNSMemberProfile>().Include(p => p.Likes).Include(p => p.NewLikes).Include(p => p.NewCmts);
                 var opt = new FindOneAndUpdateOptions<SNSMemberProfile, SNSMemberProfile>
                 {
                     ReturnDocument = ReturnDocument.Before,
-                    Projection = pd,
                     IsUpsert = false
                 };
                 var filter = new FilterDefinitionBuilder<SNSMemberProfile>().Where(f => f.UserId == UserObjectId);
@@ -84,7 +82,7 @@ namespace VessageRESTfulServer.Activities.SNS
                 }
 
                 var timeInterval = now - profile.ActiveTime;
-                if (timeInterval.TotalHours > 23)
+                if (timeInterval.TotalHours > 12)
                 {
 
                     var focused = new HashSet<ObjectId>(profile.FocusUserIds);
@@ -115,7 +113,7 @@ namespace VessageRESTfulServer.Activities.SNS
                 };
                 await usrCol.InsertOneAsync(profile);
                 await FollowSNSUsers(usrCol, profile.FocusUserIds, UserObjectId);
-                await AppServiceProvider.GetActivityService().CreateActivityBadgeData(SNSConfigCenter.ActivityId,UserObjectId);
+                await AppServiceProvider.GetActivityService().CreateActivityBadgeData(SNSConfigCenter.ActivityId, UserObjectId);
                 isNewer = true;
             }
 
@@ -139,14 +137,20 @@ namespace VessageRESTfulServer.Activities.SNS
 
         private async Task UnfollowSNSUsers(IMongoCollection<SNSMemberProfile> usrCol, IEnumerable<ObjectId> needUnFollow, ObjectId follower)
         {
-            var setUnFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needUnFollow);
-            await usrCol.UpdateManyAsync(setUnFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().Pull(p => p.Followers, follower));
+            if (needUnFollow.Count() > 0)
+            {
+                var setUnFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needUnFollow);
+                await usrCol.UpdateManyAsync(setUnFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().Pull(p => p.Followers, follower));
+            }
         }
 
         private async Task FollowSNSUsers(IMongoCollection<SNSMemberProfile> usrCol, IEnumerable<ObjectId> needSetFollow, ObjectId follower)
         {
-            var setFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needSetFollow);
-            await usrCol.UpdateManyAsync(setFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().AddToSet(p => p.Followers, follower));
+            if (needSetFollow.Count() > 0)
+            {
+                var setFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needSetFollow);
+                await usrCol.UpdateManyAsync(setFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().AddToSet(p => p.Followers, follower));
+            }
         }
 
         private static object SNSPostToJsonObject(SNSPost p, int type)
@@ -232,7 +236,7 @@ namespace VessageRESTfulServer.Activities.SNS
         public async Task<object> NewPost(string image, string nick)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
-                
+
             var poster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState > 0).Project(p => new { Follower = p.Followers, UserId = p.UserId }).FirstAsync();
             if (poster == null)
             {
@@ -258,7 +262,7 @@ namespace VessageRESTfulServer.Activities.SNS
 
             var followers = new HashSet<ObjectId>(poster.Follower);
             followers.Remove(poster.UserId);
-            await AppServiceProvider.GetActivityService().SetActivityMiniBadgeOfUserIds(SNSConfigCenter.ActivityId,followers);
+            await AppServiceProvider.GetActivityService().SetActivityMiniBadgeOfUserIds(SNSConfigCenter.ActivityId, followers);
 
             return SNSPostToJsonObject(newPost, newPost.Type);
         }
