@@ -163,14 +163,23 @@ namespace VessageRESTfulServer.Services
         {
             var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("ActivityBadgeData");
 
-            var data = await collection.Find(f => f.UserId == userId).FirstAsync();
+            try
+            {
+                var data = await collection.Find(f => f.UserId == userId).FirstAsync();
+                if (data.Activities != null && data.Activities.Count() > 0)
+                {
+                    var copy = data.Copy();
+                    copy.ClearBadges();
+                    var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Set("Activities", copy.Activities);
+                    await collection.UpdateOneAsync(f => f.UserId == userId, update);
+                }
+                return data;
+            }
+            catch (System.Exception e)
+            {
+                throw e;
+            }
 
-            var copy = data.Copy();
-            copy.ClearBadges();
-            var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Set("Activities", copy);
-            await collection.UpdateOneAsync(f => f.UserId == userId, update);
-
-            return data;
         }
 
         public async Task SetActivityMiniBadgeOfUserIds(string activityId, IEnumerable<ObjectId> followers, bool miniBadge = true, string message = null)
