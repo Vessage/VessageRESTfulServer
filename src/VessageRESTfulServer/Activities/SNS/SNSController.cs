@@ -17,7 +17,7 @@ namespace VessageRESTfulServer.Activities.SNS
 {
     public class SNSConfigCenter
     {
-        public const string ActivityId = "1003"; 
+        public const string ActivityId = "1003";
         private static IConfiguration _snsConfig;
         private static IConfiguration SNSConfig
         {
@@ -49,15 +49,17 @@ namespace VessageRESTfulServer.Activities.SNS
         }
 
         [HttpGet("SNSMainBoardData")]
-        public async Task<object> GetSNSMainBoardData(int postCnt,string focusIds,string location = null)
+        public async Task<object> GetSNSMainBoardData(int postCnt, string focusIds, string location = null)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
-            
-            var focusOIds = string.IsNullOrWhiteSpace(focusIds) ? new ObjectId[0] : from id in focusIds.Split(new char[]{',',';'}) select new ObjectId(id); 
+
+            var focusOIds = string.IsNullOrWhiteSpace(focusIds) ? new ObjectId[0] : from id in focusIds.Split(new char[] { ',', ';' }) select new ObjectId(id);
+            var newFocus = new HashSet<ObjectId>(focusOIds);
 
             var isNewer = false;
             SNSMemberProfile profile = null;
+            var now = DateTime.UtcNow;
             try
             {
                 var pd = new ProjectionDefinitionBuilder<SNSMemberProfile>().Include(p => p.Likes).Include(p => p.NewLikes).Include(p => p.NewCmts);
@@ -68,8 +70,8 @@ namespace VessageRESTfulServer.Activities.SNS
                     IsUpsert = false
                 };
                 var filter = new FilterDefinitionBuilder<SNSMemberProfile>().Where(f => f.UserId == UserObjectId);
-                var update = new UpdateDefinitionBuilder<SNSMemberProfile>().Set(p => p.NewLikes, 0).Set(p => p.NewCmts, 0).Set(p => p.ActiveTime, DateTime.UtcNow);
-                update = update.Set(p=>p.FocusUserIds,focusOIds.ToArray());
+                var update = new UpdateDefinitionBuilder<SNSMemberProfile>().Set(p => p.NewLikes, 0).Set(p => p.NewCmts, 0).Set(p => p.ActiveTime, now);
+
                 if (!string.IsNullOrWhiteSpace(location))
                 {
                     var c = Utils.LocationStringToLocation(location);
@@ -80,6 +82,22 @@ namespace VessageRESTfulServer.Activities.SNS
                 {
                     throw new NullReferenceException();
                 }
+
+                var timeInterval = now - profile.ActiveTime;
+                if (timeInterval.TotalHours > 23)
+                {
+
+                    var focused = new HashSet<ObjectId>(profile.FocusUserIds);
+
+                    var needSetFollow = newFocus.Except(focused);
+                    await FollowSNSUsers(usrCol, needSetFollow, UserObjectId);
+
+                    var needUnFollow = focused.Except(newFocus);
+                    await UnfollowSNSUsers(usrCol, needUnFollow, UserObjectId);
+
+                    await usrCol.UpdateOneAsync(f => f.UserId == UserObjectId, new UpdateDefinitionBuilder<SNSMemberProfile>().Set(p => p.FocusUserIds, newFocus.ToArray()));
+                }
+
             }
             catch (Exception)
             {
@@ -92,18 +110,20 @@ namespace VessageRESTfulServer.Activities.SNS
                     ActiveTime = DateTime.UtcNow,
                     CreateTime = DateTime.UtcNow,
                     ProfileState = SNSMemberProfile.STATE_NORMAL,
-                    FocusUserIds = focusOIds.ToArray(),
+                    FocusUserIds = newFocus.ToArray(),
                     Location = string.IsNullOrWhiteSpace(location) ? null : Utils.LocationStringToLocation(location)
                 };
                 await usrCol.InsertOneAsync(profile);
+                await FollowSNSUsers(usrCol, profile.FocusUserIds, UserObjectId);
+                await AppServiceProvider.GetActivityService().CreateActivityBadgeData(SNSConfigCenter.ActivityId,UserObjectId);
                 isNewer = true;
             }
 
             IEnumerable<SNSPost> posts = new SNSPost[0];
-            if(focusOIds.Count() > 0)
+            if (newFocus.Count() > 0)
             {
-                var filter = new FilterDefinitionBuilder<SNSPost>().In(p=>p.UserId,focusOIds);
-                var filter1 = new FilterDefinitionBuilder<SNSPost>().Where(p=>p.Type == SNSPost.TYPE_NORMAL && p.State > 0);
+                var filter = new FilterDefinitionBuilder<SNSPost>().In(p => p.UserId, newFocus);
+                var filter1 = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Type == SNSPost.TYPE_NORMAL && p.State > 0);
                 posts = await postCol.Find(filter & filter1).SortByDescending(p => p.PostTs).Limit(postCnt).ToListAsync();
             }
             return new
@@ -115,6 +135,18 @@ namespace VessageRESTfulServer.Activities.SNS
                 newer = isNewer,
                 posts = from p in posts select SNSPostToJsonObject(p, SNSPost.TYPE_NORMAL)
             };
+        }
+
+        private async Task UnfollowSNSUsers(IMongoCollection<SNSMemberProfile> usrCol, IEnumerable<ObjectId> needUnFollow, ObjectId follower)
+        {
+            var setUnFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needUnFollow);
+            await usrCol.UpdateManyAsync(setUnFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().Pull(p => p.Followers, follower));
+        }
+
+        private async Task FollowSNSUsers(IMongoCollection<SNSMemberProfile> usrCol, IEnumerable<ObjectId> needSetFollow, ObjectId follower)
+        {
+            var setFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needSetFollow);
+            await usrCol.UpdateManyAsync(setFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().AddToSet(p => p.Followers, follower));
         }
 
         private static object SNSPostToJsonObject(SNSPost p, int type)
@@ -138,9 +170,9 @@ namespace VessageRESTfulServer.Activities.SNS
         {
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
-            var userIds = await usrCol.Find(u=>u.UserId == UserObjectId && u.ProfileState > 0).Project(u=>u.FocusUserIds).FirstAsync();
-            var filter = new FilterDefinitionBuilder<SNSPost>().In(p=>p.UserId,userIds);
-            var filter1 = new FilterDefinitionBuilder<SNSPost>().Where(p=>p.Type == SNSPost.TYPE_NORMAL && p.State > 0 && p.PostTs < ts);
+            var userIds = await usrCol.Find(u => u.UserId == UserObjectId && u.ProfileState > 0).Project(u => u.FocusUserIds).FirstAsync();
+            var filter = new FilterDefinitionBuilder<SNSPost>().In(p => p.UserId, userIds);
+            var filter1 = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Type == SNSPost.TYPE_NORMAL && p.State > 0 && p.PostTs < ts);
             var posts = await postCol.Find(filter & filter1).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
             return from p in posts select SNSPostToJsonObject(p, SNSPost.TYPE_NORMAL);
         }
@@ -149,17 +181,18 @@ namespace VessageRESTfulServer.Activities.SNS
         public async Task<object> DeletePost(string postId)
         {
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
-            var update = new UpdateDefinitionBuilder<SNSPost>().Set(p=>p.State,SNSPost.STATE_REMOVED);
-            var res = await postCol.UpdateOneAsync(f=>f.UserId == UserObjectId && f.Id == new ObjectId(postId),update);
-            if(res.ModifiedCount > 0)
+            var update = new UpdateDefinitionBuilder<SNSPost>().Set(p => p.State, SNSPost.STATE_REMOVED);
+            var res = await postCol.UpdateOneAsync(f => f.UserId == UserObjectId && f.Id == new ObjectId(postId), update);
+            if (res.ModifiedCount > 0)
             {
                 return new { msg = "SUCCESS" };
-            }else
+            }
+            else
             {
                 Response.StatusCode = 500;
                 return new { msg = "FAIL" };
             }
-            
+
         }
 
         [HttpPut("ObjectionablePosts")]
@@ -173,12 +206,13 @@ namespace VessageRESTfulServer.Activities.SNS
                 return new { msg = "NOT_SNS_MEMBER" };
             }
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
-            var update = new UpdateDefinitionBuilder<SNSPost>().Set(p=>p.State,SNSPost.STATE_IN_USER_OBJECTION);
-            var res = await postCol.UpdateOneAsync(f=>f.Id == new ObjectId(postId),update);
-            if(res.ModifiedCount > 0)
+            var update = new UpdateDefinitionBuilder<SNSPost>().Set(p => p.State, SNSPost.STATE_IN_USER_OBJECTION);
+            var res = await postCol.UpdateOneAsync(f => f.Id == new ObjectId(postId), update);
+            if (res.ModifiedCount > 0)
             {
                 return new { msg = "SUCCESS" };
-            }else
+            }
+            else
             {
                 Response.StatusCode = 500;
                 return new { msg = "FAIL" };
@@ -195,15 +229,17 @@ namespace VessageRESTfulServer.Activities.SNS
         }
 
         [HttpPost("NewPost")]
-        public async Task<object> NewPost(string image,string nick)
+        public async Task<object> NewPost(string image, string nick)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
-            var poster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState > 0).CountAsync();
-            if(poster == 0)
+                
+            var poster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState > 0).Project(p => new { Follower = p.Followers, UserId = p.UserId }).FirstAsync();
+            if (poster == null)
             {
                 Response.StatusCode = 403;
                 return null;
             }
+
             var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
             var newPost = new SNSPost
             {
@@ -219,42 +255,48 @@ namespace VessageRESTfulServer.Activities.SNS
             };
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             await postCol.InsertOneAsync(newPost);
+
+            var followers = new HashSet<ObjectId>(poster.Follower);
+            followers.Remove(poster.UserId);
+            await AppServiceProvider.GetActivityService().SetActivityMiniBadgeOfUserIds(SNSConfigCenter.ActivityId,followers);
+
             return SNSPostToJsonObject(newPost, newPost.Type);
         }
 
         [HttpGet("ReceivedLikes")]
-        public async Task<IEnumerable<object>> GetReceivedLikes(long ts,int cnt)
+        public async Task<IEnumerable<object>> GetReceivedLikes(long ts, int cnt)
         {
             var likeCol = SNSDb.GetCollection<SNSPostLike>("SNSPostLike");
-            var likes = await likeCol.Find(lc=>lc.SNSPostUserId == UserObjectId && lc.Ts < ts).SortByDescending(l=>l.Ts).Limit(cnt).ToListAsync();
-            var res = from l in likes select new 
-            {
-                ts = l.Ts,
-                usrId = l.UserId.ToString(),
-                nick = l.Nick,
-                img = l.SNSPostImage
-            };
+            var likes = await likeCol.Find(lc => lc.SNSPostUserId == UserObjectId && lc.Ts < ts).SortByDescending(l => l.Ts).Limit(cnt).ToListAsync();
+            var res = from l in likes
+                      select new
+                      {
+                          ts = l.Ts,
+                          usrId = l.UserId.ToString(),
+                          nick = l.Nick,
+                          img = l.SNSPostImage
+                      };
             return res;
         }
 
         [HttpGet("MyComments")]
-        public async Task<IEnumerable<object>> GetMyComments(long ts,int cnt)
+        public async Task<IEnumerable<object>> GetMyComments(long ts, int cnt)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
             var member = await usrCol.Find(p => p.UserId == UserObjectId).CountAsync();
-            if(member == 0)
+            if (member == 0)
             {
                 Response.StatusCode = 404;
                 return null;
             }
             var postCmtCol = SNSDb.GetCollection<SNSPostComment>("SNSPostComment");
             var cmts = await postCmtCol.Find(c => (c.AtUserId == UserObjectId || c.SNSPostPoster == UserObjectId || c.Poster == UserObjectId) && c.PostTs < ts).SortByDescending(c => c.PostTs).Limit(cnt).ToListAsync();
-            var res = from c in cmts select SNSPostCommentToJsonObject(c,true);
+            var res = from c in cmts select SNSPostCommentToJsonObject(c, true);
             return res;
         }
 
         [HttpGet("PostComments")]
-        public async Task<IEnumerable<object>> GetPostComments(string postId, long ts,int cnt = 30)
+        public async Task<IEnumerable<object>> GetPostComments(string postId, long ts, int cnt = 30)
         {
             var postCmtCol = SNSDb.GetCollection<SNSPostComment>("SNSPostComment");
             var cmts = await postCmtCol.Find(c => c.PostId == new ObjectId(postId) && c.PostTs > ts).SortBy(c => c.PostTs).Limit(cnt).ToListAsync();
@@ -262,23 +304,24 @@ namespace VessageRESTfulServer.Activities.SNS
             return res;
         }
 
-        private object SNSPostCommentToJsonObject(SNSPostComment c,bool includeImage = false){
+        private object SNSPostCommentToJsonObject(SNSPostComment c, bool includeImage = false)
+        {
             return new
-                      {
-                          postId = c.PostId.ToString(),
-                          cmt = c.Content,
-                          ts = c.PostTs,
-                          psterNk = c.PosterNick,
-                          pster = c.Poster.ToString(),
-                          atNick = c.AtNick,
-                          img = includeImage ? c.SNSPostImage : null
-                      };
+            {
+                postId = c.PostId.ToString(),
+                cmt = c.Content,
+                ts = c.PostTs,
+                psterNk = c.PosterNick,
+                pster = c.Poster.ToString(),
+                atNick = c.AtNick,
+                img = includeImage ? c.SNSPostImage : null
+            };
         }
 
         [HttpPost("LikePost")]
-        public async Task<object> LikePost(string postId,string nick = null)
+        public async Task<object> LikePost(string postId, string nick = null)
         {
-            if (await LikePost(postId,1,nick))
+            if (await LikePost(postId, 1, nick))
             {
                 return new { msg = "SUCCESS" };
             }
@@ -289,14 +332,15 @@ namespace VessageRESTfulServer.Activities.SNS
             }
         }
 
-        private async Task<bool> LikePost(string postId, int likesCount,string nick)
+        private async Task<bool> LikePost(string postId, int likesCount, string nick)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
             var likeCol = SNSDb.GetCollection<SNSPostLike>("SNSPostLike");
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             try
             {
-                if(string.IsNullOrWhiteSpace(nick)){
+                if (string.IsNullOrWhiteSpace(nick))
+                {
                     nick = "SNSer";
                 }
                 var post = await postCol.Find(p => p.Id == new ObjectId(postId) && p.State > 0).FirstAsync();
@@ -310,9 +354,9 @@ namespace VessageRESTfulServer.Activities.SNS
                 var updateLike = new UpdateDefinitionBuilder<SNSPostLike>()
                                     .Set(f => f.Ts, nowTs)
                                     .Set(l => l.PostId, post.Id)
-                                    .Set(l => l.SNSPostUserId,post.UserId)
-                                    .Set(l => l.Nick,nick)
-                                    .Set(l => l.SNSPostImage,post.Image)
+                                    .Set(l => l.SNSPostUserId, post.UserId)
+                                    .Set(l => l.Nick, nick)
+                                    .Set(l => l.SNSPostImage, post.Image)
                                     .Set(l => l.UserId, UserObjectId);
                 var like = await likeCol.FindOneAndUpdateAsync(filter, updateLike, opt);
                 if (like == null)
@@ -325,10 +369,10 @@ namespace VessageRESTfulServer.Activities.SNS
                     };
                     var usrFilter = new FilterDefinitionBuilder<SNSMemberProfile>().Where(f => f.UserId == post.UserId);
                     var usr = await usrCol.FindOneAndUpdateAsync(usrFilter, update, usrOpt);
-                    
+
                     var updatePost = new UpdateDefinitionBuilder<SNSPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
                     await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
-                    if(post.UserId != UserObjectId)
+                    if (post.UserId != UserObjectId)
                     {
                         await AppServiceProvider.GetActivityService().AddActivityBadge(SNSConfigCenter.ActivityId, post.UserId, 1);
                     }
@@ -341,7 +385,7 @@ namespace VessageRESTfulServer.Activities.SNS
             }
         }
 
-        private void PublishActivityNotify(string user,string msgLocKey)
+        private void PublishActivityNotify(string user, string msgLocKey)
         {
             var notifyMsg = new BahamutPublishModel
             {
@@ -360,33 +404,33 @@ namespace VessageRESTfulServer.Activities.SNS
         }
 
         [HttpPost("PostComments")]
-        public async Task<object> NewPostComment(string postId, string comment,string senderNick = null,string atUser = null,string atNick = null)
+        public async Task<object> NewPostComment(string postId, string comment, string senderNick = null, string atUser = null, string atNick = null)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
             var cmtPoster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState == SNSMemberProfile.STATE_NORMAL).CountAsync();
 
-            if(cmtPoster == 0)
+            if (cmtPoster == 0)
             {
                 Response.StatusCode = 403;
                 return null;
             }
 
-            if(string.IsNullOrWhiteSpace(senderNick))
+            if (string.IsNullOrWhiteSpace(senderNick))
             {
                 senderNick = await this.AppServiceProvider.GetUserService().GetUserNickOfUserId(UserObjectId);
             }
-        
+
             var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
-            
+
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             var postFilter = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Id == new ObjectId(postId) && p.State > 0);
             var postUpdate = new UpdateDefinitionBuilder<SNSPost>().Set(p => p.UpdateTs, nowTs).Inc(p => p.Cmts, 1);
             var postOpt = new FindOneAndUpdateOptions<SNSPost, SNSPost>
             {
                 ReturnDocument = ReturnDocument.After,
-                Projection = new ProjectionDefinitionBuilder<SNSPost>().Include(p => p.Id).Include(p => p.UserId).Include(p=>p.Image)
+                Projection = new ProjectionDefinitionBuilder<SNSPost>().Include(p => p.Id).Include(p => p.UserId).Include(p => p.Image)
             };
-            var post = await postCol.FindOneAndUpdateAsync(postFilter, postUpdate ,postOpt);
+            var post = await postCol.FindOneAndUpdateAsync(postFilter, postUpdate, postOpt);
             var newCmt = new SNSPostComment
             {
                 Content = comment,
@@ -400,32 +444,40 @@ namespace VessageRESTfulServer.Activities.SNS
 
             var badgedUserId = ObjectId.Empty;
             var activityService = AppServiceProvider.GetActivityService();
-            if(!string.IsNullOrWhiteSpace(atUser)){
+            if (!string.IsNullOrWhiteSpace(atUser))
+            {
                 ObjectId atUserId;
-                if(ObjectId.TryParse(atUser,out atUserId)){
-                    try {
-                        var updateAtMember = new UpdateDefinitionBuilder<SNSMemberProfile>().Inc(p=>p.NewCmts,1);
-                        var updateAtMemberFilter = new FilterDefinitionBuilder<SNSMemberProfile>().Where(p=>p.UserId == atUserId);
-                        var modified = await usrCol.UpdateOneAsync(updateAtMemberFilter,updateAtMember);
-                        if(modified.ModifiedCount > 0){
+                if (ObjectId.TryParse(atUser, out atUserId))
+                {
+                    try
+                    {
+                        var updateAtMember = new UpdateDefinitionBuilder<SNSMemberProfile>().Inc(p => p.NewCmts, 1);
+                        var updateAtMemberFilter = new FilterDefinitionBuilder<SNSMemberProfile>().Where(p => p.UserId == atUserId);
+                        var modified = await usrCol.UpdateOneAsync(updateAtMemberFilter, updateAtMember);
+                        if (modified.ModifiedCount > 0)
+                        {
                             newCmt.AtUserId = atUserId;
                             newCmt.AtNick = atNick;
-                            if(atUserId != UserObjectId){
-                                await activityService.AddActivityBadge(SNSConfigCenter.ActivityId,atUserId,1);
+                            if (atUserId != UserObjectId)
+                            {
+                                await activityService.AddActivityBadge(SNSConfigCenter.ActivityId, atUserId, 1);
                                 badgedUserId = atUserId;
                             }
                         }
-                    }catch(Exception){}
+                    }
+                    catch (Exception) { }
                 }
             }
 
             var postCmtCol = SNSDb.GetCollection<SNSPostComment>("SNSPostComment");
             await postCmtCol.InsertOneAsync(newCmt);
-            
-            if(UserObjectId != post.UserId){
+
+            if (UserObjectId != post.UserId)
+            {
                 var update = new UpdateDefinitionBuilder<SNSMemberProfile>().Inc(p => p.NewCmts, 1);
                 await usrCol.UpdateOneAsync(x => x.UserId == post.UserId, update);
-                if(post.UserId != badgedUserId){
+                if (post.UserId != badgedUserId)
+                {
                     await activityService.AddActivityBadge(SNSConfigCenter.ActivityId, post.UserId, 1);
                 }
             }

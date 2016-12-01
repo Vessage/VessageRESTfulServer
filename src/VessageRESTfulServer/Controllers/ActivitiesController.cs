@@ -29,15 +29,18 @@ namespace VessageRESTfulServer.Controllers
 
         private IEnumerable<object> ActivityBadgeDataToJsonObject(ActivityBadgeData d)
         {
-            if(d == null || d.Activities == null)
+            if (d == null || d.Activities == null)
             {
                 return new object[0];
             }
-            var result = from item in d.Activities select new {
-                id = item.AcId,
-                badge = item.Badge,
-                miniBadge = item.MiniBadge
-            };
+            var result = from item in d.Activities
+                         select new
+                         {
+                             id = item.AcId,
+                             badge = item.Badge,
+                             miniBadge = item.MiniBadge,
+                             msg = item.Message
+                         };
             return result;
         }
     }

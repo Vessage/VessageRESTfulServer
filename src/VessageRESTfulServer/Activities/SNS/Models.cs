@@ -27,6 +27,7 @@ namespace VessageRESTfulServer.Activities.SNS
         public int NewCmts { get; set; }
 
         public ObjectId[] FocusUserIds { get; set; }
+        public ObjectId[] Followers { get; set; }
 
     }
 

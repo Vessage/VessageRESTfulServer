@@ -360,6 +360,7 @@ namespace VessageRESTfulServer.Activities.NFC
             };
             var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
             await postCmtCol.InsertOneAsync(newCmt);
+            await AppServiceProvider.GetActivityService().CreateActivityBadgeData(NiceFaceClubConfigCenter.ActivityId,UserObjectId);
         }
 
         private static bool TestResultId(long timeSpan,float score,string userId,string resultId)

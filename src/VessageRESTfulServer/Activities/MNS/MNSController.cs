@@ -83,6 +83,7 @@ namespace VessageRESTfulServer.Activities.MNS
                     Location = string.IsNullOrWhiteSpace(location) ? null : Utils.LocationStringToLocation(location)
                 };
                 await usrCol.InsertOneAsync(profile);
+                await AppServiceProvider.GetActivityService().CreateActivityBadgeData(MNSConfigCenter.ActivityId,UserObjectId);
                 isNewer = true;
             }
             var now = DateTime.UtcNow;
