@@ -158,7 +158,7 @@ namespace VessageRESTfulServer.Activities.LPM
                     };
                     await collection.InsertOneAsync(msgBox);
                 }
-                AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, receiverOId, 1);
+                await AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, receiverOId, 1);
                 PublishActivityNotify(nextReceiver);
                 return PaperMessageToJsonObject(newMsg, UserSessionData.UserId);
             }
@@ -239,7 +239,7 @@ namespace VessageRESTfulServer.Activities.LPM
                 updateMsg = new UpdateDefinitionBuilder<LittlePaperMessage>().Combine(updateMsg, updateMsgPostmen);
             }
             await msgCollection.UpdateOneAsync(m => m.Id == paperOId, updateMsg);
-            AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, receiverOId, 1);
+            await AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, receiverOId, 1);
             PublishActivityNotify(nextReceiver);
             return new { msg = "SUCCESS" };
         }
@@ -326,7 +326,7 @@ namespace VessageRESTfulServer.Activities.LPM
                     Type = LittlePaperReadResponse.TYPE_ASK_SENDER
                 };
                 await responseCollection.InsertOneAsync(readResp);
-                AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, senderOId, 1);
+                await AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, senderOId, 1);
                 PublishActivityNotify(sender);
 
                 return new { msg = "REQUEST_SENDED" };
@@ -367,7 +367,7 @@ namespace VessageRESTfulServer.Activities.LPM
                     Type = LittlePaperReadResponse.TYPE_RETURN_ASKER
                 };
                 await responseCollection.InsertOneAsync(readResp);
-                AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, readerOId, 1);
+                await AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, readerOId, 1);
                 PublishActivityNotify(reader);
 
                 return new { msg = "OPEN_PAPER_REJECT" };
@@ -418,7 +418,7 @@ namespace VessageRESTfulServer.Activities.LPM
                     Type = LittlePaperReadResponse.TYPE_RETURN_ASKER
                 };
                 await responseCollection.InsertOneAsync(readResp);
-                AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, readerOId, 1);
+                await AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, readerOId, 1);
                 PublishActivityNotify(reader);
 
                 if (result.ModifiedCount > 0)

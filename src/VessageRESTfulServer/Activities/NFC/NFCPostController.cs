@@ -340,7 +340,7 @@ namespace VessageRESTfulServer.Activities.NFC
                     await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
                     if (post.UserId != UserObjectId)
                     {
-                        AppServiceProvider.GetActivityService().AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, post.UserId, 1);
+                        await AppServiceProvider.GetActivityService().AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, post.UserId, 1);
                     }
                 }
                 return true;
@@ -422,7 +422,7 @@ namespace VessageRESTfulServer.Activities.NFC
                             newCmt.AtNick = string.IsNullOrWhiteSpace(atNick) ? atMemberObj.Nick : atNick;
                             if (atMemberObj.UserId != UserObjectId)
                             {
-                                activityService.AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, atMemberObj.UserId, 1);
+                                await activityService.AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, atMemberObj.UserId, 1);
                                 badgedUserId = atMemberObj.UserId;
                             }
                         }
@@ -440,7 +440,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 await usrCol.UpdateOneAsync(x => x.Id == post.MemberId, update);
                 if (post.UserId != badgedUserId)
                 {
-                    activityService.AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, post.UserId, 1);
+                    await activityService.AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, post.UserId, 1);
                 }
             }
             return new

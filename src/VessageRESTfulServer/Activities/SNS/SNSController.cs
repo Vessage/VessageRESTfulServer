@@ -330,7 +330,7 @@ namespace VessageRESTfulServer.Activities.SNS
                     await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
                     if(post.UserId != UserObjectId)
                     {
-                        AppServiceProvider.GetActivityService().AddActivityBadge(SNSConfigCenter.ActivityId, post.UserId, 1);
+                        await AppServiceProvider.GetActivityService().AddActivityBadge(SNSConfigCenter.ActivityId, post.UserId, 1);
                     }
                 }
                 return true;
@@ -411,7 +411,7 @@ namespace VessageRESTfulServer.Activities.SNS
                             newCmt.AtUserId = atUserId;
                             newCmt.AtNick = atNick;
                             if(atUserId != UserObjectId){
-                                activityService.AddActivityBadge(SNSConfigCenter.ActivityId,atUserId,1);
+                                await activityService.AddActivityBadge(SNSConfigCenter.ActivityId,atUserId,1);
                                 badgedUserId = atUserId;
                             }
                         }
@@ -426,7 +426,7 @@ namespace VessageRESTfulServer.Activities.SNS
                 var update = new UpdateDefinitionBuilder<SNSMemberProfile>().Inc(p => p.NewCmts, 1);
                 await usrCol.UpdateOneAsync(x => x.UserId == post.UserId, update);
                 if(post.UserId != badgedUserId){
-                    activityService.AddActivityBadge(SNSConfigCenter.ActivityId, post.UserId, 1);
+                    await activityService.AddActivityBadge(SNSConfigCenter.ActivityId, post.UserId, 1);
                 }
             }
             return new

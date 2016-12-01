@@ -17,7 +17,7 @@ namespace VessageRESTfulServer.Controllers
         {
             try
             {
-                var data = await AppServiceProvider.GetActivityService().GetActivityBoardData(UserSessionData.UserId);
+                var data = await AppServiceProvider.GetActivityService().GetActivityBoardData(UserObjectId);
                 var result = ActivityBadgeDataToJsonObject(data);
                 return result;
             }
@@ -25,66 +25,20 @@ namespace VessageRESTfulServer.Controllers
             {
                 return new object[0];
             }
-            
-
-        }
-
-        private class ActivityData
-        {
-            public string id { get; set; }
-            public int badge { get; set; }
-            public bool miniBadge { get; set; }
         }
 
         private IEnumerable<object> ActivityBadgeDataToJsonObject(ActivityBadgeData d)
         {
-            var dict = new Dictionary<string, ActivityData>();
-            foreach (var badge in d.BadgeValueActivity)
+            if(d == null || d.Activities == null)
             {
-                var strs = badge.Split(':');
-                var acId = strs[0];
-                var cnt = 0;
-                try
-                {
-                    cnt = int.Parse(strs[1]);
-                    if (dict.ContainsKey(acId))
-                    {
-                        var ad = dict[acId];
-                        ad.badge += cnt;
-                    }
-                    else
-                    {
-                        dict[acId] = new ActivityData
-                        {
-                            id = acId,
-                            badge = cnt,
-                            miniBadge = false
-                        };
-                    }
-                }
-                catch (Exception)
-                {
-                }
+                return new object[0];
             }
-
-            foreach (var miniAc in d.MiniBadgeActivity)
-            {
-                if(dict.ContainsKey(miniAc))
-                {
-                    dict[miniAc].miniBadge = true;
-                }
-                else
-                {
-                    dict[miniAc] = new ActivityData
-                    {
-                        id = miniAc,
-                        badge = 0,
-                        miniBadge = true
-                    };
-                }
-            }
-
-            return dict.Values.ToList();
+            var result = from item in d.Activities select new {
+                id = item.AcId,
+                badge = item.Badge,
+                miniBadge = item.MiniBadge
+            };
+            return result;
         }
     }
 }
