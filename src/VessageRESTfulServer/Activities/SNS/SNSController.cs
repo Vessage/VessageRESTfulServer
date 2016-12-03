@@ -82,18 +82,27 @@ namespace VessageRESTfulServer.Activities.SNS
                 }
 
                 var timeInterval = now - profile.ActiveTime;
-                if (timeInterval.TotalHours > 12)
+                if (timeInterval.TotalMinutes > 180)
                 {
-
                     var focused = new HashSet<ObjectId>(profile.FocusUserIds);
+                    var userId = UserObjectId;
 
                     var needSetFollow = newFocus.Except(focused);
-                    await FollowSNSUsers(usrCol, needSetFollow, UserObjectId);
-
                     var needUnFollow = focused.Except(newFocus);
-                    await UnfollowSNSUsers(usrCol, needUnFollow, UserObjectId);
 
-                    await usrCol.UpdateOneAsync(f => f.UserId == UserObjectId, new UpdateDefinitionBuilder<SNSMemberProfile>().Set(p => p.FocusUserIds, newFocus.ToArray()));
+                    if (needSetFollow.Count() > 0 || needUnFollow.Count() > 0)
+                    {
+                        if (needSetFollow.Count() > 0)
+                        {
+                            await FollowSNSUsers(usrCol, needSetFollow, userId);
+                        }
+
+                        if (needUnFollow.Count() > 0)
+                        {
+                            await UnfollowSNSUsers(usrCol, needUnFollow, userId);
+                        }
+                        await usrCol.UpdateOneAsync(f => f.UserId == userId, new UpdateDefinitionBuilder<SNSMemberProfile>().Set(p => p.FocusUserIds, newFocus.ToArray()));
+                    }
                 }
 
             }
@@ -137,20 +146,14 @@ namespace VessageRESTfulServer.Activities.SNS
 
         private async Task UnfollowSNSUsers(IMongoCollection<SNSMemberProfile> usrCol, IEnumerable<ObjectId> needUnFollow, ObjectId follower)
         {
-            if (needUnFollow.Count() > 0)
-            {
-                var setUnFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needUnFollow);
-                await usrCol.UpdateManyAsync(setUnFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().Pull(p => p.Followers, follower));
-            }
+            var setUnFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needUnFollow);
+            await usrCol.UpdateManyAsync(setUnFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().Pull(p => p.Followers, follower));
         }
 
         private async Task FollowSNSUsers(IMongoCollection<SNSMemberProfile> usrCol, IEnumerable<ObjectId> needSetFollow, ObjectId follower)
         {
-            if (needSetFollow.Count() > 0)
-            {
-                var setFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needSetFollow);
-                await usrCol.UpdateManyAsync(setFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().AddToSet(p => p.Followers, follower));
-            }
+            var setFollowFilter = new FilterDefinitionBuilder<SNSMemberProfile>().In(f => f.UserId, needSetFollow);
+            await usrCol.UpdateManyAsync(setFollowFilter, new UpdateDefinitionBuilder<SNSMemberProfile>().AddToSet(p => p.Followers, follower));
         }
 
         private static object SNSPostToJsonObject(SNSPost p, int type)
