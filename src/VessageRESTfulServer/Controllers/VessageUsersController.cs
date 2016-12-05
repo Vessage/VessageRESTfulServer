@@ -26,7 +26,7 @@ namespace VessageRESTfulServer.Controllers
     public class VessageUsersController : APIControllerBase
     {
         private static Queue<VessageUser> ActiveUsers = new Queue<VessageUser>();
-        
+
         [HttpGet]
         public async Task<object> Get()
         {
@@ -54,6 +54,13 @@ namespace VessageRESTfulServer.Controllers
         [HttpGet("Near")]
         public async Task<IEnumerable<object>> GetNearUsers(string location)
         {
+            var enableNearUser = bool.Parse(Startup.VGConfiguration["VGConfig:enableNearUser"]);
+            if (!enableNearUser)
+            {
+                Response.StatusCode = (int)HttpStatusCode.Gone;
+                return new object[0];
+            }
+
             if (!string.IsNullOrWhiteSpace(location))
             {
                 var locationJson = JsonConvert.DeserializeObject<JObject>(location);
@@ -66,7 +73,7 @@ namespace VessageRESTfulServer.Controllers
             }
             else
             {
-                await Startup.ServicesProvider.GetUserService().UpdateUserActiveInfo(UserObjectId,null);
+                await Startup.ServicesProvider.GetUserService().UpdateUserActiveInfo(UserObjectId, null);
                 return new object[0];
             }
         }
@@ -74,14 +81,11 @@ namespace VessageRESTfulServer.Controllers
         [HttpGet("Active")]
         public async Task<IEnumerable<object>> GetActiveUsers()
         {
-            if (Startup.IsProduction)
+            var enableActiveUser = bool.Parse(Startup.VGConfiguration["VGConfig:enableActiveUser"]);
+            if (!enableActiveUser)
             {
-                var vegeActiveUserLock = "/etc/bahamut/vege/active_user.lock";
-                if (System.IO.File.Exists(vegeActiveUserLock))
-                {
-                    Response.StatusCode = (int)HttpStatusCode.Gone;
-                    return new object[0];
-                }
+                Response.StatusCode = (int)HttpStatusCode.Gone;
+                return new object[0];
             }
             var users = from au in ActiveUsers where au.Id == UserObjectId select au;
             if (users.Count() == 0)
@@ -89,7 +93,7 @@ namespace VessageRESTfulServer.Controllers
                 var userService = Startup.ServicesProvider.GetUserService();
                 var user = await userService.GetUserOfUserId(UserObjectId);
                 if (!string.IsNullOrEmpty(user.AccountId) && !string.IsNullOrEmpty(user.Mobile))
-                {                    
+                {
                     ActiveUsers.Enqueue(user);
                     if (ActiveUsers.Count > 20)
                     {
@@ -165,16 +169,16 @@ namespace VessageRESTfulServer.Controllers
                 sex = user.Sex,
                 motto = user.Motto,
                 acTs = user.ActiveTime == null ? 0 : (long)DateTimeUtil.UnixTimeSpanOfDateTime(user.ActiveTime).TotalMilliseconds,
-                location = user.Location == null ? null : new double[]{ user.Location.Longitude,user.Location.Latitude }
+                location = user.Location == null ? null : new double[] { user.Location.Longitude, user.Location.Latitude }
             };
 
             return jsonResultObj;
         }
 
         [HttpPost("UserDevice")]
-        public object RegistUserDevice(String deviceToken,String deviceType)
+        public object RegistUserDevice(String deviceToken, String deviceType)
         {
-            if(string.IsNullOrWhiteSpace(deviceToken) || string.IsNullOrWhiteSpace(deviceType))
+            if (string.IsNullOrWhiteSpace(deviceToken) || string.IsNullOrWhiteSpace(deviceType))
             {
                 Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 return new { msg = "PARAMETERS_ERROR" };
@@ -220,7 +224,7 @@ namespace VessageRESTfulServer.Controllers
             return new { msg = "NOT_ALLOWED" };
         }
 
-        private static async Task<int> ValidateMobSMSCode(string mobSMSAppkey,string mobile, string zone, string code)
+        private static async Task<int> ValidateMobSMSCode(string mobSMSAppkey, string mobile, string zone, string code)
         {
 #if DEBUG
             if (1 == int.Parse("1"))
@@ -239,7 +243,7 @@ namespace VessageRESTfulServer.Controllers
                  request.Method = "Post";
                  using (Stream reqStream = await request.GetRequestStreamAsync())
                  {
-                     
+
                      reqStream.Write(bs, 0, bs.Length);
                  }
                  var response = await request.GetResponseAsync();
@@ -271,13 +275,13 @@ namespace VessageRESTfulServer.Controllers
             {
                 Response.StatusCode = 500;
             }
-            return VessageUserToJsonObject(user); 
+            return VessageUserToJsonObject(user);
         }
 
         [HttpPost("ValidateMobileVSMS")]
-        public async Task<object> ValidateMobileVSMS(string smsAppkey,string mobile, string zone, string code)
+        public async Task<object> ValidateMobileVSMS(string smsAppkey, string mobile, string zone, string code)
         {
-            
+
             var sessionData = UserSessionData;
             var userId = sessionData.UserId;
             var userOId = UserObjectId;
@@ -315,7 +319,7 @@ namespace VessageRESTfulServer.Controllers
                 {
                     var tokenService = Startup.ServicesProvider.GetTokenService();
                     sessionData.UserId = registedUser.Id.ToString();
-                    if(await tokenService.SetUserSessionDataAsync(sessionData))
+                    if (await tokenService.SetUserSessionDataAsync(sessionData))
                     {
                         await tokenService.ReleaseAppTokenAsync(sessionData.Appkey, userId, sessionData.AppToken);
                         UpdateBahamutAccountMobile(sessionData, mobile);
@@ -329,7 +333,7 @@ namespace VessageRESTfulServer.Controllers
                     {
                         throw new Exception("Alloc User Session Error");
                     }
-                    
+
                 }
             }
             catch (Exception ex)
@@ -461,7 +465,7 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPut("ChatImages")]
-        public async Task<object> UpdateChatImage(string image,string imageType)
+        public async Task<object> UpdateChatImage(string image, string imageType)
         {
             if (string.IsNullOrWhiteSpace(image) == false)
             {

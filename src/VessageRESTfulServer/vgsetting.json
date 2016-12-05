@@ -1,0 +1,10 @@
+{
+    "VGConfig":{
+        "enableActiveUser":true,
+        "enableNearUser":true,
+        "UserRegistedNotifyAdmin":{
+            "enable":true,
+            "Admins":["10000","147282"]
+        }
+    }
+}

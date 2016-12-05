@@ -54,7 +54,7 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task<Tuple<ObjectId, ObjectId>> SendVessage(ObjectId receicerId, Vessage vessage,bool isGroup)
+        public async Task<Tuple<ObjectId, ObjectId>> SendVessage(ObjectId receicerId, Vessage vessage, bool isGroup)
         {
             vessage.Id = ObjectId.GenerateNewId();
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
@@ -89,7 +89,7 @@ namespace VessageRESTfulServer.Services
         /// <param name="receicerMobile"></param>
         /// <param name="vessage"></param>
         /// <returns></returns>
-        private async Task<Tuple<ObjectId,ObjectId>> SendVessageForMobile(string receicerMobile, Vessage vessage)
+        private async Task<Tuple<ObjectId, ObjectId>> SendVessageForMobile(string receicerMobile, Vessage vessage)
         {
             vessage.Id = ObjectId.GenerateNewId();
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
@@ -169,7 +169,7 @@ namespace VessageRESTfulServer.Services
                 result.TryGetValue("UserId", out outUserId);
                 result.TryGetValue("ForMobile", out outMobile);
                 result.TryGetValue("IsGroup", out outIsGroup);
-                
+
                 return new FinishSendVessageResult
                 {
                     ReceiverId = outUserId != null && outUserId.IsObjectId ? outUserId.AsObjectId : ObjectId.Empty,
@@ -213,14 +213,20 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        internal async Task<IEnumerable<Vessage>> GetNotReadMessageOfUser(string userId)
+        public async Task<IEnumerable<Vessage>> GetNotReadMessageOfUser(string userId)
         {
             var userOId = new ObjectId(userId);
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             var updateGetTime = new UpdateDefinitionBuilder<VessageBox>().Set(v => v.LastGetMessageTime, DateTime.UtcNow);
-            var vb = await collection.FindOneAndUpdateAsync(f => f.UserId == userOId,updateGetTime);
-            var vs = from v in vb.Vessages where v.Ready && v.SendTime > vb.LastGotMessageTime && v.IsRead == false select v;
-            return vs;
+            var vb = await collection.FindOneAndUpdateAsync(f => f.UserId == userOId, updateGetTime);
+            if (vb != null && vb.Vessages != null)
+            {
+                return from v in vb.Vessages where v.Ready && v.SendTime > vb.LastGotMessageTime && v.IsRead == false select v;
+            }
+            else
+            {
+                return new Vessage[0];
+            }
         }
 
         /// <summary>

@@ -166,7 +166,7 @@ namespace VessageRESTfulServer.Services
             try
             {
                 var data = await collection.Find(f => f.UserId == userId).FirstAsync();
-                if (data.Activities != null && data.Activities.Count() > 0)
+                if (data != null && data.Activities != null && data.Activities.Count() > 0)
                 {
                     var copy = data.Copy();
                     copy.ClearBadges();

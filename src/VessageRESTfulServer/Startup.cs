@@ -16,12 +16,8 @@ using BahamutService.Service;
 using System.IO;
 using Newtonsoft.Json.Serialization;
 using DataLevelDefines;
-using System.Threading.Tasks;
 using ServerControlService;
 using Newtonsoft.Json;
-using System.Threading;
-using System.Net;
-using System.Text;
 
 namespace VessageRESTfulServer
 {
@@ -58,6 +54,9 @@ namespace VessageRESTfulServer
     {
         public static IHostingEnvironment ServerHostingEnvironment { get; private set; }
         public static IConfiguration Configuration { get; set; }
+
+        public static IConfiguration VGConfiguration { get; set; }
+
         public static IServiceProvider ServicesProvider { get; private set; }
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
 
@@ -78,7 +77,7 @@ namespace VessageRESTfulServer
         public static int ChicagoServerPort { get { return int.Parse(Configuration["Data:ChicagoServer:port"]); } }
 
         public static IDictionary<string, string> ValidatedUsers { get; private set; }
-        
+
         public static bool IsProduction { get { return ServerHostingEnvironment.IsProduction(); } }
 
         public Startup(IHostingEnvironment env)
@@ -102,7 +101,11 @@ namespace VessageRESTfulServer
             ServerHostingEnvironment = env;
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
-            
+
+            //VG Configuration
+            VGConfiguration = new ConfigurationBuilder()
+                .AddJsonFile(string.Format("{0}vgsetting.json", Startup.ConfigRoot + Path.DirectorySeparatorChar), true, true)
+                .Build();
         }
 
         // This method gets called by the runtime. Use this method to add services to the container
@@ -115,7 +118,8 @@ namespace VessageRESTfulServer
             services.AddSingleton(new ServerControlManagementService(redis));
             services.AddSingleton(new TokenService(TokenServerClientManager));
 
-            services.AddMvc(config => {
+            services.AddMvc(config =>
+            {
                 config.Filters.Add(new BahamutAspNetCommon.LogExceptionFilter());
             }).AddJsonOptions(op =>
             {
@@ -142,7 +146,7 @@ namespace VessageRESTfulServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            
+
             ServicesProvider = app.ApplicationServices;
 
             //Log
@@ -186,7 +190,7 @@ namespace VessageRESTfulServer
 
     public static class IPubSubServiceExtension
     {
-        public static void PublishVegeNotifyMessage(this BahamutPubSubService service,BahamutPublishModel message)
+        public static void PublishVegeNotifyMessage(this BahamutPubSubService service, BahamutPublishModel message)
         {
             service.PublishBahamutUserNotifyMessage(Startup.AppChannelId, message);
         }
