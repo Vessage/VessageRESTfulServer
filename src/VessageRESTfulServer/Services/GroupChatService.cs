@@ -44,7 +44,7 @@ namespace VessageRESTfulServer.Services
         public async Task<bool> UserJoinGroup(ObjectId userId, ObjectId groupId, string inviteCode)
         {
             var collection = VessageDb.GetCollection<ChatGroup>("ChatGroup");
-            var update = new UpdateDefinitionBuilder<ChatGroup>().Push(g => g.Chatters, userId);
+            var update = new UpdateDefinitionBuilder<ChatGroup>().AddToSet(g => g.Chatters, userId);
             var result = await collection.UpdateOneAsync(f => f.Id == groupId && f.InviteCode == inviteCode && !f.Chatters.Contains(userId), update);
             return result.ModifiedCount > 0;
         }
@@ -52,7 +52,7 @@ namespace VessageRESTfulServer.Services
         public async Task<bool> AddUserJoinGroup(ObjectId hoster, ObjectId groupId, ObjectId userId)
         {
             var collection = VessageDb.GetCollection<ChatGroup>("ChatGroup");
-            var update = new UpdateDefinitionBuilder<ChatGroup>().Push(g => g.Chatters, userId);
+            var update = new UpdateDefinitionBuilder<ChatGroup>().AddToSet(g => g.Chatters, userId);
             var result = await collection.UpdateOneAsync(f => f.Id == groupId && f.Hosters.Contains(hoster) && !f.Chatters.Contains(userId), update);
             return result.ModifiedCount > 0;
         }
@@ -60,10 +60,10 @@ namespace VessageRESTfulServer.Services
         public async Task<bool> QuitChatGroup(ObjectId userId, ObjectId groupId)
         {
             var collection = VessageDb.GetCollection<ChatGroup>("ChatGroup");
-            var group = await collection.Find(f => f.Id == groupId).FirstAsync();
-            if (group != null)
+            var g = await collection.Find(f => f.Id == groupId).FirstAsync();
+            if (g != null)
             {
-                return await KickUserFromChatGroup(collection, group.Hosters[0], groupId, userId);
+                return await KickUserFromChatGroup(collection, g.Hosters[0], groupId, userId);
             }
             return false;
         }
@@ -89,13 +89,11 @@ namespace VessageRESTfulServer.Services
 
         private async Task<bool> KickUserFromChatGroup(IMongoCollection<ChatGroup> collection, ObjectId hoster, ObjectId groupId, ObjectId kickUserId)
         {
-            var update1 = new UpdateDefinitionBuilder<ChatGroup>().Pull(g => g.Chatters, kickUserId);
-            var update2 = new UpdateDefinitionBuilder<ChatGroup>().Pull(g => g.Hosters, kickUserId);
-            var update = new UpdateDefinitionBuilder<ChatGroup>().Combine(update1, update2);
+            var update = new UpdateDefinitionBuilder<ChatGroup>().Pull(g => g.Chatters, kickUserId).Pull(g => g.Hosters, kickUserId);
             var result = await collection.FindOneAndUpdateAsync(f => f.Id == groupId && f.Hosters.Contains(hoster), update);
             if (result.Hosters.Count() == 0 && result.Chatters.Count() > 0)
             {
-                update = new UpdateDefinitionBuilder<ChatGroup>().Push(g => g.Hosters, result.Chatters[0]);
+                update = new UpdateDefinitionBuilder<ChatGroup>().AddToSet(g => g.Hosters, result.Chatters[0]);
                 await collection.UpdateOneAsync(g => g.Id == groupId, update);
             }
             return result.Id == groupId;

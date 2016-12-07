@@ -20,7 +20,7 @@ namespace VessageRESTfulServer.Controllers
         [HttpGet]
         public async Task<object> GetGroupChat(string groupId)
         {
-            var g = await AppServiceProvider.GetGroupChatService().GetChatGroupById(UserObjectId,new ObjectId(groupId));
+            var g = await AppServiceProvider.GetGroupChatService().GetChatGroupById(UserObjectId, new ObjectId(groupId));
             return ChatGroupToJsonObject(g);
         }
 
@@ -42,12 +42,22 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("CreateGroupChat")]
-        public async Task<object> CreateGroupChat(string groupUsers,string groupName)
+        public async Task<object> CreateGroupChat(string groupUsers, string groupName)
         {
+
             var userIdArray = groupUsers.Split(new char[] { ',', ';' });
-            var userIds = from id in userIdArray select new ObjectId(id);
-            var g = await AppServiceProvider.GetGroupChatService().CreateChatGroup(UserObjectId, userIds, groupName);
-            return ChatGroupToJsonObject(g);
+            if (userIdArray.Count() > 0)
+            {
+                userIdArray = new HashSet<string>(userIdArray).ToArray();
+                var userIds = from id in userIdArray select new ObjectId(id);
+                var g = await AppServiceProvider.GetGroupChatService().CreateChatGroup(UserObjectId, userIds, groupName);
+                return ChatGroupToJsonObject(g);
+            }
+            else
+            {
+                Response.StatusCode = 400;
+                return null;
+            }
         }
 
         [HttpPost("AddUserJoinGroupChat")]
@@ -121,7 +131,7 @@ namespace VessageRESTfulServer.Controllers
         [HttpPut("EditGroupName")]
         public async Task<object> EditGroupName(string groupId, string inviteCode, string newGroupName)
         {
-            if (await AppServiceProvider.GetGroupChatService().EditGroupName(new ObjectId(groupId),inviteCode,newGroupName))
+            if (await AppServiceProvider.GetGroupChatService().EditGroupName(new ObjectId(groupId), inviteCode, newGroupName))
             {
                 return new
                 {

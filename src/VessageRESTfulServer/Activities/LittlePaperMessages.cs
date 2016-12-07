@@ -147,7 +147,7 @@ namespace VessageRESTfulServer.Activities.LPM
                 var msgCollection = LittlePaperDb.GetCollection<LittlePaperMessage>("LittlePaperMessage");
                 await msgCollection.InsertOneAsync(newMsg);
                 var collection = LittlePaperDb.GetCollection<PaperMessageBox>("PaperMessageBox");
-                var update = new UpdateDefinitionBuilder<PaperMessageBox>().Push(mb => mb.ReceivedMessages, newMsg.Id);
+                var update = new UpdateDefinitionBuilder<PaperMessageBox>().AddToSet(mb => mb.ReceivedMessages, newMsg.Id);
                 var msgBox = await collection.FindOneAndUpdateAsync(pb => pb.UserId == receiverOId, update);
                 if (msgBox == null)
                 {
@@ -219,7 +219,7 @@ namespace VessageRESTfulServer.Activities.LPM
             var updatePosterBox = new UpdateDefinitionBuilder<PaperMessageBox>().Pull(b => b.ReceivedMessages, paperOId);
             await collection.UpdateOneAsync(mbox => mbox.UserId == UserObjectId, updatePosterBox);
 
-            var updateReceiverBox = new UpdateDefinitionBuilder<PaperMessageBox>().Push(mb => mb.ReceivedMessages, paperOId);
+            var updateReceiverBox = new UpdateDefinitionBuilder<PaperMessageBox>().AddToSet(mb => mb.ReceivedMessages, paperOId);
             var msgBox = await collection.FindOneAndUpdateAsync(pb => pb.UserId == receiverOId, updateReceiverBox);
 
             if (msgBox == null)
@@ -235,7 +235,7 @@ namespace VessageRESTfulServer.Activities.LPM
             var updateMsg = new UpdateDefinitionBuilder<LittlePaperMessage>().Set(m => m.UpdatedTime, DateTime.UtcNow);
             if (!isAnonymousPost)
             {
-                var updateMsgPostmen = new UpdateDefinitionBuilder<LittlePaperMessage>().Push(m => m.Postmen, UserSessionData.UserId);
+                var updateMsgPostmen = new UpdateDefinitionBuilder<LittlePaperMessage>().AddToSet(m => m.Postmen, UserSessionData.UserId);
                 updateMsg = new UpdateDefinitionBuilder<LittlePaperMessage>().Combine(updateMsg, updateMsgPostmen);
             }
             await msgCollection.UpdateOneAsync(m => m.Id == paperOId, updateMsg);

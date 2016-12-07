@@ -9,7 +9,6 @@ using BahamutService.Service;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VessageRESTfulServer.Models;
-using Microsoft.Extensions.Configuration;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
