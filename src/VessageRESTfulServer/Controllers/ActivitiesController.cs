@@ -33,7 +33,7 @@ namespace VessageRESTfulServer.Controllers
             {
                 return new object[0];
             }
-            var result = from item in d.Activities
+            var result = from item in d.Activities where item.Badge > 0 || item.MiniBadge || !string.IsNullOrEmpty(item.Message)
                          select new
                          {
                              id = item.AcId,

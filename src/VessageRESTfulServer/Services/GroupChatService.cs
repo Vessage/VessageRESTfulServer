@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using VessageRESTfulServer.Models;
@@ -22,7 +20,7 @@ namespace VessageRESTfulServer.Services
             this.Client = Client;
         }
 
-        public async Task<ChatGroup> CreateChatGroup(ObjectId hoster, IEnumerable<ObjectId> chatters,string groupName)
+        public async Task<ChatGroup> CreateChatGroup(ObjectId hoster, IEnumerable<ObjectId> chatters, string groupName)
         {
             var chatterList = new List<ObjectId>(chatters);
             if (!chatterList.Contains(hoster))
@@ -74,7 +72,7 @@ namespace VessageRESTfulServer.Services
             return await KickUserFromChatGroup(collection, hoster, groupId, kickUserId);
         }
 
-        public async Task<ChatGroup> GetChatGroupById(ObjectId userId,ObjectId groupId)
+        public async Task<ChatGroup> GetChatGroupById(ObjectId userId, ObjectId groupId)
         {
             var collection = VessageDb.GetCollection<ChatGroup>("ChatGroup");
             try
@@ -90,7 +88,15 @@ namespace VessageRESTfulServer.Services
         private async Task<bool> KickUserFromChatGroup(IMongoCollection<ChatGroup> collection, ObjectId hoster, ObjectId groupId, ObjectId kickUserId)
         {
             var update = new UpdateDefinitionBuilder<ChatGroup>().Pull(g => g.Chatters, kickUserId).Pull(g => g.Hosters, kickUserId);
-            var result = await collection.FindOneAndUpdateAsync(f => f.Id == groupId && f.Hosters.Contains(hoster), update);
+            var option = new FindOneAndUpdateOptions<ChatGroup>()
+            {
+                ReturnDocument = ReturnDocument.After
+            };
+
+            var filter1 = new FilterDefinitionBuilder<ChatGroup>().Eq(c => c.Id, groupId);
+            var filter2 = new FilterDefinitionBuilder<ChatGroup>().AnyEq(c => c.Hosters, hoster);
+
+            var result = await collection.FindOneAndUpdateAsync(filter1 & filter2, update, option);
             if (result.Hosters.Count() == 0 && result.Chatters.Count() > 0)
             {
                 update = new UpdateDefinitionBuilder<ChatGroup>().AddToSet(g => g.Hosters, result.Chatters[0]);

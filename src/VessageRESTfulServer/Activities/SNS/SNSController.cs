@@ -118,6 +118,7 @@ namespace VessageRESTfulServer.Activities.SNS
                     CreateTime = DateTime.UtcNow,
                     ProfileState = SNSMemberProfile.STATE_NORMAL,
                     FocusUserIds = newFocus.ToArray(),
+                    Followers = new ObjectId[0],
                     Location = string.IsNullOrWhiteSpace(location) ? null : Utils.LocationStringToLocation(location)
                 };
                 await usrCol.InsertOneAsync(profile);

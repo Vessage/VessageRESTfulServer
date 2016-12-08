@@ -94,13 +94,13 @@ namespace VessageRESTfulServer.Services
                 {
                     var addToSet = new UpdateDefinitionBuilder<BsonDocument>()
                     .Set("UserId", userId)
-                    .AddToSet("Activities", new BadgeData
+                    .AddToSet("Activities", new BadgeData[]{new BadgeData
                     {
                         AcId = activityId,
                         Badge = addiction,
                         MiniBadge = false,
                         Message = message
-                    });
+                    }});
                     var option = new UpdateOptions
                     {
                         IsUpsert = true
@@ -138,13 +138,13 @@ namespace VessageRESTfulServer.Services
                     var addToSet = new UpdateDefinitionBuilder<BsonDocument>()
                     .Set("AcId", activityId)
                     .Set("UserId", userId)
-                    .AddToSet("Activities", new BadgeData
+                    .AddToSet("Activities", new BadgeData[]{new BadgeData
                     {
                         AcId = activityId,
                         Badge = 0,
                         MiniBadge = miniBadge,
                         Message = message
-                    });
+                    }});
                     var option = new UpdateOptions
                     {
                         IsUpsert = true
