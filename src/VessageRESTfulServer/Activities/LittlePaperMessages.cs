@@ -16,10 +16,10 @@ using VessageRESTfulServer.Controllers;
 
 namespace VessageRESTfulServer.Activities.LPM
 {
-    
+
     class LittlePaperMessage
     {
-        public ObjectId Id{ get; set; }
+        public ObjectId Id { get; set; }
         public string Sender { get; set; }
         public string ReceiverInfo { get; set; }
         public string Content { get; set; }
@@ -156,6 +156,7 @@ namespace VessageRESTfulServer.Activities.LPM
                         ReceivedMessages = new ObjectId[] { newMsg.Id },
                         UserId = receiverOId
                     };
+                    await AppServiceProvider.GetActivityService().CreateActivityBadgeData(ActivityId, receiverOId);
                     await collection.InsertOneAsync(msgBox);
                 }
                 await AppServiceProvider.GetActivityService().AddActivityBadge(ActivityId, receiverOId, 1);
@@ -446,7 +447,7 @@ namespace VessageRESTfulServer.Activities.LPM
                 .Set(m => m.Got, true);
             await responseCollection.UpdateManyAsync(m => m.ToUser == UserObjectId, update);
             var resps = await responseCollection.Find(m => m.ToUser == UserObjectId).ToListAsync();
-            
+
             var result = from r in resps
                          select new
                          {
