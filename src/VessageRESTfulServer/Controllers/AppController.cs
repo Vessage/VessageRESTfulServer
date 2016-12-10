@@ -17,10 +17,10 @@ namespace VessageRESTfulServer.Controllers
     [Route("api/[controller]")]
     public class AppController : APIControllerBase
     {
-        private static Dictionary<string,JObject> VersionVessage = new Dictionary<string, JObject>();
+        private static Dictionary<string, JObject> VersionVessage = new Dictionary<string, JObject>();
 
         [HttpPost("FirstLaunch")]
-        public async Task Post(string platform, int buildVersion,int oldBuildVersion)
+        public async Task Post(string platform, int buildVersion, int oldBuildVersion)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace VessageRESTfulServer.Controllers
             return null;
         }
 
-        private async Task<bool> SendVersionVessages(ObjectId UserId,string platform, int buildVersion, int oldBuildVersion)
+        private async Task<bool> SendVersionVessages(ObjectId UserId, string platform, int buildVersion, int oldBuildVersion)
         {
             var jsonObj = LoadVersionVessageConfig(platform, buildVersion);
             if (jsonObj == null)

@@ -93,14 +93,15 @@ namespace VessageRESTfulServer.Services
                 if (res.ModifiedCount == 0)
                 {
                     var addToSet = new UpdateDefinitionBuilder<BsonDocument>()
+                    .Set("AcId", activityId)
                     .Set("UserId", userId)
-                    .AddToSet("Activities", new BadgeData[]{new BadgeData
+                    .AddToSet("Activities", new BadgeData
                     {
                         AcId = activityId,
                         Badge = addiction,
                         MiniBadge = false,
                         Message = message
-                    }});
+                    });
                     var option = new UpdateOptions
                     {
                         IsUpsert = true
@@ -138,13 +139,13 @@ namespace VessageRESTfulServer.Services
                     var addToSet = new UpdateDefinitionBuilder<BsonDocument>()
                     .Set("AcId", activityId)
                     .Set("UserId", userId)
-                    .AddToSet("Activities", new BadgeData[]{new BadgeData
+                    .AddToSet("Activities", new BadgeData
                     {
                         AcId = activityId,
                         Badge = 0,
                         MiniBadge = miniBadge,
                         Message = message
-                    }});
+                    });
                     var option = new UpdateOptions
                     {
                         IsUpsert = true
@@ -182,12 +183,12 @@ namespace VessageRESTfulServer.Services
 
         }
 
-        public async Task SetActivityMiniBadgeOfUserIds(string activityId, IEnumerable<ObjectId> followers, bool miniBadge = true, string message = null)
+        public async Task SetActivityMiniBadgeOfUserIds(string activityId, IEnumerable<ObjectId> userIds, bool miniBadge = true, string message = null)
         {
-            if (followers.Count() > 0)
+            if (userIds.Count() > 0)
             {
                 var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("ActivityBadgeData");
-                var filter = new FilterDefinitionBuilder<ActivityBadgeData>().In(f => f.UserId, followers);
+                var filter = new FilterDefinitionBuilder<ActivityBadgeData>().In(f => f.UserId, userIds);
                 var filter2 = new FilterDefinitionBuilder<ActivityBadgeData>().Eq("Activities.AcId", activityId);
                 var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Set("Activities.$.MiniBadge", miniBadge);
                 if (string.IsNullOrEmpty(message) == false)
