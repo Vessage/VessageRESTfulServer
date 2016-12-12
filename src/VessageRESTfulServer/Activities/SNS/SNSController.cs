@@ -237,7 +237,7 @@ namespace VessageRESTfulServer.Activities.SNS
         }
 
         [HttpPost("NewPost")]
-        public async Task<object> NewPost(string image, string nick)
+        public async Task<object> NewPost(string image, string nick, string body = null)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
 
@@ -259,7 +259,8 @@ namespace VessageRESTfulServer.Activities.SNS
                 PostTs = nowTs,
                 UpdateTs = nowTs,
                 Type = SNSPost.TYPE_NORMAL,
-                State = SNSPost.STATE_NORMAL
+                State = SNSPost.STATE_NORMAL,
+                Body = body
             };
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             await postCol.InsertOneAsync(newPost);
@@ -367,9 +368,14 @@ namespace VessageRESTfulServer.Activities.SNS
                                     .Set(l => l.SNSPostImage, post.Image)
                                     .Set(l => l.UserId, UserObjectId);
                 var like = await likeCol.FindOneAndUpdateAsync(filter, updateLike, opt);
+                var notSelf = post.UserId != UserObjectId;
                 if (like == null)
                 {
-                    var update = new UpdateDefinitionBuilder<SNSMemberProfile>().Inc(p => p.Likes, likesCount).Inc(p => p.NewLikes, likesCount);
+                    var update = new UpdateDefinitionBuilder<SNSMemberProfile>().Inc(p => p.Likes, likesCount);
+                    if (notSelf)
+                    {
+                        update = update.Inc(p => p.NewLikes, likesCount);
+                    }
                     var usrOpt = new FindOneAndUpdateOptions<SNSMemberProfile, SNSMemberProfile>
                     {
                         ReturnDocument = ReturnDocument.After,
@@ -380,7 +386,7 @@ namespace VessageRESTfulServer.Activities.SNS
 
                     var updatePost = new UpdateDefinitionBuilder<SNSPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
                     await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
-                    if (post.UserId != UserObjectId)
+                    if (notSelf)
                     {
                         await AppServiceProvider.GetActivityService().AddActivityBadge(SNSConfigCenter.ActivityId, post.UserId, 1);
                     }

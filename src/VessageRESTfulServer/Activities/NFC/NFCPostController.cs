@@ -190,7 +190,7 @@ namespace VessageRESTfulServer.Activities.NFC
         }
 
         [HttpPost("NewPost")]
-        public async Task<object> NewPost(string image)
+        public async Task<object> NewPost(string image, string body = null)
         {
             var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
             var poster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState > 0).Project(p => new { Nick = p.Nick, MemberId = p.Id, State = p.ProfileState }).FirstAsync();
@@ -206,7 +206,8 @@ namespace VessageRESTfulServer.Activities.NFC
                 UpdateTs = nowTs,
                 Type = poster.State == NFCMemberProfile.STATE_VALIDATED ? NFCPost.TYPE_NORMAL : NFCPost.TYPE_NEW_MEMBER,
                 UserId = UserObjectId,
-                State = NFCPost.STATE_NORMAL
+                State = NFCPost.STATE_NORMAL,
+                Body = body
             };
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
             await postCol.InsertOneAsync(newPost);
@@ -314,7 +315,12 @@ namespace VessageRESTfulServer.Activities.NFC
                 var like = await likeCol.FindOneAndUpdateAsync(filter, updateLike, opt);
                 if (like == null)
                 {
-                    var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Inc(p => p.Likes, likesCount).Inc(p => p.NewLikes, likesCount);
+                    var notSelf = post.UserId != UserObjectId;
+                    var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Inc(p => p.Likes, likesCount);
+                    if (notSelf)
+                    {
+                        update = update.Inc(p => p.NewLikes, likesCount);
+                    }
                     var usrOpt = new FindOneAndUpdateOptions<NFCMemberProfile, NFCMemberProfile>
                     {
                         ReturnDocument = ReturnDocument.After,
@@ -338,7 +344,7 @@ namespace VessageRESTfulServer.Activities.NFC
                     new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount).Set(p => p.Type, NFCPost.TYPE_NEW_MEMBER_VALIDATED) :
                     new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
                     await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
-                    if (post.UserId != UserObjectId)
+                    if (notSelf)
                     {
                         await AppServiceProvider.GetActivityService().AddActivityBadge(NiceFaceClubConfigCenter.ActivityId, post.UserId, 1);
                     }

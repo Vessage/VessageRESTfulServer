@@ -64,6 +64,7 @@ namespace VessageRESTfulServer.Activities.NFC
         public string PosterNick { get; set; }
         public int Type { get; set; }
         public int State { get; set; }
+        public string Body { get; set; }
     }
 
     public class NFCPostLike

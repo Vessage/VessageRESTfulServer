@@ -57,7 +57,8 @@ namespace VessageRESTfulServer.Activities.SNS
         public int Type { get; set; }
         public int State { get; set; }
 
-        public SNSPostComment FirstComment { get; set; }
+        public string Body { get; set; }
+
     }
 
     public class SNSPostLike
