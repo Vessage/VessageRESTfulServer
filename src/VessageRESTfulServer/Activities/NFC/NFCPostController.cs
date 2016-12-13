@@ -151,11 +151,11 @@ namespace VessageRESTfulServer.Activities.NFC
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
             try
             {
-                var twoDaysAgo = (long)DateTimeUtil.UnixTimeSpanOfDateTime(DateTime.UtcNow.AddDays(-2)).TotalMilliseconds;
+                var twoDaysLater = (long)DateTimeUtil.UnixTimeSpanOfDateTime(DateTime.UtcNow.AddDays(2)).TotalMilliseconds;
                 var profileExists = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState == NFCMemberProfile.STATE_VALIDATED).CountAsync();
                 if (profileExists > 0)
                 {
-                    var posts = await postCol.Find(f => (f.Type == NFCPost.TYPE_NEW_MEMBER || f.Type == NFCPost.TYPE_NEW_MEMBER_VALIDATED && f.PostTs > twoDaysAgo) && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
+                    var posts = await postCol.Find(f => (f.Type == NFCPost.TYPE_NEW_MEMBER || f.Type == NFCPost.TYPE_NEW_MEMBER_VALIDATED && f.PostTs < twoDaysLater) && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
                     return from p in posts select NFCPostToJsonObject(p, NFCPost.TYPE_NEW_MEMBER);
                 }
                 else
@@ -324,7 +324,7 @@ namespace VessageRESTfulServer.Activities.NFC
                     var usrOpt = new FindOneAndUpdateOptions<NFCMemberProfile, NFCMemberProfile>
                     {
                         ReturnDocument = ReturnDocument.After,
-                        Projection = new ProjectionDefinitionBuilder<NFCMemberProfile>().Include(p => p.Likes).Include(p => p.ProfileState).Include(p => p.UserId)
+                        Projection = new ProjectionDefinitionBuilder<NFCMemberProfile>().Include(p => p.Likes).Include(p => p.ProfileState)
                     };
                     var usrFilter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(f => f.Id == post.MemberId);
                     var usr = await usrCol.FindOneAndUpdateAsync(usrFilter, update, usrOpt);
@@ -338,7 +338,7 @@ namespace VessageRESTfulServer.Activities.NFC
                             acName = NiceFaceClubConfigCenter.NFCName,
                             acMsg = NiceFaceClubConfigCenter.NFCHelloMessage
                         };
-                        PublishActivityNotify(usr.UserId.ToString(), extra.acMsg, extra);
+                        PublishActivityNotify(post.UserId.ToString(), extra.acMsg, extra);
                     }
                     var updatePost = updatePostNormal ?
                     new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount).Set(p => p.Type, NFCPost.TYPE_NEW_MEMBER_VALIDATED) :

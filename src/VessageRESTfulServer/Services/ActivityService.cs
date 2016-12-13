@@ -93,7 +93,6 @@ namespace VessageRESTfulServer.Services
                 if (res.ModifiedCount == 0)
                 {
                     var addToSet = new UpdateDefinitionBuilder<BsonDocument>()
-                    .Set("AcId", activityId)
                     .Set("UserId", userId)
                     .AddToSet("Activities", new BadgeData
                     {
@@ -137,7 +136,6 @@ namespace VessageRESTfulServer.Services
                 if (res.ModifiedCount == 0)
                 {
                     var addToSet = new UpdateDefinitionBuilder<BsonDocument>()
-                    .Set("AcId", activityId)
                     .Set("UserId", userId)
                     .AddToSet("Activities", new BadgeData
                     {
