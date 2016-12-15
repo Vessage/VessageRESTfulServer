@@ -151,11 +151,12 @@ namespace VessageRESTfulServer.Activities.NFC
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
             try
             {
-                var twoDaysLater = (long)DateTimeUtil.UnixTimeSpanOfDateTime(DateTime.UtcNow.AddDays(2)).TotalMilliseconds;
+                var twoDaysEarly = (long)DateTimeUtil.UnixTimeSpanOfDateTime(DateTime.UtcNow.AddDays(-2)).TotalMilliseconds;
                 var profileExists = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState == NFCMemberProfile.STATE_VALIDATED).CountAsync();
                 if (profileExists > 0)
                 {
-                    var posts = await postCol.Find(f => (f.Type == NFCPost.TYPE_NEW_MEMBER || f.Type == NFCPost.TYPE_NEW_MEMBER_VALIDATED && f.PostTs < twoDaysLater) && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
+                    var posts = await postCol
+                    .Find(f => (f.Type == NFCPost.TYPE_NEW_MEMBER || f.Type == NFCPost.TYPE_NEW_MEMBER_VALIDATED && f.PostTs > twoDaysEarly) && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
                     return from p in posts select NFCPostToJsonObject(p, NFCPost.TYPE_NEW_MEMBER);
                 }
                 else
