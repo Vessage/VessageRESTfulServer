@@ -328,21 +328,27 @@ namespace VessageRESTfulServer.Activities.NFC
                     };
                     var usrFilter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(f => f.Id == post.MemberId);
                     var usr = await usrCol.FindOneAndUpdateAsync(usrFilter, update, usrOpt);
-                    var updatePostNormal = false;
-                    if (usr.Likes >= NiceFaceClubConfigCenter.BaseLikeJoinNFC && usr.ProfileState == NFCMemberProfile.STATE_ANONYMOUS)
+                    var updatePost = new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
+
+                    if (usr.ProfileState == NFCMemberProfile.STATE_ANONYMOUS)
                     {
-                        await usrCol.UpdateOneAsync(f => f.Id == post.MemberId, new UpdateDefinitionBuilder<NFCMemberProfile>().Set(f => f.ProfileState, NFCMemberProfile.STATE_VALIDATED));
-                        updatePostNormal = true;
+                        var likeMessage = NiceFaceClubConfigCenter.NFCHelloMessage;
+                        if (usr.Likes >= NiceFaceClubConfigCenter.BaseLikeJoinNFC)
+                        {
+                            await usrCol.UpdateOneAsync(f => f.Id == post.MemberId, new UpdateDefinitionBuilder<NFCMemberProfile>().Set(f => f.ProfileState, NFCMemberProfile.STATE_VALIDATED));
+                            updatePost = updatePost.Set(p => p.Type, NFCPost.TYPE_NEW_MEMBER_VALIDATED);
+                        }
+                        else
+                        {
+                            likeMessage = string.Format(NiceFaceClubConfigCenter.NFCNeedLikeJoinMessage, usr.Likes, NiceFaceClubConfigCenter.BaseLikeJoinNFC - usr.Likes);
+                        }
                         var extra = new
                         {
                             acName = NiceFaceClubConfigCenter.NFCName,
-                            acMsg = NiceFaceClubConfigCenter.NFCHelloMessage
+                            acMsg = likeMessage
                         };
                         PublishActivityNotify(post.UserId.ToString(), extra.acMsg, extra);
                     }
-                    var updatePost = updatePostNormal ?
-                    new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount).Set(p => p.Type, NFCPost.TYPE_NEW_MEMBER_VALIDATED) :
-                    new UpdateDefinitionBuilder<NFCPost>().Set(p => p.UpdateTs, (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds).Inc(p => p.Likes, likesCount);
                     await postCol.UpdateOneAsync(p => p.Id == new ObjectId(postId), updatePost);
                     if (notSelf)
                     {

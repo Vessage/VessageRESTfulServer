@@ -55,6 +55,9 @@ namespace VessageRESTfulServer.Activities.NFC
 
         public static string NFCHelloMessage { get { return NFCConfig["NFCHello"]; } }
 
+        public static string NFCNeedLikeJoinMessage { get { return NFCConfig["NFCNeedLikeJoinMessage"]; } }
+
+
         public static string NFCName { get { return "高颜值俱乐部"; } }
 
         public static string GetScoreString(float highScore)

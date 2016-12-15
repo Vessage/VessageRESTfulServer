@@ -1,5 +1,6 @@
 ﻿{
-  "NFCHello": "欢迎加入高颜值俱乐部~",
+  "NFCHello": "高颜值俱乐部:你已经获得正式会员的足够的赞，欢迎正式加入NFC！",
+  "NFCNeedLikeJoinMessage":"高颜值俱乐部:你已经获得{0}个赞，还差{1}个正式会员点赞即可正式加入NFC",
 
   "PuzzlePassMsgs": [
     "哈哈，被你猜到了!",
