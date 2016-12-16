@@ -17,6 +17,7 @@ using System.Net;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
 using MongoDB.Driver.GeoJsonObjectModel;
+using System.Text.RegularExpressions;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -61,15 +62,17 @@ namespace VessageRESTfulServer.Controllers
                 return new object[0];
             }
 
+
             if (!string.IsNullOrWhiteSpace(location))
             {
+                var ignoreRegexPattern = Startup.VGConfiguration["VGConfig:virtualUserRegex"];
                 var locationJson = JsonConvert.DeserializeObject<JObject>(location);
                 var coordinates = (JArray)locationJson["coordinates"];
                 var longitude = (double)coordinates.First;
                 var latitude = (double)coordinates.Last;
                 var geoLoc = new GeoJson2DGeographicCoordinates(longitude, latitude);
                 var users = await Startup.ServicesProvider.GetUserService().GetNearUsers(UserObjectId, geoLoc);
-                return from u in users select VessageUserToJsonObject(u);
+                return from u in users where !Regex.IsMatch(u.AccountId, ignoreRegexPattern) select VessageUserToJsonObject(u);
             }
             else
             {
@@ -82,6 +85,7 @@ namespace VessageRESTfulServer.Controllers
         public async Task<IEnumerable<object>> GetActiveUsers()
         {
             var enableActiveUser = bool.Parse(Startup.VGConfiguration["VGConfig:enableActiveUser"]);
+
             if (!enableActiveUser)
             {
                 Response.StatusCode = (int)HttpStatusCode.Gone;
@@ -94,7 +98,12 @@ namespace VessageRESTfulServer.Controllers
                 var user = await userService.GetUserOfUserId(UserObjectId);
                 if (!string.IsNullOrEmpty(user.AccountId) && !string.IsNullOrEmpty(user.Mobile))
                 {
-                    ActiveUsers.Enqueue(user);
+
+                    var ignoreRegexPattern = Startup.VGConfiguration["VGConfig:virtualUserRegex"];
+                    if (!Regex.IsMatch(user.AccountId, ignoreRegexPattern))
+                    {
+                        ActiveUsers.Enqueue(user);
+                    }
                     if (ActiveUsers.Count > 20)
                     {
                         ActiveUsers.Dequeue();
