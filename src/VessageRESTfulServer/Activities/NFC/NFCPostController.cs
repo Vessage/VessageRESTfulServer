@@ -98,7 +98,7 @@ namespace VessageRESTfulServer.Activities.NFC
 
         private async Task<IEnumerable<NFCPost>> GetPostOrigin(IMongoCollection<NFCPost> postCol, long ts, int cnt)
         {
-            var posts = await postCol.Find(f => (f.Type == NFCPost.TYPE_NORMAL || f.Type == NFCPost.TYPE_NEW_MEMBER_VALIDATED) && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
+            var posts = await postCol.Find(f => f.Type == NFCPost.TYPE_NORMAL && f.State > 0 && f.PostTs < ts).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
             return posts;
         }
 
@@ -325,7 +325,7 @@ namespace VessageRESTfulServer.Activities.NFC
                     var usrOpt = new FindOneAndUpdateOptions<NFCMemberProfile, NFCMemberProfile>
                     {
                         ReturnDocument = ReturnDocument.After,
-                        Projection = new ProjectionDefinitionBuilder<NFCMemberProfile>().Include(p => p.Likes).Include(p => p.ProfileState)
+                        Projection = new ProjectionDefinitionBuilder<NFCMemberProfile>().Include(p => p.Likes).Include(p => p.ProfileState).Include(p => p.FaceScore)
                     };
                     var usrFilter = new FilterDefinitionBuilder<NFCMemberProfile>().Where(f => f.Id == post.MemberId);
                     var usr = await usrCol.FindOneAndUpdateAsync(usrFilter, update, usrOpt);
@@ -337,7 +337,7 @@ namespace VessageRESTfulServer.Activities.NFC
                         if (usr.Likes >= NiceFaceClubConfigCenter.BaseLikeJoinNFC)
                         {
                             await usrCol.UpdateOneAsync(f => f.Id == post.MemberId, new UpdateDefinitionBuilder<NFCMemberProfile>().Set(f => f.ProfileState, NFCMemberProfile.STATE_VALIDATED));
-                            updatePost = updatePost.Set(p => p.Type, NFCPost.TYPE_NEW_MEMBER_VALIDATED);
+                            updatePost = updatePost.Set(p => p.Type, usr.FaceScore >= 8.6 ? NFCPost.TYPE_NORMAL : NFCPost.TYPE_NEW_MEMBER_VALIDATED);
                         }
                         else
                         {
