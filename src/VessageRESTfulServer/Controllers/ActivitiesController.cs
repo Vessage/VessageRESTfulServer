@@ -18,7 +18,7 @@ namespace VessageRESTfulServer.Controllers
             try
             {
                 var data = await AppServiceProvider.GetActivityService().GetActivityBoardData(UserObjectId);
-                var result = ActivityBadgeDataToJsonObject(data);
+                var result = from d in data select ActivityBadgeDataToJsonObject(d);
                 return result;
             }
             catch (Exception)
@@ -27,21 +27,15 @@ namespace VessageRESTfulServer.Controllers
             }
         }
 
-        private IEnumerable<object> ActivityBadgeDataToJsonObject(ActivityBadgeData d)
+        private object ActivityBadgeDataToJsonObject(ActivityBadgeData d)
         {
-            if (d == null || d.Activities == null)
+            return new
             {
-                return new object[0];
-            }
-            var result = from item in d.Activities where item.Badge > 0 || item.MiniBadge || !string.IsNullOrEmpty(item.Message)
-                         select new
-                         {
-                             id = item.AcId,
-                             badge = item.Badge,
-                             miniBadge = item.MiniBadge,
-                             msg = item.Message
-                         };
-            return result;
+                id = d.AcId,
+                badge = d.Badge,
+                miniBadge = d.MiniBadge,
+                msg = d.Message
+            };
         }
     }
 }

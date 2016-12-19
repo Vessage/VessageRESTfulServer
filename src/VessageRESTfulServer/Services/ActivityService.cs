@@ -10,45 +10,9 @@ namespace VessageRESTfulServer.Services
 {
     public class ActivityBadgeData
     {
-        public ActivityBadgeData()
-        {
-            Activities = new BadgeData[0];
-        }
 
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
-
-        public BadgeData[] Activities;
-
-        public ActivityBadgeData Copy()
-        {
-            return new ActivityBadgeData
-            {
-                Id = this.Id,
-                UserId = this.UserId,
-                Activities = (from a in this.Activities select a.Copy()).ToArray()
-            };
-        }
-
-        public void ClearBadges()
-        {
-            foreach (var item in Activities)
-            {
-
-                item.Badge = 0;
-                item.MiniBadge = false;
-                item.Message = null;
-            }
-        }
-    }
-
-    public class BadgeData
-    {
-        public BadgeData()
-        {
-            Badge = 0;
-            MiniBadge = false;
-        }
 
         public string AcId { get; set; }
         public int Badge { get; set; }
@@ -56,16 +20,6 @@ namespace VessageRESTfulServer.Services
 
         public string Message { get; set; }
 
-        public BadgeData Copy()
-        {
-            return new BadgeData
-            {
-                AcId = this.AcId,
-                Badge = this.Badge,
-                MiniBadge = this.MiniBadge,
-                Message = this.Message
-            };
-        }
     }
 
     public class ActivityService
@@ -81,33 +35,18 @@ namespace VessageRESTfulServer.Services
         {
             try
             {
-                var collection = ActivityBadgeDataDb.GetCollection<BsonDocument>("ActivityBadgeData");
-                var filterUserId = new FilterDefinitionBuilder<BsonDocument>().Eq("UserId", userId);
-                var filterAc = new FilterDefinitionBuilder<BsonDocument>().Eq("Activities.AcId", activityId);
-                var incUpdate = new UpdateDefinitionBuilder<BsonDocument>().Inc("Activities.$.Badge", addiction);
+                var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("Badges");
+                var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Inc("Badge", addiction).Set("UserId", userId).Set("AcId", activityId);
                 if (string.IsNullOrEmpty(message) == false)
                 {
-                    incUpdate.Set("Activities.$.Message", message);
+                    update = update.Set("Message", message);
                 }
-                var res = await collection.UpdateOneAsync(filterUserId & filterAc, incUpdate);
-                if (res.ModifiedCount == 0)
+                var option = new UpdateOptions
                 {
-                    var addToSet = new UpdateDefinitionBuilder<BsonDocument>()
-                    .Set("UserId", userId)
-                    .AddToSet("Activities", new BadgeData
-                    {
-                        AcId = activityId,
-                        Badge = addiction,
-                        MiniBadge = false,
-                        Message = message
-                    });
-                    var option = new UpdateOptions
-                    {
-                        IsUpsert = true
-                    };
-                    res = await collection.UpdateOneAsync(filterUserId, addToSet, option);
-                }
-                return res.ModifiedCount > 0 || res.UpsertedId != null;
+                    IsUpsert = true
+                };
+                var res = await collection.UpdateOneAsync(f => f.UserId == userId && f.AcId == activityId, update, option);
+                return res.ModifiedCount > 0;
             }
             catch (Exception)
             {
@@ -124,33 +63,18 @@ namespace VessageRESTfulServer.Services
         {
             try
             {
-                var collection = ActivityBadgeDataDb.GetCollection<BsonDocument>("ActivityBadgeData");
-                var filterUserId = new FilterDefinitionBuilder<BsonDocument>().Eq("UserId", userId);
-                var filterAc = new FilterDefinitionBuilder<BsonDocument>().Eq("Activities.AcId", activityId);
-                var update = new UpdateDefinitionBuilder<BsonDocument>().Set("Activities.$.MiniBadge", miniBadge);
+                var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("Badges");
+                var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Set("MiniBadge", miniBadge).Set("UserId", userId).Set("AcId", activityId);
                 if (string.IsNullOrEmpty(message) == false)
                 {
-                    update.Set("Activities.$.Message", message);
+                    update = update.Set("Message", message);
                 }
-                var res = await collection.UpdateOneAsync(filterUserId & filterAc, update);
-                if (res.ModifiedCount == 0)
+                var option = new UpdateOptions
                 {
-                    var addToSet = new UpdateDefinitionBuilder<BsonDocument>()
-                    .Set("UserId", userId)
-                    .AddToSet("Activities", new BadgeData
-                    {
-                        AcId = activityId,
-                        Badge = 0,
-                        MiniBadge = miniBadge,
-                        Message = message
-                    });
-                    var option = new UpdateOptions
-                    {
-                        IsUpsert = true
-                    };
-                    res = await collection.UpdateOneAsync(filterUserId, addToSet, option);
-                }
-                return res.ModifiedCount > 0 || res.UpsertedId != null;
+                    IsUpsert = true
+                };
+                var res = await collection.UpdateOneAsync(f => f.UserId == userId && f.AcId == activityId, update, option);
+                return res.ModifiedCount > 0;
             }
             catch (Exception)
             {
@@ -158,20 +82,15 @@ namespace VessageRESTfulServer.Services
             return false;
         }
 
-        public async Task<ActivityBadgeData> GetActivityBoardData(ObjectId userId)
+        public async Task<IEnumerable<ActivityBadgeData>> GetActivityBoardData(ObjectId userId)
         {
-            var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("ActivityBadgeData");
+            var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("Badges");
 
             try
             {
-                var data = await collection.Find(f => f.UserId == userId).FirstAsync();
-                if (data != null && data.Activities != null && data.Activities.Count() > 0)
-                {
-                    var copy = data.Copy();
-                    copy.ClearBadges();
-                    var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Set("Activities", copy.Activities);
-                    await collection.UpdateOneAsync(f => f.UserId == userId, update);
-                }
+                var data = await collection.Find(f => f.UserId == userId).ToListAsync();
+                var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Set("Badge", 0).Set("MiniBadge", false).Set(f => f.Message, null);
+                await collection.UpdateManyAsync(f => f.UserId == userId, update);
                 return data;
             }
             catch (System.Exception e)
@@ -185,14 +104,17 @@ namespace VessageRESTfulServer.Services
         {
             if (userIds.Count() > 0)
             {
-                var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("ActivityBadgeData");
+                var collection = ActivityBadgeDataDb.GetCollection<ActivityBadgeData>("Badges");
+
                 var filter = new FilterDefinitionBuilder<ActivityBadgeData>().In(f => f.UserId, userIds);
-                var filter2 = new FilterDefinitionBuilder<ActivityBadgeData>().Eq("Activities.AcId", activityId);
-                var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Set("Activities.$.MiniBadge", miniBadge);
+                var filter2 = new FilterDefinitionBuilder<ActivityBadgeData>().Eq("AcId", activityId);
+
+                var update = new UpdateDefinitionBuilder<ActivityBadgeData>().Set("MiniBadge", miniBadge);
                 if (string.IsNullOrEmpty(message) == false)
                 {
-                    update.Set("Activities.$.Message", message);
+                    update = update.Set("Message", message);
                 }
+
                 await collection.UpdateManyAsync(filter & filter2, update);
             }
         }
