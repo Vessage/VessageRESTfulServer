@@ -116,7 +116,11 @@ namespace VessageRESTfulServer
             var redis = DBClientManagerBuilder.GenerateRedisConnectionMultiplexer(Configuration.GetSection("Data:ControlServiceServer"));
             BahamutAppInsanceMonitorManager.Instance.InitManager(redis);
             services.AddSingleton(new ServerControlManagementService(redis));
-            services.AddSingleton(new TokenService(TokenServerClientManager));
+
+            var tokenService = new TokenService(TokenServerClientManager);
+            tokenService.AppTokenExipreTime = TimeSpan.FromDays(45);
+
+            services.AddSingleton(tokenService);
 
             services.AddMvc(config =>
             {
