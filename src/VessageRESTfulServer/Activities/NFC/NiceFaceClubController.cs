@@ -23,7 +23,7 @@ namespace VessageRESTfulServer.Activities.NFC
     public class NiceFaceClubConfigCenter
     {
         private static Random random = new Random(DateTime.Now.Millisecond);
-		public static Random Random { get { return random; } }
+        public static Random Random { get { return random; } }
         private static IConfiguration _nfcConfig;
         private static IConfiguration NFCConfig
         {
@@ -33,7 +33,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 {
                     var configRoot = Startup.ConfigRoot + Path.DirectorySeparatorChar;
                     _nfcConfig = new ConfigurationBuilder()
-                        .AddJsonFile(string.Format("{0}nfc_tips.json",configRoot), true, true)
+                        .AddJsonFile(string.Format("{0}nfc_tips.json", configRoot), true, true)
                         .AddJsonFile(string.Format("{0}nfc_config.json", configRoot), true, true)
                         .Build();
                 }
@@ -43,7 +43,7 @@ namespace VessageRESTfulServer.Activities.NFC
         public static string NFCAnnounce { get { return NFCConfig["NFCAnnounce"]; } }
 
         public static string NFCJoinRuleAnnounce { get { return NFCConfig["NFCJoinRuleAnnounce"]; } }
-        
+
         public static float FaceTestMaxAddtion { get { return float.Parse(NFCConfig["FaceTestMaxAddtionScore"]); } }
         public static float NFCBaseFaceScore { get { return float.Parse(NFCConfig["NFCBaseFaceScore"]); } }
         public static string ActivityId { get { return NFCConfig["ActId"]; } }
@@ -117,7 +117,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 var update = new UpdateDefinitionBuilder<NFCMemberProfile>().Set(p => p.ActiveTime, DateTime.UtcNow);
                 if (!string.IsNullOrWhiteSpace(location))
                 {
-                    var c = Utils.LocationStringToLocation(location); 
+                    var c = Utils.LocationStringToLocation(location);
                     update = update.Set(p => p.Location, c);
                 }
                 await collection.UpdateOneAsync(p => p.Id == profile.Id, update);
@@ -136,7 +136,7 @@ namespace VessageRESTfulServer.Activities.NFC
                     ProfileState = NFCMemberProfile.STATE_ANONYMOUS
                 };
                 return MemberProfileToJsonObject(tmpProfile);
-            }            
+            }
         }
 
         [HttpGet("Profiles")]
@@ -157,7 +157,7 @@ namespace VessageRESTfulServer.Activities.NFC
             {
                 Response.StatusCode = 404;
                 return null;
-            }            
+            }
         }
 
         [HttpPut("MyProfileValues")]
@@ -226,7 +226,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 var client = new HttpClient();
                 client.DefaultRequestHeaders.Add("user-agent", "Mozilla/5.0");
                 var time = (long)DateTimeUtil.UnixTimeSpan.TotalSeconds;
-                
+
                 var paras = new KeyValuePair<string, string>[] {
                     new KeyValuePair<string, string>("MsgId",IDUtil.GenerateLongId().ToString()),
                     new KeyValuePair<string, string>("CreateTime",time.ToString()),
@@ -247,7 +247,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 {
                 }
                 var highScore = 0.0f;
-                
+
                 for (int i = 0; i < fbrCnt; i++)
                 {
                     var s = (float)metadata["FBR_Score" + i];
@@ -262,7 +262,7 @@ namespace VessageRESTfulServer.Activities.NFC
 
                 return new
                 {
-                    rId = GenerateResultId(time,highScore,userId),
+                    rId = GenerateResultId(time, highScore, userId),
                     hs = highScore,
                     msg = msg,
                     ts = time
@@ -273,10 +273,10 @@ namespace VessageRESTfulServer.Activities.NFC
                 Response.StatusCode = 400;
                 return null;
             }
-            
+
         }
 
-        private static float AdjustScore(float highScore,float addition)
+        private static float AdjustScore(float highScore, float addition)
         {
             var maxAddtion = NiceFaceClubConfigCenter.FaceTestMaxAddtion;
             addition = addition > maxAddtion ? maxAddtion : addition;
@@ -310,6 +310,8 @@ namespace VessageRESTfulServer.Activities.NFC
                 if (result.MatchedCount == 0)
                 {
                     await NewNFCMemberProfile(collection, user, imageId, score);
+                    var members = await collection.Find(f => f.ProfileState == NFCMemberProfile.STATE_VALIDATED).Project(p => p.UserId).ToListAsync();
+                    await Startup.ServicesProvider.GetActivityService().SetActivityMiniBadgeOfUserIds(NiceFaceClubConfigCenter.ActivityId, members, true);
                 }
                 return new { msg = "SUCCESS" };
             }
@@ -361,15 +363,15 @@ namespace VessageRESTfulServer.Activities.NFC
             };
             var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
             await postCmtCol.InsertOneAsync(newCmt);
-            await AppServiceProvider.GetActivityService().CreateActivityBadgeData(NiceFaceClubConfigCenter.ActivityId,UserObjectId);
+            await AppServiceProvider.GetActivityService().CreateActivityBadgeData(NiceFaceClubConfigCenter.ActivityId, UserObjectId);
         }
 
-        private static bool TestResultId(long timeSpan,float score,string userId,string resultId)
+        private static bool TestResultId(long timeSpan, float score, string userId, string resultId)
         {
             return resultId == GenerateResultId(timeSpan, score, userId);
         }
 
-        private static string GenerateResultId(long timeSpan, float score,string userId)
+        private static string GenerateResultId(long timeSpan, float score, string userId)
         {
             var scoreInt = (int)(score * 10);
             var sign = StringUtil.Md5String(string.Format("{0}:{1}:{2}:{3}", userId, timeSpan, scoreInt, NiceFaceClubConfigCenter.TestResultSignKey));
