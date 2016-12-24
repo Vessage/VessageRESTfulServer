@@ -86,7 +86,7 @@ namespace VessageRESTfulServer.Activities.MYQ
                 await AppServiceProvider.GetActivityService().CreateActivityBadgeData(MYQConfigCenter.ActivityId,UserObjectId);
                 isNewer = true;
             }
-            IEnumerable<MYQProfile> profiles = await usrCol.Find(p =>p.ProfileState == MYQProfile.STATE_NORMAL).SortByDescending(p=>p.ActiveTime).Limit(100).ToListAsync();
+            IEnumerable<MYQProfile> profiles = await usrCol.Find(p =>p.ProfileState == MYQProfile.STATE_NORMAL && p.Question != null).SortByDescending(p=>p.ActiveTime).Limit(100).ToListAsync();
 
             return new
             {
@@ -102,7 +102,7 @@ namespace VessageRESTfulServer.Activities.MYQ
             var usrCol = MYQDb.GetCollection<MYQProfile>("MYQProfile");
             var update = new UpdateDefinitionBuilder<MYQProfile>()
             .Set(p => p.ActiveTime, DateTime.UtcNow)
-            .Set(p => p.Question, ques);
+            .Set(p => p.Question, string.IsNullOrWhiteSpace(ques) ? null : ques);
             var r = await usrCol.UpdateOneAsync(f => f.UserId == UserObjectId, update);
             if (r.ModifiedCount > 0 || r.MatchedCount > 0)
             {
