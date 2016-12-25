@@ -83,12 +83,12 @@ namespace VessageRESTfulServer.Activities.MNS
                     Location = string.IsNullOrWhiteSpace(location) ? null : Utils.LocationStringToLocation(location)
                 };
                 await usrCol.InsertOneAsync(profile);
-                await AppServiceProvider.GetActivityService().CreateActivityBadgeData(MNSConfigCenter.ActivityId,UserObjectId);
+                await AppServiceProvider.GetActivityService().CreateActivityBadgeData(MNSConfigCenter.ActivityId, UserObjectId);
                 isNewer = true;
             }
             var now = DateTime.UtcNow;
             var limit = now.AddHours(-1);
-            IEnumerable<MNSProfile> profiles = await usrCol.Find(p => p.UserId != UserObjectId && p.ProfileState == MNSProfile.STATE_NORMAL && p.ActiveTime > limit).SortByDescending(p=>p.ActiveTime).Limit(100).ToListAsync();
+            IEnumerable<MNSProfile> profiles = await usrCol.Find(p =>p.MidNightAnnounce != null && p.UserId != UserObjectId && p.ProfileState == MNSProfile.STATE_NORMAL && p.ActiveTime > limit).SortByDescending(p => p.ActiveTime).Limit(100).ToListAsync();
 
             return new
             {
@@ -104,7 +104,7 @@ namespace VessageRESTfulServer.Activities.MNS
             var usrCol = MNSDb.GetCollection<MNSProfile>("MNSProfile");
             var update = new UpdateDefinitionBuilder<MNSProfile>()
             .Set(p => p.ActiveTime, DateTime.UtcNow)
-            .Set(p => p.MidNightAnnounce, mnannc);
+            .Set(p => p.MidNightAnnounce, string.IsNullOrEmpty(mnannc) ? null : mnannc);
             var r = await usrCol.UpdateOneAsync(f => f.UserId == UserObjectId, update);
             if (r.ModifiedCount > 0 || r.MatchedCount > 0)
             {
