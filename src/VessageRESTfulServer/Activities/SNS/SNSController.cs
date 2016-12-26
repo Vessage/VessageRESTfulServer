@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using VessageRESTfulServer.Controllers;
+using Newtonsoft.Json.Linq;
 
 namespace VessageRESTfulServer.Activities.SNS
 {
@@ -169,7 +170,8 @@ namespace VessageRESTfulServer.Activities.SNS
                 lc = p.Likes,
                 cmtCnt = p.Cmts,
                 t = type,
-                pster = p.PosterNick
+                pster = p.PosterNick,
+                body = p.Body
             };
         }
 
@@ -264,6 +266,30 @@ namespace VessageRESTfulServer.Activities.SNS
             };
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             await postCol.InsertOneAsync(newPost);
+
+            if (string.IsNullOrWhiteSpace(body) == false)
+            {
+                var bodyJson = (JObject)JsonConvert.DeserializeObject(body);
+                var textContent = bodyJson.GetValue("txt");
+                if (textContent != null)
+                {
+                    var comment = (string)textContent;
+                    if (string.IsNullOrWhiteSpace(comment) == false)
+                    {
+                        var postCmtCol = SNSDb.GetCollection<SNSPostComment>("SNSPostComment");
+                        await postCmtCol.InsertOneAsync(new SNSPostComment
+                        {
+                            Content = comment,
+                            Poster = UserObjectId,
+                            PosterNick = nick,
+                            PostId = newPost.Id,
+                            PostTs = nowTs,
+                            SNSPostPoster = newPost.UserId,
+                            SNSPostImage = newPost.Image,
+                        });
+                    }
+                }
+            }
 
             var followers = new HashSet<ObjectId>(poster.Follower);
             followers.Remove(poster.UserId);

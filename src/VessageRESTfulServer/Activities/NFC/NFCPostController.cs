@@ -9,6 +9,7 @@ using MongoDB.Bson;
 using VessageRESTfulServer.Services;
 using BahamutService.Service;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace VessageRESTfulServer.Activities.NFC
 {
@@ -84,7 +85,8 @@ namespace VessageRESTfulServer.Activities.NFC
                 lc = p.Likes,
                 cmtCnt = p.Cmts,
                 t = type,
-                pster = p.PosterNick
+                pster = p.PosterNick,
+                body = p.Body
             };
         }
 
@@ -212,6 +214,31 @@ namespace VessageRESTfulServer.Activities.NFC
             };
             var postCol = NiceFaceClubDb.GetCollection<NFCPost>("NFCPost");
             await postCol.InsertOneAsync(newPost);
+
+            if (string.IsNullOrWhiteSpace(body) == false)
+            {
+                var bodyJson = (JObject)JsonConvert.DeserializeObject(body);
+                var textContent = bodyJson.GetValue("txt");
+                if (textContent != null)
+                {
+                    var comment = (string)textContent;
+                    if (string.IsNullOrWhiteSpace(comment) == false)
+                    {
+                        var postCmtCol = NiceFaceClubDb.GetCollection<NFCPostComment>("NFCPostComment");
+                        await postCmtCol.InsertOneAsync(new NFCPostComment
+                        {
+                            Content = comment,
+                            Poster = newPost.MemberId,
+                            PosterNick = newPost.PosterNick,
+                            PostId = newPost.Id,
+                            PostTs = nowTs,
+                            NFCPostPoster = newPost.MemberId,
+                            NFCPostImage = newPost.Image
+                        });
+                    }
+                }
+            }
+
             return NFCPostToJsonObject(newPost, newPost.Type);
         }
 
