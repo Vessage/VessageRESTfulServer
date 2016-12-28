@@ -59,6 +59,7 @@ namespace VessageRESTfulServer.Activities.NFC
         public int Likes { get; set; }
         public int Cmts { get; set; }
         public string PosterNick { get; set; }
+        public string PostAvatar { get; set; }
         public int Type { get; set; }
         public int State { get; set; }
         public string Body { get; set; }
@@ -84,6 +85,8 @@ namespace VessageRESTfulServer.Activities.NFC
         public string Content { get; set; }
         public long PostTs { get; set; }
         public string PosterNick { get; set; }
+
+        public string CmtAvatar { get; set; }
 
         public ObjectId Poster { get; set; } // Comment Poster
 

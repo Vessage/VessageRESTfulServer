@@ -86,6 +86,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 cmtCnt = p.Cmts,
                 t = type,
                 pster = p.PosterNick,
+                avatar = p.PostAvatar,
                 body = p.Body
             };
         }
@@ -196,7 +197,7 @@ namespace VessageRESTfulServer.Activities.NFC
         public async Task<object> NewPost(string image, string body = null)
         {
             var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            var poster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState > 0).Project(p => new { Nick = p.Nick, MemberId = p.Id, State = p.ProfileState }).FirstAsync();
+            var poster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState > 0).Project(p => new { Nick = p.Nick, MemberId = p.Id, State = p.ProfileState, Avatar = p.FaceImageId }).FirstAsync();
             var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
             var newPost = new NFCPost
             {
@@ -205,6 +206,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 Cmts = 0,
                 MemberId = poster.MemberId,
                 PosterNick = poster.Nick,
+                PostAvatar = poster.Avatar,
                 PostTs = nowTs,
                 UpdateTs = nowTs,
                 Type = poster.State == NFCMemberProfile.STATE_VALIDATED ? NFCPost.TYPE_NORMAL : NFCPost.TYPE_NEW_MEMBER,
@@ -293,6 +295,7 @@ namespace VessageRESTfulServer.Activities.NFC
                 ts = c.PostTs,
                 psterNk = c.PosterNick,
                 pster = c.Poster.ToString(),
+                avatar = c.CmtAvatar,
                 atNick = c.AtNick,
                 img = includeImage ? c.NFCPostImage : null
             };
@@ -421,12 +424,12 @@ namespace VessageRESTfulServer.Activities.NFC
             var postOpt = new FindOneAndUpdateOptions<NFCPost, NFCPost>
             {
                 ReturnDocument = ReturnDocument.After,
-                Projection = new ProjectionDefinitionBuilder<NFCPost>().Include(p => p.Id).Include(p => p.MemberId).Include(p => p.UserId).Include(p => p.Image)
+                Projection = new ProjectionDefinitionBuilder<NFCPost>().Include(p => p.Id).Include(p => p.MemberId).Include(p => p.UserId).Include(p => p.Image).Include(p => p.PostAvatar)
             };
             var post = await postCol.FindOneAndUpdateAsync(postFilter, postUpdate, postOpt);
 
             var usrCol = NiceFaceClubDb.GetCollection<NFCMemberProfile>("NFCMemberProfile");
-            var cmtPoster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState == NFCMemberProfile.STATE_VALIDATED).Project(t => new { Nick = t.Nick, Id = t.Id }).FirstAsync();
+            var cmtPoster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState == NFCMemberProfile.STATE_VALIDATED).Project(t => new { Nick = t.Nick, Id = t.Id, Avatar = t.FaceImageId }).FirstAsync();
 
             var newCmt = new NFCPostComment
             {
@@ -436,7 +439,8 @@ namespace VessageRESTfulServer.Activities.NFC
                 PostId = post.Id,
                 PostTs = nowTs,
                 NFCPostPoster = post.MemberId,
-                NFCPostImage = post.Image
+                NFCPostImage = post.Image,
+                CmtAvatar = cmtPoster.Avatar
             };
 
             var badgedUserId = ObjectId.Empty;
