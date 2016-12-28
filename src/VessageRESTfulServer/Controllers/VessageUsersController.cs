@@ -52,6 +52,29 @@ namespace VessageRESTfulServer.Controllers
             }
         }
 
+        [HttpGet("MatchMobileProfiles")]
+        public async Task<IEnumerable<object>> MatchUserProfilesWithMobile(string mobiles)
+        {
+            if (string.IsNullOrWhiteSpace(mobiles))
+            {
+                Response.StatusCode = 400;
+                return null;
+            }
+            else
+            {
+                var mobileNos = from m in mobiles.Split(new char[] { ',', '#', ';' }) select m;
+                var users = await Startup.ServicesProvider.GetUserService().MatchUsersWithMobiles(mobileNos);
+                return from u in users
+                       select new
+                       {
+                           usrId = u.Id.ToString(),
+                           mobile = u.Mobile,
+                           nick = u.Nick,
+                           avatar = u.Avartar
+                       };
+            }
+        }
+
         [HttpGet("Near")]
         public async Task<IEnumerable<object>> GetNearUsers(string location)
         {
@@ -288,14 +311,14 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("ValidateMobileVSMS")]
-        public async Task<object> ValidateMobileVSMS(string smsAppkey, string mobile, string zone, string code)
+        public async Task<object> ValidateMobileVSMS(string smsAppkey, string mobile, string zone, string code, bool bindExistsAccount = true)
         {
 
             var sessionData = UserSessionData;
             var userId = sessionData.UserId;
             var userOId = UserObjectId;
             var userService = Startup.ServicesProvider.GetUserService();
-            var profile = await userService.GetUserOfUserId(UserObjectId);
+            var profile = await userService.GetUserOfUserId(userOId);
             if (!string.IsNullOrWhiteSpace(profile.Mobile) && profile.Mobile == mobile)
             {
                 return new { msg = "SUCCESS" };
@@ -311,7 +334,7 @@ namespace VessageRESTfulServer.Controllers
             try
             {
                 VessageUser registedUser = null;
-                if (profile.Mobile == null)
+                if (profile.Mobile == null && bindExistsAccount)
                 {
                     registedUser = await userService.BindExistsUserOnRegist(userOId, mobile);
                 }
@@ -321,6 +344,10 @@ namespace VessageRESTfulServer.Controllers
                     if (suc)
                     {
                         UpdateBahamutAccountMobile(sessionData, mobile);
+                        if (bindExistsAccount == false)
+                        {
+                            await userService.RemoveExistsNullAccountUserOfMobileAsync(mobile, profile.AccountId);
+                        }
                         return new { msg = "SUCCESS" };
                     }
                 }

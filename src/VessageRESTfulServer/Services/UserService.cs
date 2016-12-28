@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using VessageRESTfulServer.Models;
 using MongoDB.Bson;
 using MongoDB.Driver.GeoJsonObjectModel;
+using System.Linq;
 
 namespace VessageRESTfulServer.Services
 {
@@ -49,7 +50,7 @@ namespace VessageRESTfulServer.Services
 
         public async Task<VessageUser> CreateNewUserByMobile(string mobile)
         {
-            
+
             try
             {
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
@@ -95,10 +96,10 @@ namespace VessageRESTfulServer.Services
         {
             var collection = UserDb.GetCollection<VessageUser>("VessageUser");
             var update = new UpdateDefinitionBuilder<VessageUser>().Set(x => x.ActiveTime, DateTime.UtcNow).Set(x => x.Location, geoLoc);
-            await collection.UpdateOneAsync(f=>f.Id == userId,update);
+            await collection.UpdateOneAsync(f => f.Id == userId, update);
             var pnt = new GeoJsonPoint<GeoJson2DGeographicCoordinates>(geoLoc);
             var maxDis = 1000 * 100;
-            var filter = Builders<VessageUser>.Filter.Ne(f=>f.Id,userId);
+            var filter = Builders<VessageUser>.Filter.Ne(f => f.Id, userId);
             var nearFilter = Builders<VessageUser>.Filter.NearSphere(p => p.Location, pnt, maxDis);
 #if DEBUG
             var result = await collection.Find(filter).SortByDescending(f => f.ActiveTime).Limit(30).ToListAsync();
@@ -133,7 +134,8 @@ namespace VessageRESTfulServer.Services
             catch (InvalidOperationException)
             {
                 return null;
-            }catch (Exception)
+            }
+            catch (Exception)
             {
                 throw;
             }
@@ -184,6 +186,18 @@ namespace VessageRESTfulServer.Services
             }
         }
 
+        public async Task<bool> RemoveExistsNullAccountUserOfMobileAsync(string mobile, string requestByAccountId)
+        {
+            var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+
+            var update = new UpdateDefinitionBuilder<VessageUser>()
+            .Set(p => p.Mobile, string.Format("RemovedMobile:{0}", mobile))
+            .Set(p => p.AccountId, string.Format("ResetedBy:{0}", requestByAccountId));
+
+            var res = await collection.UpdateManyAsync(u => u.Mobile == mobile && u.AccountId == null, update);
+            return res.ModifiedCount > 0;
+        }
+
         public async Task<VessageUser> BindExistsUserOnRegist(ObjectId userId, string mobile)
         {
             try
@@ -192,18 +206,21 @@ namespace VessageRESTfulServer.Services
                 var user = await collection.Find(u => u.Id == userId && u.Mobile == null).FirstAsync();
                 if (user != null)
                 {
-                    var mobileUser = await collection.Find(u => u.Mobile == mobile && u.AccountId == null).FirstAsync();
                     var update = new UpdateDefinitionBuilder<VessageUser>()
-                        .Set(u => u.AccountId, user.AccountId)
-                        .Set(u => u.Avartar, user.Avartar)
-                        .Set(u => u.CreateTime, user.CreateTime)
-                        .Set(u => u.MainChatImage, user.MainChatImage)
-                        .Set(u => u.Mobile, mobile)
-                        .Set(u => u.Nick, user.Nick);
-                    mobileUser = await collection.FindOneAndUpdateAsync(u => u.Id == mobileUser.Id, update);
-                    await collection.DeleteOneAsync(u => u.Id == user.Id);
+                                                .Set(u => u.AccountId, user.AccountId)
+                                                .Set(u => u.Avartar, user.Avartar)
+                                                .Set(u => u.CreateTime, user.CreateTime)
+                                                .Set(u => u.MainChatImage, user.MainChatImage)
+                                                .Set(u => u.Mobile, mobile)
+                                                .Set(u => u.Nick, user.Nick);
+
+                    var mobileUser = await collection.FindOneAndUpdateAsync(u => u.Mobile == mobile && u.AccountId == null, update);
+
                     if (mobileUser != null)
                     {
+                        var resetInvalidUser = new UpdateDefinitionBuilder<VessageUser>().Set(p => p.AccountId, string.Format("Reseted:{0}", user.AccountId));
+                        await collection.UpdateOneAsync(u => u.Id == user.Id, resetInvalidUser);
+
                         return mobileUser;
                     }
                 }
@@ -245,7 +262,7 @@ namespace VessageRESTfulServer.Services
                 var result = await collection.UpdateOneAsync(ci => ci.UserId == userId && ci.ImageType == imageType, update);
                 if (!result.IsModifiedCountAvailable || result.ModifiedCount == 0)
                 {
-                   var newChatImage = new ChatImageInfo
+                    var newChatImage = new ChatImageInfo
                     {
                         UserId = userId,
                         ImageFileId = image,
@@ -300,12 +317,24 @@ namespace VessageRESTfulServer.Services
             try
             {
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
-                return await collection.Find(f=>f.Id == userId).Project(u=>u.Nick).FirstAsync();
+                return await collection.Find(f => f.Id == userId).Project(u => u.Nick).FirstAsync();
             }
             catch (Exception)
             {
                 return null;
             }
+        }
+
+        public async Task<IEnumerable<VessageUser>> MatchUsersWithMobiles(IEnumerable<string> mobiles)
+        {
+            mobiles = from m in mobiles where string.IsNullOrWhiteSpace(m) == false select m;
+            if (mobiles.Count() == 0)
+            {
+                return new VessageUser[0];
+            }
+            var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+            var filter = new FilterDefinitionBuilder<VessageUser>().In(f => f.Mobile, mobiles);
+            return await collection.Find(filter).ToListAsync();
         }
     }
 
