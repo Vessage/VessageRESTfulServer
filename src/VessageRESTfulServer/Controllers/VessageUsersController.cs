@@ -67,6 +67,7 @@ namespace VessageRESTfulServer.Controllers
                 return from u in users
                        select new
                        {
+                           account = u.AccountId,
                            usrId = u.Id.ToString(),
                            mobile = u.Mobile,
                            nick = u.Nick,
