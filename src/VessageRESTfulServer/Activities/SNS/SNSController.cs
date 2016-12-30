@@ -238,6 +238,15 @@ namespace VessageRESTfulServer.Activities.SNS
             return from p in posts select SNSPostToJsonObject(p, SNSPost.TYPE_MY_POST);
         }
 
+        [HttpGet("UserPosts")]
+        public async Task<object> GetUserPosts(string userId,long ts, int cnt)
+        {
+            var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
+            var usrOId = new ObjectId(userId);
+            var posts = await postCol.Find(f => f.UserId == usrOId && f.State > 0 && f.UpdateTs < ts).SortByDescending(p => p.UpdateTs).Limit(cnt).ToListAsync();
+            return from p in posts select SNSPostToJsonObject(p, SNSPost.TYPE_SINGLE_USER_POST);
+        }
+
         [HttpPost("NewPost")]
         public async Task<object> NewPost(string image, string nick, string body = null)
         {

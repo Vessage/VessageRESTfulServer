@@ -40,6 +40,8 @@ namespace VessageRESTfulServer.Activities.SNS
         public const int TYPE_NORMAL = 0;
         public const int TYPE_MY_POST = 1;
 
+        public const int TYPE_SINGLE_USER_POST = 2;
+
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
         public string Image { get; set; }
