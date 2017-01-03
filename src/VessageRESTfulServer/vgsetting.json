@@ -1,5 +1,7 @@
 {
     "VGConfig":{
+        "defaultInviteMessage":"我在玩VG聊天，发条消息给你，收到请回复",
+
         "enableActiveUser":true,
         "enableNearUser":true,
         "virtualUserRegex":"^1000[1-9]|1001[0-9]|1472(5[89]|6[0-9]|7[12])$",

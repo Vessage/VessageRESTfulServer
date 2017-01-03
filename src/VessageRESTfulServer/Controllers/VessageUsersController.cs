@@ -296,13 +296,31 @@ namespace VessageRESTfulServer.Controllers
         }
 
         [HttpPost("NewMobileUser")]
-        public async Task<object> NewMobileUser(string mobile)
+        public async Task<object> NewMobileUser(string mobile, string inviteMsg = null)
         {
             var userService = this.AppServiceProvider.GetUserService();
             var user = await userService.GetUserOfMobile(mobile);
             if (user == null)
             {
                 user = await userService.CreateNewUserByMobile(mobile);
+                if (user != null)
+                {
+                    var textMsgFormat = "{\"textMessage\":\"{0}\"}";
+                    var inviteVessage = new Vessage
+                    {
+                        Id = ObjectId.GenerateNewId(),
+                        IsGroup = false,
+                        IsRead = false,
+                        Sender = UserObjectId,
+                        SendTime = DateTime.UtcNow,
+                        TypeId = Vessage.TYPE_FACE_TEXT,
+                        Ready = true,
+                        Body = string.Format(textMsgFormat, string.IsNullOrWhiteSpace(inviteMsg) ? Startup.VGConfiguration["defaultInviteMessage"] : inviteMsg)
+                    };
+                    await this.AppServiceProvider.GetVessageService().SendVessagesToUser(user.Id, new Vessage[] { inviteVessage });
+                    var sender = await userService.GetUserOfUserId(UserObjectId);
+                    await NotifyAdminHelper.NotifyAdminUserInviteNewMobileAccount(sender, mobile, userService);
+                }
             }
             if (user == null)
             {
