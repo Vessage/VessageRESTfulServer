@@ -236,6 +236,11 @@ namespace VessageRESTfulServer.Activities.NFC
                 var result = await client.PostAsync(apiUrl, content);
 
                 var resultContent = await result.Content.ReadAsStringAsync();
+
+#if DEBUG
+                Console.WriteLine(resultContent);
+#endif
+
                 dynamic obj = JsonConvert.DeserializeObject(resultContent);
                 var metadata = (JObject)obj.content.metadata;
                 var fbrCnt = 0;
@@ -246,18 +251,26 @@ namespace VessageRESTfulServer.Activities.NFC
                 catch (Exception)
                 {
                 }
+
                 var highScore = 0.0f;
+                var sumScore = 0.0f;
 
                 for (int i = 0; i < fbrCnt; i++)
                 {
                     var s = (float)metadata["FBR_Score" + i];
+                    sumScore += s;
                     if (s > highScore)
                     {
                         highScore = s;
                     }
                 }
 
-                highScore = AdjustScore(highScore, addition);
+                var avgScore = sumScore / fbrCnt;
+
+                highScore = AdjustScore(highScore, sumScore, avgScore, fbrCnt, addition);
+
+                highScore = highScore < 10f ? ((int)(highScore * 10f)) / 10f : 9.9f;
+
                 var msg = NiceFaceClubConfigCenter.GetScoreString(highScore);
 
                 return new
@@ -273,19 +286,21 @@ namespace VessageRESTfulServer.Activities.NFC
                 Response.StatusCode = 400;
                 return null;
             }
-
         }
 
-        private static float AdjustScore(float highScore, float addition)
+        private static float AdjustScore(float highScore, float sumScore, float avgScore, int scoreCnt, float addition)
         {
             var maxAddtion = NiceFaceClubConfigCenter.FaceTestMaxAddtion;
             addition = addition > maxAddtion ? maxAddtion : addition;
+            return avgScore + addition;
+            /*
             var random = NiceFaceClubConfigCenter.Random;
             var ad = addition * random.Next(66, 88) / 100f;
             highScore = highScore >= 8.6 ? 8.0f + (highScore - 8.6f) / (0.9f - ad) : 8.0f - 8.6f * (1f - highScore / (8.6f - ad));
             highScore += addition * 0.4f;
             highScore = ((int)(highScore * 10f)) / 10f;
             return highScore > 10f ? 10f : highScore < 3 ? 0f : highScore;
+            */
         }
 
         [HttpPost("NiceFace")]
