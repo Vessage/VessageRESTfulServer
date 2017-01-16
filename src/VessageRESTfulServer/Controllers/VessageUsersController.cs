@@ -142,7 +142,7 @@ namespace VessageRESTfulServer.Controllers
                 }
             }
 
-            if (ActiveUsers.Count == 1)
+            if (ActiveUsers.Count <= 1)
             {
                 var initActiveUsers = await userService.GetActiveUsers(queueMaxLength);
                 for (int i = initActiveUsers.Count() - 1; i >= 0; i--)
