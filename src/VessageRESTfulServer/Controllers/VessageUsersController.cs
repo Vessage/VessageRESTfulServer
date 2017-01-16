@@ -124,12 +124,13 @@ namespace VessageRESTfulServer.Controllers
             var users = from au in ActiveUsers where au.Id == UserObjectId select au;
             var userService = Startup.ServicesProvider.GetUserService();
 
+            var ignoreRegexPattern = Startup.VGConfiguration["VGConfig:virtualUserRegex"];
+
             if (users.Count() == 0)
             {
                 var user = await userService.GetUserOfUserId(UserObjectId);
                 if (!string.IsNullOrEmpty(user.AccountId) && !string.IsNullOrEmpty(user.Mobile))
                 {
-                    var ignoreRegexPattern = Startup.VGConfiguration["VGConfig:virtualUserRegex"];
                     if (!Regex.IsMatch(user.AccountId, ignoreRegexPattern))
                     {
                         ActiveUsers.Enqueue(user);
@@ -146,7 +147,11 @@ namespace VessageRESTfulServer.Controllers
                 var initActiveUsers = await userService.GetActiveUsers(queueMaxLength);
                 for (int i = initActiveUsers.Count() - 1; i >= 0; i--)
                 {
-                    ActiveUsers.Enqueue(initActiveUsers.ElementAt(i));
+                    var user = initActiveUsers.ElementAt(i);
+                    if (!Regex.IsMatch(user.AccountId, ignoreRegexPattern))
+                    {
+                        ActiveUsers.Enqueue(user);
+                    }
                 }
             }
 
