@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using VessageRESTfulServer.Services;
 using VessageRESTfulServer.Models;
 using BahamutService;
-using BahamutService.Service;
-using Newtonsoft.Json;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -39,7 +35,7 @@ namespace VessageRESTfulServer.Controllers
                     AccountId = accountId,
                     CreateTime = DateTime.UtcNow,
                     Nick = nickName,
-                    Sex = 0,
+                    Sex = -50,
                     Mobile = mobile
                 };
 
