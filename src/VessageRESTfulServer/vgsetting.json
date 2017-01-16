@@ -1,13 +1,22 @@
 {
-    "VGConfig":{
-        "defaultInviteMessage":"我在玩VG聊天，发条消息给你，收到请回复",
-
-        "enableActiveUser":true,
-        "enableNearUser":true,
-        "virtualUserRegex":"^1000[1-9]|1001[0-9]|1472(5[89]|6[0-9]|7[12])$",
-        "UserRegistedNotifyAdmin":{
-            "enable":true,
-            "Admins":["10000","147282"]
+    "VGConfig": {
+        "defaultInviteMessage": "我在玩VG聊天，发条消息给你，收到请回复",
+        "activeUser": {
+            "enabled": true,
+            "limit": 20
+        },
+        "nearUser": {
+            "enabled": true,
+            "limit": 20,
+            "distance": 100000
+        },
+        "virtualUserRegex": "^1000[1-9]|1001[0-9]|1472(5[89]|6[0-9]|7[12])$",
+        "UserRegistedNotifyAdmin": {
+            "enable": true,
+            "Admins": [
+                "10000",
+                "147282"
+            ]
         }
     }
 }

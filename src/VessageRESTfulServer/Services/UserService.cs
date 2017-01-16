@@ -92,19 +92,26 @@ namespace VessageRESTfulServer.Services
             return await collection.Find(filter).ToListAsync();
         }
 
-        public async Task<IEnumerable<VessageUser>> GetNearUsers(ObjectId userId, GeoJson2DGeographicCoordinates geoLoc)
+        public async Task<IEnumerable<VessageUser>> GetActiveUsers(int limit)
+        {
+            var collection = UserDb.GetCollection<VessageUser>("VessageUser");
+            var result = await collection.Find(f => f.AccountId != null).SortByDescending(f => f.ActiveTime).Limit(limit).ToListAsync();
+            return result;
+        }
+
+        public async Task<IEnumerable<VessageUser>> GetNearUsers(ObjectId userId, GeoJson2DGeographicCoordinates geoLoc, int limit, int distance)
         {
             var collection = UserDb.GetCollection<VessageUser>("VessageUser");
             var update = new UpdateDefinitionBuilder<VessageUser>().Set(x => x.ActiveTime, DateTime.UtcNow).Set(x => x.Location, geoLoc);
             await collection.UpdateOneAsync(f => f.Id == userId, update);
             var pnt = new GeoJsonPoint<GeoJson2DGeographicCoordinates>(geoLoc);
-            var maxDis = 1000 * 100;
+            var maxDis = distance;
             var filter = Builders<VessageUser>.Filter.Ne(f => f.Id, userId);
             var nearFilter = Builders<VessageUser>.Filter.NearSphere(p => p.Location, pnt, maxDis);
 #if DEBUG
-            var result = await collection.Find(filter).SortByDescending(f => f.ActiveTime).Limit(30).ToListAsync();
+            var result = await collection.Find(filter).SortByDescending(f => f.ActiveTime).Limit(limit).ToListAsync();
 #else    
-            var result = await collection.Find(filter&nearFilter).SortByDescending(f=>f.ActiveTime).Limit(30).ToListAsync();
+            var result = await collection.Find(filter&nearFilter).SortByDescending(f=>f.ActiveTime).Limit(limit).ToListAsync();
 #endif
             return result;
         }

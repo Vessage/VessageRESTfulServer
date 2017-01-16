@@ -79,23 +79,27 @@ namespace VessageRESTfulServer.Controllers
         [HttpGet("Near")]
         public async Task<IEnumerable<object>> GetNearUsers(string location)
         {
-            var enableNearUser = bool.Parse(Startup.VGConfiguration["VGConfig:enableNearUser"]);
+            var enableNearUser = bool.Parse(Startup.VGConfiguration["VGConfig:nearUser:enabled"]);
+
+
             if (!enableNearUser)
             {
                 Response.StatusCode = (int)HttpStatusCode.Gone;
                 return new object[0];
             }
 
-
             if (!string.IsNullOrWhiteSpace(location))
             {
+                var distance = int.Parse(Startup.VGConfiguration["VGConfig:nearUser:distance"]);
+                var limit = int.Parse(Startup.VGConfiguration["VGConfig:nearUser:limit"]);
+
                 var ignoreRegexPattern = Startup.VGConfiguration["VGConfig:virtualUserRegex"];
                 var locationJson = JsonConvert.DeserializeObject<JObject>(location);
                 var coordinates = (JArray)locationJson["coordinates"];
                 var longitude = (double)coordinates.First;
                 var latitude = (double)coordinates.Last;
                 var geoLoc = new GeoJson2DGeographicCoordinates(longitude, latitude);
-                var users = await Startup.ServicesProvider.GetUserService().GetNearUsers(UserObjectId, geoLoc);
+                var users = await Startup.ServicesProvider.GetUserService().GetNearUsers(UserObjectId, geoLoc, limit, distance);
                 return from u in users where !Regex.IsMatch(u.AccountId, ignoreRegexPattern) select VessageUserToJsonObject(u);
             }
             else
@@ -108,32 +112,44 @@ namespace VessageRESTfulServer.Controllers
         [HttpGet("Active")]
         public async Task<IEnumerable<object>> GetActiveUsers()
         {
-            var enableActiveUser = bool.Parse(Startup.VGConfiguration["VGConfig:enableActiveUser"]);
+            var enableActiveUser = bool.Parse(Startup.VGConfiguration["VGConfig:activeUser:enabled"]);
+            var queueMaxLength = int.Parse(Startup.VGConfiguration["VGConfig:activeUser:limit"]);
 
             if (!enableActiveUser)
             {
                 Response.StatusCode = (int)HttpStatusCode.Gone;
                 return new object[0];
             }
+
             var users = from au in ActiveUsers where au.Id == UserObjectId select au;
+            var userService = Startup.ServicesProvider.GetUserService();
+
             if (users.Count() == 0)
             {
-                var userService = Startup.ServicesProvider.GetUserService();
                 var user = await userService.GetUserOfUserId(UserObjectId);
                 if (!string.IsNullOrEmpty(user.AccountId) && !string.IsNullOrEmpty(user.Mobile))
                 {
-
                     var ignoreRegexPattern = Startup.VGConfiguration["VGConfig:virtualUserRegex"];
                     if (!Regex.IsMatch(user.AccountId, ignoreRegexPattern))
                     {
                         ActiveUsers.Enqueue(user);
                     }
-                    if (ActiveUsers.Count > 20)
+                    if (ActiveUsers.Count > queueMaxLength)
                     {
                         ActiveUsers.Dequeue();
                     }
                 }
             }
+
+            if (ActiveUsers.Count == 0)
+            {
+                var initActiveUsers = await userService.GetActiveUsers(queueMaxLength);
+                for (int i = initActiveUsers.Count() - 1; i >= 0; i--)
+                {
+                    ActiveUsers.Enqueue(initActiveUsers.ElementAt(i));
+                }
+            }
+
             var result = new List<object>();
             foreach (var u in ActiveUsers)
             {
@@ -191,6 +207,7 @@ namespace VessageRESTfulServer.Controllers
             {
                 return null;
             }
+
             var jsonResultObj = new
             {
                 accountId = user.AccountId,
