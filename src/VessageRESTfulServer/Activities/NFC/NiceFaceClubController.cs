@@ -51,6 +51,8 @@ namespace VessageRESTfulServer.Activities.NFC
 
         public static int BaseLikeJoinNFC { get { return int.Parse(NFCConfig["BaseLikeJoinNFC"]); } }
 
+        public static bool IsFaceTestLogEnabled { get { return bool.Parse(NFCConfig["FaceTestLog"]); } }
+
         public static string NFCHelloMessage { get { return NFCConfig["NFCHello"]; } }
 
         public static string NFCNeedLikeJoinMessage { get { return NFCConfig["NFCNeedLikeJoinMessage"]; } }
@@ -237,8 +239,14 @@ namespace VessageRESTfulServer.Activities.NFC
 
                 var resultContent = await result.Content.ReadAsStringAsync();
 
+
 #if DEBUG
                 Console.WriteLine(resultContent);
+#else
+                if (NiceFaceClubConfigCenter.IsFaceTestLogEnabled)
+                {
+                    LogInfo(resultContent);
+                }
 #endif
 
                 dynamic obj = JsonConvert.DeserializeObject(resultContent);
@@ -267,16 +275,23 @@ namespace VessageRESTfulServer.Activities.NFC
 
                 var avgScore = sumScore / fbrCnt;
 
-                highScore = AdjustScore(highScore, sumScore, avgScore, fbrCnt, addition);
+                var resScore = AdjustScore(highScore, sumScore, avgScore, fbrCnt, addition);
 
-                highScore = highScore < 10f ? ((int)(highScore * 10f)) / 10f : 9.9f;
+                if (resScore >= 10f)
+                {
+                    resScore = 9.9f;
+                }
+                else
+                {
+                    resScore = ((int)(resScore * 10f)) / 10f;
+                }
 
-                var msg = NiceFaceClubConfigCenter.GetScoreString(highScore);
+                var msg = NiceFaceClubConfigCenter.GetScoreString(resScore);
 
                 return new
                 {
-                    rId = GenerateResultId(time, highScore, userId),
-                    hs = highScore,
+                    rId = GenerateResultId(time, resScore, userId),
+                    hs = resScore,
                     msg = msg,
                     ts = time
                 };
@@ -291,16 +306,8 @@ namespace VessageRESTfulServer.Activities.NFC
         private static float AdjustScore(float highScore, float sumScore, float avgScore, int scoreCnt, float addition)
         {
             var maxAddtion = NiceFaceClubConfigCenter.FaceTestMaxAddtion;
-            addition = addition > maxAddtion ? maxAddtion : addition;
-            return avgScore + addition;
-            /*
-            var random = NiceFaceClubConfigCenter.Random;
-            var ad = addition * random.Next(66, 88) / 100f;
-            highScore = highScore >= 8.6 ? 8.0f + (highScore - 8.6f) / (0.9f - ad) : 8.0f - 8.6f * (1f - highScore / (8.6f - ad));
-            highScore += addition * 0.4f;
-            highScore = ((int)(highScore * 10f)) / 10f;
-            return highScore > 10f ? 10f : highScore < 3 ? 0f : highScore;
-            */
+            var a = addition > maxAddtion ? maxAddtion : addition;
+            return avgScore + a;
         }
 
         [HttpPost("NiceFace")]
@@ -388,7 +395,7 @@ namespace VessageRESTfulServer.Activities.NFC
 
         private static string GenerateResultId(long timeSpan, float score, string userId)
         {
-            var scoreInt = (int)(score * 10);
+            var scoreInt = (int)(score * 10f);
             var sign = StringUtil.Md5String(string.Format("{0}:{1}:{2}:{3}", userId, timeSpan, scoreInt, NiceFaceClubConfigCenter.TestResultSignKey));
             return sign;
         }
