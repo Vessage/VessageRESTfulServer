@@ -217,7 +217,6 @@ namespace VessageRESTfulServer.Controllers
             {
                 accountId = user.AccountId,
                 userId = user.Id.ToString(),
-                mainChatImage = user.MainChatImage,
                 avatar = user.Avartar,
                 nickName = user.Nick,
                 mobile = UserObjectId == user.Id ? user.Mobile : StringUtil.Md5String(user.Mobile),
@@ -317,6 +316,7 @@ namespace VessageRESTfulServer.Controllers
              });
         }
 
+/*
         [HttpPost("NewMobileUser")]
         public async Task<object> NewMobileUser(string mobile, string inviteMsg = null)
         {
@@ -350,6 +350,7 @@ namespace VessageRESTfulServer.Controllers
             }
             return VessageUserToJsonObject(user);
         }
+*/
 
         [HttpPost("ValidateMobileVSMS")]
         public async Task<object> ValidateMobileVSMS(string smsAppkey, string mobile, string zone, string code, bool bindExistsAccount = true)
