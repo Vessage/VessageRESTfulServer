@@ -92,7 +92,6 @@ namespace VessageRESTfulServer.Controllers
                            Sender = new ObjectId(u["Sender"].ToObject<string>()),
                            SendTime = now.AddMilliseconds(i++),
                            TypeId = u["TypeId"].ToObject<int>(),
-                           FileId = u["FileId"].ToObject<string>(),
                            Ready = u["Ready"].ToObject<bool>()
                        };
             if (vsgs.Count() == 0)
