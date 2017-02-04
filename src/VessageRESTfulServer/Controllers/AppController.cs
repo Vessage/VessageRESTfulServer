@@ -90,7 +90,7 @@ namespace VessageRESTfulServer.Controllers
                            IsGroup = u["IsGroup"].ToObject<bool>(),
                            IsRead = u["IsRead"].ToObject<bool>(),
                            Sender = new ObjectId(u["Sender"].ToObject<string>()),
-                           SendTime = now.AddMilliseconds(i++),
+                           SendTime = now.AddSeconds(i++),
                            TypeId = u["TypeId"].ToObject<int>(),
                            Ready = u["Ready"].ToObject<bool>()
                        };
