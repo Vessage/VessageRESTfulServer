@@ -23,10 +23,7 @@ namespace VessageRESTfulServer.Services
         {
             foreach (var vsg in vessages)
             {
-                if (vsg.Id == ObjectId.Empty)
-                {
-                    vsg.Id = ObjectId.GenerateNewId();
-                }
+                vsg.Id = ObjectId.GenerateNewId();
             }
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             var update = new UpdateDefinitionBuilder<VessageBox>().PushEach(vb => vb.Vessages, vessages);

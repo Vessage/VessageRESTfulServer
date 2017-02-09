@@ -86,7 +86,6 @@ namespace VessageRESTfulServer.Controllers
                        {
                            Body = u["Body"].ToObject<string>(),
                            ExtraInfo = u["ExtraInfo"].ToObject<string>(),
-                           Id = ObjectId.GenerateNewId(),
                            IsGroup = u["IsGroup"].ToObject<bool>(),
                            IsRead = u["IsRead"].ToObject<bool>(),
                            Sender = new ObjectId(u["Sender"].ToObject<string>()),
