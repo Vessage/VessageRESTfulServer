@@ -191,7 +191,6 @@ namespace VessageRESTfulServer
             LogManager.GetLogger("Main").Info("VG Api Server Started!");
         }
     }
-
     public static class IPubSubServiceExtension
     {
         public static void PublishVegeNotifyMessage(this BahamutPubSubService service, BahamutPublishModel message)
