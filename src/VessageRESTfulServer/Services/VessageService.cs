@@ -21,12 +21,14 @@ namespace VessageRESTfulServer.Services
 
         public async Task<ObjectId> SendVessagesToUser(ObjectId userId, IEnumerable<Vessage> vessages)
         {
-            foreach (var vsg in vessages)
+            var vsgArr = vessages.ToArray();
+            for (int i = 0; i < vsgArr.Length; i++)
             {
-                vsg.Id = ObjectId.GenerateNewId();
+                vsgArr[i].Id = ObjectId.GenerateNewId();
             }
+            
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
-            var update = new UpdateDefinitionBuilder<VessageBox>().PushEach(vb => vb.Vessages, vessages);
+            var update = new UpdateDefinitionBuilder<VessageBox>().PushEach(vb => vb.Vessages, vsgArr);
             try
             {
                 var result = await collection.FindOneAndUpdateAsync(vb => vb.UserId == userId, update);
@@ -35,7 +37,7 @@ namespace VessageRESTfulServer.Services
                     var newVb = new VessageBox()
                     {
                         UserId = userId,
-                        Vessages = vessages.ToArray(),
+                        Vessages = vsgArr,
                         LastGetMessageTime = DateTime.UtcNow.AddMinutes(-2),
                         LastGotMessageTime = DateTime.UtcNow.AddMinutes(-2),
                         IsGroup = false
