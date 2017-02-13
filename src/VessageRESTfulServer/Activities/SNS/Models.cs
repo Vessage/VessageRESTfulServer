@@ -33,7 +33,9 @@ namespace VessageRESTfulServer.Activities.SNS
         public const int STATE_REMOVED = -1;
         public const int STATE_DELETED = -2;
 
+        public const int STATE_PRIVATE = 0;
         public const int STATE_NORMAL = 1;
+
 
         public const int STATE_IN_USER_OBJECTION = 2;
 

@@ -170,6 +170,7 @@ namespace VessageRESTfulServer.Activities.SNS
                 lc = p.Likes,
                 cmtCnt = p.Cmts,
                 t = type,
+                st = p.State,
                 pster = p.PosterNick,
                 body = p.Body
             };
@@ -185,6 +186,29 @@ namespace VessageRESTfulServer.Activities.SNS
             var filter1 = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Type == SNSPost.TYPE_NORMAL && p.State > 0 && p.PostTs < ts);
             var posts = await postCol.Find(filter & filter1).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
             return from p in posts select SNSPostToJsonObject(p, SNSPost.TYPE_NORMAL);
+        }
+
+        [HttpPut("PostState")]
+        public async Task<object> EditPostState(string postId, int state)
+        {
+            if (state < 0)
+            {
+                Response.StatusCode = 400;
+                return new { msg = "FAIL" };
+            }
+
+            var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
+            var update = new UpdateDefinitionBuilder<SNSPost>().Set(p => p.State, state);
+            var res = await postCol.UpdateOneAsync(f => f.UserId == UserObjectId && f.Id == new ObjectId(postId), update);
+            if (res.ModifiedCount > 0)
+            {
+                return new { msg = "SUCCESS" };
+            }
+            else
+            {
+                Response.StatusCode = 500;
+                return new { msg = "FAIL" };
+            }
         }
 
         [HttpDelete("Posts")]
@@ -234,12 +258,12 @@ namespace VessageRESTfulServer.Activities.SNS
         {
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             var usrOId = UserObjectId;
-            var posts = await postCol.Find(f => f.UserId == usrOId && f.State > 0 && f.UpdateTs < ts).SortByDescending(p => p.UpdateTs).Limit(cnt).ToListAsync();
+            var posts = await postCol.Find(f => f.UserId == usrOId && f.State >= 0 && f.UpdateTs < ts).SortByDescending(p => p.UpdateTs).Limit(cnt).ToListAsync();
             return from p in posts select SNSPostToJsonObject(p, SNSPost.TYPE_MY_POST);
         }
 
         [HttpGet("UserPosts")]
-        public async Task<object> GetUserPosts(string userId,long ts, int cnt)
+        public async Task<object> GetUserPosts(string userId, long ts, int cnt)
         {
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             var usrOId = new ObjectId(userId);
@@ -248,7 +272,7 @@ namespace VessageRESTfulServer.Activities.SNS
         }
 
         [HttpPost("NewPost")]
-        public async Task<object> NewPost(string image, string nick, string body = null)
+        public async Task<object> NewPost(string image, string nick, string body = null, int state = SNSPost.STATE_NORMAL)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
 
@@ -270,9 +294,10 @@ namespace VessageRESTfulServer.Activities.SNS
                 PostTs = nowTs,
                 UpdateTs = nowTs,
                 Type = SNSPost.TYPE_NORMAL,
-                State = SNSPost.STATE_NORMAL,
+                State = state,
                 Body = body
             };
+
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             await postCol.InsertOneAsync(newPost);
 
@@ -300,9 +325,12 @@ namespace VessageRESTfulServer.Activities.SNS
                 }
             }
 
-            var followers = new HashSet<ObjectId>(poster.Follower);
-            followers.Remove(poster.UserId);
-            await AppServiceProvider.GetActivityService().SetActivityMiniBadgeOfUserIds(SNSConfigCenter.ActivityId, followers);
+            if (state == SNSPost.STATE_NORMAL)
+            {
+                var followers = new HashSet<ObjectId>(poster.Follower);
+                followers.Remove(poster.UserId);
+                await AppServiceProvider.GetActivityService().SetActivityMiniBadgeOfUserIds(SNSConfigCenter.ActivityId, followers);
+            }
 
             return SNSPostToJsonObject(newPost, newPost.Type);
         }
