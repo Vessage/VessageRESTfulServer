@@ -88,7 +88,7 @@ namespace VessageRESTfulServer.Activities.MNS
             }
             var now = DateTime.UtcNow;
             var limit = now.AddHours(-3);
-            IEnumerable<MNSProfile> profiles = await usrCol.Find(p =>p.MidNightAnnounce != null && p.UserId != UserObjectId && p.ProfileState == MNSProfile.STATE_NORMAL && p.ActiveTime > limit).Limit(100).ToListAsync();
+            IEnumerable<MNSProfile> profiles = await usrCol.Find(p =>p.MidNightAnnounce != null && p.UserId != UserObjectId && p.ProfileState == MNSProfile.STATE_NORMAL && p.ActiveTime > limit).SortByDescending(p => p.ActiveTime).Limit(100).ToListAsync();
 
             return new
             {
