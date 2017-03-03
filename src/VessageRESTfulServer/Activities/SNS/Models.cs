@@ -60,6 +60,8 @@ namespace VessageRESTfulServer.Activities.SNS
 
         public string Body { get; set; }
 
+        public string Txt { get; set; }
+
     }
 
     public class SNSPostLike
@@ -72,6 +74,8 @@ namespace VessageRESTfulServer.Activities.SNS
         public string Nick { get; set; } //Add Like User Nick
         public ObjectId SNSPostUserId { get; set; } //SNS Post UserId
         public string SNSPostImage { get; set; }
+
+        public string SNSPostText { get; set; }
     }
 
     public class SNSPostComment
@@ -90,6 +94,8 @@ namespace VessageRESTfulServer.Activities.SNS
         public ObjectId SNSPostPoster { get; set; } //SNS Post Poster
 
         public string SNSPostImage { get; set; }
+
+        public string SNSPostText { get; set; }
     }
 
 }

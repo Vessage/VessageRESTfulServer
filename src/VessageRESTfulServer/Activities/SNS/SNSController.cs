@@ -298,31 +298,33 @@ namespace VessageRESTfulServer.Activities.SNS
                 Body = body
             };
 
-            var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
-            await postCol.InsertOneAsync(newPost);
-
+            string textContent = null;
             if (string.IsNullOrWhiteSpace(body) == false)
             {
                 var bodyJson = (JObject)JsonConvert.DeserializeObject(body);
-                var textContent = bodyJson.GetValue("txt");
+                textContent = (string)bodyJson.GetValue("txt");
                 if (textContent != null)
                 {
-                    var comment = (string)textContent;
-                    if (string.IsNullOrWhiteSpace(comment) == false)
-                    {
-                        var postCmtCol = SNSDb.GetCollection<SNSPostComment>("SNSPostComment");
-                        await postCmtCol.InsertOneAsync(new SNSPostComment
-                        {
-                            Content = comment,
-                            Poster = UserObjectId,
-                            PosterNick = nick,
-                            PostId = newPost.Id,
-                            PostTs = nowTs,
-                            SNSPostPoster = newPost.UserId,
-                            SNSPostImage = newPost.Image,
-                        });
-                    }
+                    newPost.Txt = textContent.Length > 30 ? string.Format("{0}...", textContent.Substring(0, 27)) : textContent;
                 }
+            }
+
+            var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
+            await postCol.InsertOneAsync(newPost);
+
+            if (string.IsNullOrWhiteSpace(textContent) == false)
+            {
+                var postCmtCol = SNSDb.GetCollection<SNSPostComment>("SNSPostComment");
+                await postCmtCol.InsertOneAsync(new SNSPostComment
+                {
+                    Content = textContent,
+                    Poster = UserObjectId,
+                    PosterNick = nick,
+                    PostId = newPost.Id,
+                    PostTs = nowTs,
+                    SNSPostPoster = newPost.UserId,
+                    SNSPostImage = newPost.Image
+                });
             }
 
             if (state == SNSPost.STATE_NORMAL)
@@ -346,7 +348,8 @@ namespace VessageRESTfulServer.Activities.SNS
                           ts = l.Ts,
                           usrId = l.UserId.ToString(),
                           nick = l.Nick,
-                          img = l.SNSPostImage
+                          img = l.SNSPostImage,
+                          txt = l.SNSPostText
                       };
             return res;
         }
@@ -376,7 +379,7 @@ namespace VessageRESTfulServer.Activities.SNS
             return res;
         }
 
-        private object SNSPostCommentToJsonObject(SNSPostComment c, bool includeImage = false)
+        private object SNSPostCommentToJsonObject(SNSPostComment c, bool includePostInfo = false)
         {
             return new
             {
@@ -386,7 +389,8 @@ namespace VessageRESTfulServer.Activities.SNS
                 psterNk = c.PosterNick,
                 pster = c.Poster.ToString(),
                 atNick = c.AtNick,
-                img = includeImage ? c.SNSPostImage : null
+                img = includePostInfo ? c.SNSPostImage : null,
+                txt = includePostInfo ? c.SNSPostText : null
             };
         }
 
@@ -429,6 +433,7 @@ namespace VessageRESTfulServer.Activities.SNS
                                     .Set(l => l.SNSPostUserId, post.UserId)
                                     .Set(l => l.Nick, nick)
                                     .Set(l => l.SNSPostImage, post.Image)
+                                    .Set(l => l.SNSPostText, post.Txt)
                                     .Set(l => l.UserId, UserObjectId);
                 var like = await likeCol.FindOneAndUpdateAsync(filter, updateLike, opt);
                 var notSelf = post.UserId != UserObjectId;
@@ -505,7 +510,7 @@ namespace VessageRESTfulServer.Activities.SNS
             var postOpt = new FindOneAndUpdateOptions<SNSPost, SNSPost>
             {
                 ReturnDocument = ReturnDocument.After,
-                Projection = new ProjectionDefinitionBuilder<SNSPost>().Include(p => p.Id).Include(p => p.UserId).Include(p => p.Image)
+                Projection = new ProjectionDefinitionBuilder<SNSPost>().Include(p => p.Id).Include(p => p.UserId).Include(p => p.Image).Include(p => p.Txt)
             };
             var post = await postCol.FindOneAndUpdateAsync(postFilter, postUpdate, postOpt);
             var newCmt = new SNSPostComment
@@ -517,6 +522,7 @@ namespace VessageRESTfulServer.Activities.SNS
                 PostTs = nowTs,
                 SNSPostPoster = post.UserId,
                 SNSPostImage = post.Image,
+                SNSPostText = post.Txt
             };
 
             var badgedUserId = ObjectId.Empty;
