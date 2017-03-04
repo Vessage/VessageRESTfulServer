@@ -336,7 +336,7 @@ namespace VessageRESTfulServer.Activities.SNS
                 });
             }
 
-            if (state == SNSPost.STATE_NORMAL)
+            if (state == SNSPost.STATE_NORMAL && autoPrivate == 0)
             {
                 var followers = new HashSet<ObjectId>(poster.Follower);
                 followers.Remove(poster.UserId);
