@@ -160,7 +160,7 @@ namespace VessageRESTfulServer.Activities.SNS
 
         private static object SNSPostToJsonObject(SNSPost p, int type)
         {
-            var atpv = (p.AutoPrivateDate - DateTime.UtcNow).TotalSeconds;
+            var atpv = p.AutoPrivateDate.Year > 8000 ? 0 : (p.AutoPrivateDate - DateTime.UtcNow).TotalSeconds;
             return new
             {
                 pid = p.Id.ToString(),
@@ -171,10 +171,10 @@ namespace VessageRESTfulServer.Activities.SNS
                 lc = p.Likes,
                 cmtCnt = p.Cmts,
                 t = type,
-                st = atpv > 0 ? p.State : SNSPost.STATE_PRIVATE,
+                st = atpv < 0 ? SNSPost.STATE_PRIVATE : p.State,
                 pster = p.PosterNick,
                 body = p.Body,
-                atpv = type == SNSPost.TYPE_MY_POST ? 0 : atpv
+                atpv = atpv < 0 ? 0 : atpv
             };
         }
 
