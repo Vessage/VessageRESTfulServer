@@ -30,6 +30,11 @@ namespace VessageRESTfulServer.Activities.SNS
 
     public class SNSPost
     {
+        public SNSPost()
+        {
+            AutoPrivateDate = DateTime.MaxValue;
+        }
+
         public const int STATE_REMOVED = -1;
         public const int STATE_DELETED = -2;
 
@@ -61,6 +66,8 @@ namespace VessageRESTfulServer.Activities.SNS
         public string Body { get; set; }
 
         public string Txt { get; set; }
+
+        public DateTime AutoPrivateDate { get; set; }
 
     }
 

@@ -132,7 +132,7 @@ namespace VessageRESTfulServer.Activities.SNS
             if (newFocus.Count() > 0)
             {
                 var filter = new FilterDefinitionBuilder<SNSPost>().In(p => p.UserId, newFocus);
-                var filter1 = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Type == SNSPost.TYPE_NORMAL && p.State > 0);
+                var filter1 = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Type == SNSPost.TYPE_NORMAL && p.State > 0 && p.AutoPrivateDate > now);
                 posts = await postCol.Find(filter & filter1).SortByDescending(p => p.PostTs).Limit(postCnt).ToListAsync();
             }
             return new
@@ -160,6 +160,7 @@ namespace VessageRESTfulServer.Activities.SNS
 
         private static object SNSPostToJsonObject(SNSPost p, int type)
         {
+            var atpv = (p.AutoPrivateDate - DateTime.UtcNow).TotalSeconds;
             return new
             {
                 pid = p.Id.ToString(),
@@ -170,9 +171,10 @@ namespace VessageRESTfulServer.Activities.SNS
                 lc = p.Likes,
                 cmtCnt = p.Cmts,
                 t = type,
-                st = p.State,
+                st = atpv > 0 ? p.State : SNSPost.STATE_PRIVATE,
                 pster = p.PosterNick,
-                body = p.Body
+                body = p.Body,
+                atpv = type == SNSPost.TYPE_MY_POST ? 0 : atpv
             };
         }
 
@@ -181,9 +183,11 @@ namespace VessageRESTfulServer.Activities.SNS
         {
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
+            var now = DateTime.UtcNow;
+
             var userIds = await usrCol.Find(u => u.UserId == UserObjectId && u.ProfileState > 0).Project(u => u.FocusUserIds).FirstAsync();
             var filter = new FilterDefinitionBuilder<SNSPost>().In(p => p.UserId, userIds);
-            var filter1 = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Type == SNSPost.TYPE_NORMAL && p.State > 0 && p.PostTs < ts);
+            var filter1 = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Type == SNSPost.TYPE_NORMAL && p.AutoPrivateDate > now && p.State > 0 && p.PostTs < ts);
             var posts = await postCol.Find(filter & filter1).SortByDescending(p => p.PostTs).Limit(cnt).ToListAsync();
             return from p in posts select SNSPostToJsonObject(p, SNSPost.TYPE_NORMAL);
         }
@@ -199,6 +203,10 @@ namespace VessageRESTfulServer.Activities.SNS
 
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             var update = new UpdateDefinitionBuilder<SNSPost>().Set(p => p.State, state);
+            if (state == SNSPost.STATE_NORMAL)
+            {
+                update = update.Set(p => p.AutoPrivateDate, DateTime.MaxValue);
+            }
             var res = await postCol.UpdateOneAsync(f => f.UserId == UserObjectId && f.Id == new ObjectId(postId), update);
             if (res.ModifiedCount > 0)
             {
@@ -267,12 +275,12 @@ namespace VessageRESTfulServer.Activities.SNS
         {
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             var usrOId = new ObjectId(userId);
-            var posts = await postCol.Find(f => f.UserId == usrOId && f.State > 0 && f.UpdateTs < ts).SortByDescending(p => p.UpdateTs).Limit(cnt).ToListAsync();
+            var posts = await postCol.Find(f => f.UserId == usrOId && f.State > 0 && f.AutoPrivateDate > DateTime.UtcNow && f.UpdateTs < ts).SortByDescending(p => p.UpdateTs).Limit(cnt).ToListAsync();
             return from p in posts select SNSPostToJsonObject(p, SNSPost.TYPE_SINGLE_USER_POST);
         }
 
         [HttpPost("NewPost")]
-        public async Task<object> NewPost(string image, string nick, string body = null, int state = SNSPost.STATE_NORMAL)
+        public async Task<object> NewPost(string image, string nick, string body = null, int state = SNSPost.STATE_NORMAL, int autoPrivate = 0)
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
 
@@ -295,7 +303,8 @@ namespace VessageRESTfulServer.Activities.SNS
                 UpdateTs = nowTs,
                 Type = SNSPost.TYPE_NORMAL,
                 State = state,
-                Body = body
+                Body = body,
+                AutoPrivateDate = autoPrivate == 0 ? DateTime.MaxValue : DateTime.UtcNow.AddSeconds(autoPrivate)
             };
 
             string textContent = null;
