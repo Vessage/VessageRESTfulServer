@@ -160,7 +160,7 @@ namespace VessageRESTfulServer.Activities.SNS
 
         private static object SNSPostToJsonObject(SNSPost p, int type)
         {
-            var atpv = p.AutoPrivateDate.Year > 8000 ? 0 : (p.AutoPrivateDate - DateTime.UtcNow).TotalSeconds;
+            var atpv = p.AutoPrivateDate.Year > 8000 ? 0 : (int)(p.AutoPrivateDate - DateTime.UtcNow).TotalSeconds;
             return new
             {
                 pid = p.Id.ToString(),
