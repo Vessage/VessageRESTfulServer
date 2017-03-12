@@ -567,8 +567,10 @@ namespace VessageRESTfulServer.Activities.SNS
 
             var nowTs = (long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds;
 
+            var userId = UserObjectId;
+
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
-            var postFilter = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Id == new ObjectId(postId) && p.State > 0);
+            var postFilter = new FilterDefinitionBuilder<SNSPost>().Where(p => p.Id == new ObjectId(postId) && (p.State > 0 || (p.State == 0 && p.UserId == userId)));
             var postUpdate = new UpdateDefinitionBuilder<SNSPost>().Set(p => p.UpdateTs, nowTs).Inc(p => p.Cmts, 1);
             var postOpt = new FindOneAndUpdateOptions<SNSPost, SNSPost>
             {
