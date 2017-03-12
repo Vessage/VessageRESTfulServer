@@ -374,7 +374,7 @@ namespace VessageRESTfulServer.Activities.SNS
                 return null;
             }
             var postCmtCol = SNSDb.GetCollection<SNSPostComment>("SNSPostComment");
-            var cmts = await postCmtCol.Find(c => (c.AtUserId == UserObjectId || c.SNSPostPoster == UserObjectId || c.Poster == UserObjectId) && c.PostTs < ts).SortByDescending(c => c.PostTs).Limit(cnt).ToListAsync();
+            var cmts = await postCmtCol.Find(c => c.State >= 0 && (c.AtUserId == UserObjectId || c.SNSPostPoster == UserObjectId || c.Poster == UserObjectId) && c.PostTs < ts).SortByDescending(c => c.PostTs).Limit(cnt).ToListAsync();
             var res = from c in cmts select SNSPostCommentToJsonObject(c, true);
             return res;
         }
@@ -392,6 +392,7 @@ namespace VessageRESTfulServer.Activities.SNS
         {
             return new
             {
+                id = c.Id.ToString(),
                 postId = c.PostId.ToString(),
                 cmt = c.State >= 0 ? c.Content : "CMT_REMOVED",
                 ts = c.PostTs,
@@ -584,7 +585,8 @@ namespace VessageRESTfulServer.Activities.SNS
                 PostTs = nowTs,
                 SNSPostPoster = post.UserId,
                 SNSPostImage = post.Image,
-                SNSPostText = post.Txt
+                SNSPostText = post.Txt,
+                State = SNSPostComment.STATE_NORMAL
             };
 
             var badgedUserId = ObjectId.Empty;
@@ -626,10 +628,7 @@ namespace VessageRESTfulServer.Activities.SNS
                     await activityService.AddActivityBadge(SNSConfigCenter.ActivityId, post.UserId, 1);
                 }
             }
-            return new
-            {
-                msg = "SUCCESS"
-            };
+            return new { cmtId = newCmt.Id.ToString() };
         }
     }
 }
