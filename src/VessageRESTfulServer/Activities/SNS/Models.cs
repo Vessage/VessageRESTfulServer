@@ -87,6 +87,11 @@ namespace VessageRESTfulServer.Activities.SNS
 
     public class SNSPostComment
     {
+
+        public const int STATE_NORMAL = 0;
+        public const int STATE_REMOVED = -1; //Comment Poster Removed
+        public const int STATE_DELETED = -2; //SNS Post Owner Deleted
+
         public ObjectId Id { get; set; }
         public ObjectId PostId { get; set; }
         public string Content { get; set; }
@@ -103,6 +108,8 @@ namespace VessageRESTfulServer.Activities.SNS
         public string SNSPostImage { get; set; }
 
         public string SNSPostText { get; set; }
+
+        public int State { get; set; }
     }
 
 }

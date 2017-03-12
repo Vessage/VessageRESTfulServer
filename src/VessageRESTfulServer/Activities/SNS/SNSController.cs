@@ -393,13 +393,14 @@ namespace VessageRESTfulServer.Activities.SNS
             return new
             {
                 postId = c.PostId.ToString(),
-                cmt = c.Content,
+                cmt = c.State >= 0 ? c.Content : "CMT_REMOVED",
                 ts = c.PostTs,
                 psterNk = c.PosterNick,
                 pster = c.Poster.ToString(),
                 atNick = c.AtNick,
                 img = includePostInfo ? c.SNSPostImage : null,
-                txt = includePostInfo ? c.SNSPostText : null
+                txt = includePostInfo ? c.SNSPostText : null,
+                st = c.State
             };
         }
 
@@ -492,6 +493,58 @@ namespace VessageRESTfulServer.Activities.SNS
                 ToUser = user
             };
             AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notifyMsg);
+        }
+
+        [HttpDelete("Comments")]
+        public async Task<object> DeletePostComment(string postId, string cmtId, bool cmtOwner)
+        {
+            var state = cmtOwner ? SNSPostComment.STATE_REMOVED : SNSPostComment.STATE_DELETED;
+            return await UpdatePostCommentState(postId, cmtId, cmtOwner, state);
+        }
+
+        private async Task<object> UpdatePostCommentState(string postId, string cmtId, bool cmtOwner, int state)
+        {
+            var postCmtCol = SNSDb.GetCollection<SNSPostComment>("SNSPostComment");
+            var cmtOId = ObjectId.Parse(cmtId);
+            var postOId = ObjectId.Parse(postId);
+            var userOId = UserObjectId;
+
+            UpdateDefinition<SNSPostComment> update = null;
+            FilterDefinition<SNSPostComment> filter = null;
+            if (cmtOwner)
+            {
+                filter = new FilterDefinitionBuilder<SNSPostComment>().Where(f => f.Id == cmtOId && f.PostId == postOId && f.Poster == userOId);
+                update = new UpdateDefinitionBuilder<SNSPostComment>().Set(u => u.State, state);
+            }
+            else
+            {
+                var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
+                var exists = await postCol.CountAsync(f => f.Id == postOId && f.UserId == userOId);
+                if (exists > 0)
+                {
+                    filter = new FilterDefinitionBuilder<SNSPostComment>().Where(f => f.Id == cmtOId && f.PostId == postOId);
+                    update = new UpdateDefinitionBuilder<SNSPostComment>().Set(u => u.State, state);
+                }
+            }
+
+            if (filter != null && update != null)
+            {
+                var res = await postCmtCol.UpdateOneAsync(filter, update);
+                if (res.ModifiedCount > 0)
+                {
+                    return new { suc = true };
+                }
+                else
+                {
+                    Response.StatusCode = 400;
+                    return new { suc = false };
+                }
+            }
+            else
+            {
+                Response.StatusCode = 403;
+                return new { suc = false, msg = "UNAUTH" };
+            }
         }
 
         [HttpPost("PostComments")]
