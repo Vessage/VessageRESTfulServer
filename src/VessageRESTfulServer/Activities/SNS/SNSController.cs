@@ -264,6 +264,10 @@ namespace VessageRESTfulServer.Activities.SNS
         [HttpGet("MyPost")]
         public async Task<object> GetMyPost(long ts, int cnt)
         {
+            if (cnt > 50)
+            {
+                cnt = 50;
+            }
             var postCol = SNSDb.GetCollection<SNSPost>("SNSPost");
             var usrOId = UserObjectId;
             var posts = await postCol.Find(f => f.UserId == usrOId && f.State >= 0 && f.UpdateTs < ts).SortByDescending(p => p.UpdateTs).Limit(cnt).ToListAsync();
@@ -349,6 +353,10 @@ namespace VessageRESTfulServer.Activities.SNS
         [HttpGet("ReceivedLikes")]
         public async Task<IEnumerable<object>> GetReceivedLikes(long ts, int cnt)
         {
+            if (cnt > 50)
+            {
+                cnt = 50;
+            }
             var likeCol = SNSDb.GetCollection<SNSPostLike>("SNSPostLike");
             var likes = await likeCol.Find(lc => lc.SNSPostUserId == UserObjectId && lc.Ts < ts).SortByDescending(l => l.Ts).Limit(cnt).ToListAsync();
             var res = from l in likes

@@ -33,6 +33,7 @@ namespace VessageRESTfulServer.Models
         public const int TYPE_FACE_TEXT = 1;
         public const int TYPE_IMAGE = 2;
         public const int TYPE_LITTLE_VIDEO = 3;
+        public const int TYPE_TIPS = 4;
 
         public ObjectId Id { get; set; }
         public ObjectId Sender { get; set; }

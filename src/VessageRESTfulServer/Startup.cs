@@ -139,6 +139,7 @@ namespace VessageRESTfulServer
             services.AddSingleton(new SharedService(mongoClient));
             services.AddSingleton(new ActivityService(mongoClient));
             services.AddSingleton(new GroupChatService(mongoClient));
+            services.AddSingleton(new SubscriptionService(mongoClient));
 
             //pubsub manager
             var pbClientManager = DBClientManagerBuilder.GenerateRedisConnectionMultiplexer(Configuration.GetSection("Data:MessagePubSubServer"));

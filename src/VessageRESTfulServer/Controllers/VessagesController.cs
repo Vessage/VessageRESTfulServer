@@ -98,6 +98,18 @@ namespace VessageRESTfulServer.Controllers
         [HttpPost("ForUser")]
         public async Task<object> SendNewVessageForUser(string receiverId, string extraInfo, bool isGroup = false, int typeId = 0, string fileId = null, string body = null, bool ready = false)
         {
+            var userOId = UserObjectId;
+            var userId = UserSessionData.UserId;
+
+            if (await SubscriptionVessageAsync(userOId, receiverId))
+            {
+                return new
+                {
+                    vessageBoxId = receiverId,
+                    vessageId = receiverId
+                };
+            }
+
             Vessage vessage = null;
             Tuple<ObjectId, ObjectId> result = null;
             var receiverOId = new ObjectId(receiverId);
@@ -105,7 +117,7 @@ namespace VessageRESTfulServer.Controllers
             ChatGroup chatGroup = null;
             if (isGroup)
             {
-                chatGroup = await AppServiceProvider.GetGroupChatService().GetChatGroupById(UserObjectId, receiverOId);
+                chatGroup = await AppServiceProvider.GetGroupChatService().GetChatGroupById(userOId, receiverOId);
                 if (chatGroup == null)
                 {
                     Response.StatusCode = (int)HttpStatusCode.Forbidden;
@@ -118,7 +130,7 @@ namespace VessageRESTfulServer.Controllers
                 {
                     Id = ObjectId.GenerateNewId(),
                     IsRead = false,
-                    Sender = isGroup ? receiverOId : UserObjectId,
+                    Sender = isGroup ? receiverOId : userOId,
                     Ready = ready || !string.IsNullOrWhiteSpace(fileId),
                     FileId = string.IsNullOrWhiteSpace(fileId) ? null : fileId,
                     SendTime = DateTime.UtcNow,
@@ -126,7 +138,7 @@ namespace VessageRESTfulServer.Controllers
                     IsGroup = isGroup,
                     TypeId = typeId,
                     Body = body,
-                    GroupSender = isGroup ? UserObjectId.ToString() : null
+                    GroupSender = isGroup ? userOId.ToString() : null
                 };
                 result = await vessageService.SendVessage(receiverOId, vessage, isGroup);
             }
@@ -145,14 +157,14 @@ namespace VessageRESTfulServer.Controllers
                 string sender = null;
                 if (isGroup)
                 {
-                    var toUsersObjectId = from c in chatGroup.Chatters where c != UserObjectId select c;
+                    var toUsersObjectId = from c in chatGroup.Chatters where c != userOId select c;
                     toUsers = from id in toUsersObjectId select id.ToString();
                     await vessageService.SendGroupVessageToChatters(chatGroup.Id, toUsersObjectId, new ObjectId(vsgId));
                     sender = chatGroup.Id.ToString();
                 }
                 else
                 {
-                    sender = UserSessionData.UserId;
+                    sender = userId;
                     toUsers = new string[] { receiverId };
                 }
                 PostBahamutNotification(toUsers, sender, GenerateVessageNotifyText(vessage));
@@ -163,6 +175,20 @@ namespace VessageRESTfulServer.Controllers
                 vessageBoxId = vbId,
                 vessageId = vsgId
             };
+        }
+
+        private async Task<bool> SubscriptionVessageAsync(ObjectId senderId, string receiverId)
+        {
+            var subService = AppServiceProvider.GetSubscriptionService();
+            var sa = subService.GetSubscriptionAccount(receiverId);
+            if (sa != null)
+            {
+                var vessages = subService.GetSubscriptedVessages(sa);
+                await AppServiceProvider.GetVessageService().SendVessagesToUser(senderId, vessages);
+                PostBahamutNotification(new string[] { senderId.ToString() }, receiverId, null);
+                return true;
+            }
+            return false;
         }
 
         private class NotificationTips
