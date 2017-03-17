@@ -223,7 +223,8 @@ namespace VessageRESTfulServer.Controllers
                 sex = user.Sex,
                 motto = user.Motto,
                 acTs = user.ActiveTime == null ? 0 : (long)DateTimeUtil.UnixTimeSpanOfDateTime(user.ActiveTime).TotalMilliseconds,
-                location = user.Location == null ? null : new double[] { user.Location.Longitude, user.Location.Latitude }
+                location = user.Location == null ? null : new double[] { user.Location.Longitude, user.Location.Latitude },
+                t = user.Type
             };
 
             return jsonResultObj;

@@ -36,7 +36,8 @@ namespace VessageRESTfulServer.Controllers
                     CreateTime = DateTime.UtcNow,
                     Nick = nickName,
                     Sex = -50,
-                    Mobile = mobile
+                    Mobile = mobile,
+                    Type = VessageUser.TYPE_NORMAL
                 };
 
                 newUser = await userService.CreateNewUser(newUser);

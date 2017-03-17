@@ -14,6 +14,13 @@ namespace VessageRESTfulServer.Models
 
     public class VessageUser
     {
+        public VessageUser(){
+            Type = TYPE_NORMAL;
+        }
+        
+        public const int TYPE_NORMAL = 0;
+        public const int TYPE_SUBSCRIPTION = 1;
+
         public ObjectId Id { get; set; }
         public string AccountId { get; set; }
         public string Nick { get; set; }
@@ -25,6 +32,7 @@ namespace VessageRESTfulServer.Models
         public string Motto { get; set; }
         public DateTime ActiveTime { get; set; }
         public GeoJson2DGeographicCoordinates Location { get; set; }
+        public int Type { get; set; }
     }
 
     public class Vessage
