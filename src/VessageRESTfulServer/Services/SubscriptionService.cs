@@ -20,6 +20,7 @@ namespace VessageRESTfulServer.Services
         public const int STATE_OFFLINE = -1;
         public const int STATE_NORMAL = 0;
         public ObjectId Id { get; set; }
+        public string AccountId { get; set; }
         public string UserId { get; set; }
         public string Desc { get; set; }
         public int State { get; set; }
