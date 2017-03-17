@@ -49,7 +49,6 @@ namespace VessageRESTfulServer.Controllers
             await AppServiceProvider.GetVessageService().UpdateGotMessageTime(UserSessionData.UserId);
         }
 
-
         [HttpPost("ForMobile")]
         public async Task<object> SendNewVessageForMobile(string receiverMobile, string extraInfo, int typeId = 0)
         {

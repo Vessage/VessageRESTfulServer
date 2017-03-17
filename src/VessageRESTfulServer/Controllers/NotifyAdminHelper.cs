@@ -92,7 +92,8 @@ namespace VessageRESTfulServer.Controllers
                     AfterOpen = "go_custom",
                     Custom = "ActivityUpdatedNotify",
                     Text = notifyAdmins.First(),
-                    LocKey = msg
+                    LocKey = msg,
+                    Extra = new { acName = "通知管理员", acMsg = msg }
                 }, Formatting.None),
                 NotifyType = "ActivityUpdatedNotify",
                 ToUser = notifyAdmins.Count() > 1 ? string.Join(",", notifyAdmins) : notifyAdmins.First()
