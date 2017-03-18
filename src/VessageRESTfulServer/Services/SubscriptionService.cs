@@ -22,6 +22,7 @@ namespace VessageRESTfulServer.Services
         public ObjectId Id { get; set; }
         public string AccountId { get; set; }
         public string UserId { get; set; }
+        public string Title { get; set; }
         public string Desc { get; set; }
         public int State { get; set; }
 
@@ -89,6 +90,11 @@ namespace VessageRESTfulServer.Services
             {
                 return null;
             }
+        }
+
+        public IEnumerable<SubAccount> GetSubscriptionAccounts()
+        {
+            return _subscriptionAccounts.Values;
         }
 
         public IEnumerable<Vessage> GetSubscriptedVessages(SubAccount subAccount)
