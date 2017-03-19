@@ -10,6 +10,7 @@ using System.IO;
 using VessageRESTfulServer.Models;
 using System.Threading;
 using Newtonsoft.Json;
+using BahamutCommon;
 
 namespace VessageRESTfulServer.Services
 {
@@ -25,6 +26,7 @@ namespace VessageRESTfulServer.Services
         public string Title { get; set; }
         public string Desc { get; set; }
         public int State { get; set; }
+        public string Avatar { get; set; }
 
         public long UpdateTs { get; set; }
     }
@@ -65,6 +67,27 @@ namespace VessageRESTfulServer.Services
             SubscriptionConfig = new ConfigurationBuilder()
                 .AddJsonFile(string.Format("{0}sub_account_msgs.json", configRoot), true, true)
                 .Build();
+        }
+
+        public async Task<bool> UpdateAccountAvatarAsync(string accountId, string avatar)
+        {
+            var update = new UpdateDefinitionBuilder<SubAccount>().Set(f => f.Avatar, avatar).Set(f=>f.UpdateTs,DateTimeUtil.UnixTimeSpan.TotalMilliseconds);
+            var res = await Db.GetCollection<SubAccount>("SubAccount").UpdateOneAsync(f => f.AccountId == accountId, update);
+            return res.MatchedCount > 0;
+        }
+
+        public async Task<bool> UpdateAccountTitleAsync(string accountId, string title)
+        {
+            var update = new UpdateDefinitionBuilder<SubAccount>().Set(f => f.Title, title).Set(f=>f.UpdateTs,DateTimeUtil.UnixTimeSpan.TotalMilliseconds);
+            var res = await Db.GetCollection<SubAccount>("SubAccount").UpdateOneAsync(f => f.AccountId == accountId, update);
+            return res.MatchedCount > 0;
+        }
+
+        public async Task<bool> UpdateAccountDescAsync(string accountId, string desc)
+        {
+            var update = new UpdateDefinitionBuilder<SubAccount>().Set(f => f.Desc, desc).Set(f=>f.UpdateTs,DateTimeUtil.UnixTimeSpan.TotalMilliseconds);
+            var res = await Db.GetCollection<SubAccount>("SubAccount").UpdateOneAsync(f => f.AccountId == accountId, update);
+            return res.MatchedCount > 0;
         }
 
         private void LoadSubscriptionAccounts()

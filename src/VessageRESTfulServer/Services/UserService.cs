@@ -163,33 +163,33 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task<bool> ChangeAvatarOfUser(ObjectId userId, string avatar)
+        public async Task<VessageUser> ChangeAvatarOfUser(ObjectId userId, string avatar)
         {
             try
             {
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Avartar, avatar);
                 var user = await collection.FindOneAndUpdateAsync(u => u.Id == userId, update);
-                return user != null;
+                return user;
             }
             catch (Exception)
             {
-                return false;
+                return null;
             }
         }
 
-        public async Task<bool> ChangeNickOfUser(ObjectId userId, string nick)
+        public async Task<VessageUser> ChangeNickOfUser(ObjectId userId, string nick)
         {
             try
             {
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Nick, nick);
                 var user = await collection.FindOneAndUpdateAsync(u => u.Id == userId, update);
-                return user != null;
+                return user;
             }
             catch (Exception)
             {
-                return false;
+                return null;
             }
         }
 
@@ -304,18 +304,17 @@ namespace VessageRESTfulServer.Services
             }
         }
 
-        public async Task<bool> ChangeMottoOfUser(ObjectId userObjectId, string motto)
+        public async Task<VessageUser> ChangeMottoOfUser(ObjectId userObjectId, string motto)
         {
             try
             {
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
                 var update = new UpdateDefinitionBuilder<VessageUser>().Set(u => u.Motto, motto);
-                var res = await collection.UpdateOneAsync(u => u.Id == userObjectId, update);
-                return res.ModifiedCount > 0;
+                return await collection.FindOneAndUpdateAsync(u => u.Id == userObjectId, update);
             }
             catch (Exception)
             {
-                return false;
+                return null;
             }
         }
 

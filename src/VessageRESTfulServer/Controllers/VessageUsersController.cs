@@ -447,9 +447,13 @@ namespace VessageRESTfulServer.Controllers
             if (string.IsNullOrWhiteSpace(nick) == false)
             {
                 var userService = Startup.ServicesProvider.GetUserService();
-                bool suc = await userService.ChangeNickOfUser(UserObjectId, nick);
-                if (suc)
+                var user = await userService.ChangeNickOfUser(UserObjectId, nick);
+                if (user != null)
                 {
+                    if (user.Type == VessageUser.TYPE_SUBSCRIPTION)
+                    {
+                        await Startup.ServicesProvider.GetSubscriptionService().UpdateAccountTitleAsync(user.AccountId,nick);
+                    }
                     return new { msg = "SUCCESS" };
                 }
                 else
@@ -471,9 +475,13 @@ namespace VessageRESTfulServer.Controllers
             if (string.IsNullOrWhiteSpace(motto) == false)
             {
                 var userService = Startup.ServicesProvider.GetUserService();
-                bool suc = await userService.ChangeMottoOfUser(UserObjectId, motto);
-                if (suc)
+                var user = await userService.ChangeMottoOfUser(UserObjectId, motto);
+                if (user != null)
                 {
+                    if (user.Type == VessageUser.TYPE_SUBSCRIPTION)
+                    {
+                        await Startup.ServicesProvider.GetSubscriptionService().UpdateAccountDescAsync(user.AccountId,motto);
+                    }
                     return new { msg = "SUCCESS" };
                 }
                 else
@@ -511,9 +519,13 @@ namespace VessageRESTfulServer.Controllers
             if (string.IsNullOrWhiteSpace(avatar) == false)
             {
                 var userService = Startup.ServicesProvider.GetUserService();
-                bool suc = await userService.ChangeAvatarOfUser(UserObjectId, avatar);
-                if (suc)
+                var user = await userService.ChangeAvatarOfUser(UserObjectId, avatar);
+                if (user != null)
                 {
+                    if (user.Type == VessageUser.TYPE_SUBSCRIPTION)
+                    {
+                        await Startup.ServicesProvider.GetSubscriptionService().UpdateAccountAvatarAsync(user.AccountId,avatar);
+                    }
                     return new { msg = "SUCCESS" };
                 }
                 else
