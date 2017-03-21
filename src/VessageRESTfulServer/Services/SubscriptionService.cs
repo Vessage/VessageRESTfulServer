@@ -71,21 +71,21 @@ namespace VessageRESTfulServer.Services
 
         public async Task<bool> UpdateAccountAvatarAsync(string accountId, string avatar)
         {
-            var update = new UpdateDefinitionBuilder<SubAccount>().Set(f => f.Avatar, avatar).Set(f=>f.UpdateTs,DateTimeUtil.UnixTimeSpan.TotalMilliseconds);
+            var update = new UpdateDefinitionBuilder<SubAccount>().Set(f => f.Avatar, avatar).Set(f=>f.UpdateTs,(long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds);
             var res = await Db.GetCollection<SubAccount>("SubAccount").UpdateOneAsync(f => f.AccountId == accountId, update);
             return res.MatchedCount > 0;
         }
 
         public async Task<bool> UpdateAccountTitleAsync(string accountId, string title)
         {
-            var update = new UpdateDefinitionBuilder<SubAccount>().Set(f => f.Title, title).Set(f=>f.UpdateTs,DateTimeUtil.UnixTimeSpan.TotalMilliseconds);
+            var update = new UpdateDefinitionBuilder<SubAccount>().Set(f => f.Title, title).Set(f=>f.UpdateTs,(long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds);
             var res = await Db.GetCollection<SubAccount>("SubAccount").UpdateOneAsync(f => f.AccountId == accountId, update);
             return res.MatchedCount > 0;
         }
 
         public async Task<bool> UpdateAccountDescAsync(string accountId, string desc)
         {
-            var update = new UpdateDefinitionBuilder<SubAccount>().Set(f => f.Desc, desc).Set(f=>f.UpdateTs,DateTimeUtil.UnixTimeSpan.TotalMilliseconds);
+            var update = new UpdateDefinitionBuilder<SubAccount>().Set(f => f.Desc, desc).Set(f=>f.UpdateTs,(long)DateTimeUtil.UnixTimeSpan.TotalMilliseconds);
             var res = await Db.GetCollection<SubAccount>("SubAccount").UpdateOneAsync(f => f.AccountId == accountId, update);
             return res.MatchedCount > 0;
         }
