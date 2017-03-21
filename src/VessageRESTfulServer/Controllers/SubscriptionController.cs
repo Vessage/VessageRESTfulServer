@@ -33,7 +33,8 @@ namespace VessageRESTfulServer.Controllers
             {
                 id = d.UserId,
                 title = d.Title,
-                desc = d.Desc
+                desc = d.Desc,
+                avatar = d.Avatar
             };
         }
     }
