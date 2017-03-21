@@ -20,6 +20,9 @@ namespace VessageRESTfulServer.Services
         public const int STATE_BLACK = -999;
         public const int STATE_OFFLINE = -1;
         public const int STATE_NORMAL = 0;
+
+        public const int PRIORITY_TOP = 0;
+
         public ObjectId Id { get; set; }
         public string AccountId { get; set; }
         public string UserId { get; set; }
@@ -27,7 +30,7 @@ namespace VessageRESTfulServer.Services
         public string Desc { get; set; }
         public int State { get; set; }
         public string Avatar { get; set; }
-
+        public int Priority { get; set; }
         public long UpdateTs { get; set; }
     }
 
@@ -92,7 +95,7 @@ namespace VessageRESTfulServer.Services
 
         private void LoadSubscriptionAccounts()
         {
-            var accounts = Db.GetCollection<SubAccount>("SubAccount").Find(f => f.State >= 0 && f.UpdateTs > updateAccountTs).ToList();
+            var accounts = Db.GetCollection<SubAccount>("SubAccount").Find(f => f.State >= 0 && f.UpdateTs > updateAccountTs).SortBy(p=>p.Priority).ToList();
             foreach (var ac in accounts)
             {
                 _subscriptionAccounts[ac.UserId] = ac;
