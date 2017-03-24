@@ -100,13 +100,16 @@ namespace VessageRESTfulServer.Controllers
             var userOId = UserObjectId;
             var userId = UserSessionData.UserId;
 
-            if (await SubscriptionVessageAsync(userOId, receiverId))
+            if (AppServiceProvider.GetSubscriptionService().GetSubscriptionAccount(receiverId) != null && typeId == Vessage.TYPE_FACE_TEXT && body != null)
             {
-                return new
+                if ((body.Contains("\"订阅\"") || body.ToLower().Contains("\"dy\"")) && await SubscriptionVessageAsync(userOId, receiverId))
                 {
-                    vessageBoxId = receiverId,
-                    vessageId = receiverId
-                };
+                    return new
+                    {
+                        vessageBoxId = receiverId,
+                        vessageId = receiverId
+                    };
+                }
             }
 
             Vessage vessage = null;
