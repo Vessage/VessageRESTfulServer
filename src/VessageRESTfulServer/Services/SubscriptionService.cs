@@ -120,7 +120,7 @@ namespace VessageRESTfulServer.Services
 
         public IEnumerable<SubAccount> GetSubscriptionAccounts()
         {
-            return _subscriptionAccounts.Values;
+            return from a in _subscriptionAccounts.Values where a.State >= 0 select a;
         }
 
         public IEnumerable<Vessage> GetSubscriptedVessages(SubAccount subAccount)
