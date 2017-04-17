@@ -40,30 +40,34 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var focusdUserId = new ObjectId(userId);
             var linked = await col.UpdateOneAsync(f => f.FocusedUserId == UserObjectId && f.UserId == focusdUserId, new UpdateDefinitionBuilder<AISNSFocus>().Set(p => p.Linked, true).Set(p => p.UpdatedTime, DateTime.UtcNow));
 
+            var now = DateTime.UtcNow;
             var update = new UpdateDefinitionBuilder<AISNSFocus>()
-            .Set(p => p.UpdatedTime, DateTime.UtcNow)
+            .Set(p => p.UpdatedTime, now)
             .Set(p => p.FocusedNoteName, noteName)
             .Set(p => p.FocusedUserId, focusdUserId)
             .Set(p => p.Linked, linked.MatchedCount > 0);
 
-            var r = await col.UpdateOneAsync(f => f.UserId == UserObjectId, update);
-            if (r.MatchedCount == 0)
+            var r = await col.FindOneAndUpdateAsync(f => f.UserId == UserObjectId, update);
+            if (r == null)
             {
-                col.InsertOne(new AISNSFocus
+                r = new AISNSFocus
                 {
                     UserId = UserObjectId,
                     FocusedNoteName = noteName,
                     FocusedUserId = focusdUserId,
-                    UpdatedTime = DateTime.UtcNow,
-                    CreatedTime = DateTime.UtcNow,
+                    UpdatedTime = now,
+                    CreatedTime = now,
                     Linked = linked.MatchedCount > 0
-                });
+                };
+                col.InsertOne(r);
             }
 
             return new
             {
-                code = 200,
-                msg = "SUCCESS"
+                usrId = r.FocusedUserId.ToString(),
+                name = r.FocusedNoteName,
+                linked = r.Linked,
+                uts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(r.UpdatedTime)
             };
         }
 
@@ -77,7 +81,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
                    {
                        usrId = f.FocusedUserId.ToString(),
                        name = f.FocusedNoteName,
-                       linked = f.Linked
+                       linked = f.Linked,
+                       uts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(f.UpdatedTime)
                    };
         }
 
