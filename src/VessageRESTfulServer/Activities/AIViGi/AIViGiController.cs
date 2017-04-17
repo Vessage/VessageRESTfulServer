@@ -25,7 +25,18 @@ namespace VessageRESTfulServer.Activities.AIViGi
         [HttpGet("AIProfile")]
         public async Task<object> GetUserSettingInfoAsync()
         {
-            var user = await AiViGiDb.GetCollection<AIViGiProfile>("AIViGiProfile").Find(f => f.UserId == UserObjectId).FirstOrDefaultAsync();
+            var col = AiViGiDb.GetCollection<AIViGiProfile>("AIViGiProfile");
+            var user = await col.Find(f => f.UserId == UserObjectId).FirstOrDefaultAsync();
+            if (user == null)
+            {
+                user = new AIViGiProfile
+                {
+                    CreatedTime = DateTime.UtcNow,
+                    UpdatedTime = DateTime.UtcNow,
+                    UserId = UserObjectId
+                };
+                await col.InsertOneAsync(user);
+            }
             return new
             {
                 id = user.Id.ToString(),
@@ -37,7 +48,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public async Task<object> UpdateMasterNameAsync(string newName)
         {
             var update = new UpdateDefinitionBuilder<AIViGiProfile>().Set(p => p.MasterName, newName).Set(p => p.UpdatedTime, DateTime.UtcNow);
-            var res = await AiViGiDb.GetCollection<AIViGiProfile>("AIViGiProfile").UpdateOneAsync(f => f.UserId == UserObjectId, update);
+            var col = AiViGiDb.GetCollection<AIViGiProfile>("AIViGiProfile");
+            var res = await col.UpdateOneAsync(f => f.UserId == UserObjectId, update);
             if (res.MatchedCount > 0)
             {
                 return new
