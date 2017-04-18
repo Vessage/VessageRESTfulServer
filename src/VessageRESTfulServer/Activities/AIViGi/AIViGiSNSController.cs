@@ -119,6 +119,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
                 pid = post.Id.ToString(),
                 usrId = post.UserId.ToString(),
                 body = post.Body,
+                bdt = post.BodyType,
                 t = post.Type,
                 st = post.State,
                 cts = DateTimeUtil.UnixTimeSpanOfDateTime(post.CreatedTime).TotalMilliseconds,
@@ -152,12 +153,13 @@ namespace VessageRESTfulServer.Activities.AIViGi
         }
 
         [HttpPost("NewPost")]
-        public async Task PostNewAsync(string body)
+        public async Task PostNewAsync(string body,int bodyType = AISNSPost.BODY_TYPE_TEXT)
         {
             var post = new AISNSPost
             {
                 UserId = UserObjectId,
                 Body = body,
+                BodyType = bodyType,
                 CreatedTime = DateTime.UtcNow,
                 UpdatedTime = DateTime.UtcNow,
                 Type = AISNSPost.TYPE_NORMAL,

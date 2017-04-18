@@ -1,5 +1,4 @@
 using MongoDB.Bson;
-using MongoDB.Driver.GeoJsonObjectModel;
 using System;
 
 namespace VessageRESTfulServer.Activities.AIViGi
@@ -37,10 +36,15 @@ namespace VessageRESTfulServer.Activities.AIViGi
 
         public const int TYPE_NORMAL = 0;
 
+        public const int BODY_TYPE_TEXT = 0;
+        public const int BODY_TYPE_JSON = 1;
+
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
 
         public string Body { get; set; }
+
+        public int BodyType { get; set; }
 
         public int State { get; set; }
 
