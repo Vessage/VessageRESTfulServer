@@ -15,15 +15,6 @@ namespace VessageRESTfulServer.Activities.AIViGi
     [Route("api/[controller]")]
     public partial class AIViGiSNSController : APIControllerBase
     {
-        private IMongoDatabase AiViGiDb
-        {
-            get
-            {
-                var client = AppServiceProvider.GetSharedService().GetMongoDBClient();
-                return client.GetDatabase("AIViGi");
-            }
-        }
-
         private IMongoDatabase AiViGiSNSDb
         {
             get

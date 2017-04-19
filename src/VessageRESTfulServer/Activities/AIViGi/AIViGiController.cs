@@ -22,6 +22,15 @@ namespace VessageRESTfulServer.Activities.AIViGi
             }
         }
 
+        private IMongoDatabase AiViGiSNSDb
+        {
+            get
+            {
+                var client = AppServiceProvider.GetSharedService().GetMongoDBClient();
+                return client.GetDatabase("AIViGiSNS");
+            }
+        }
+
         [HttpGet("AIProfile")]
         public async Task<object> GetUserSettingInfoAsync()
         {
@@ -36,6 +45,18 @@ namespace VessageRESTfulServer.Activities.AIViGi
                     UserId = UserObjectId
                 };
                 await col.InsertOneAsync(user);
+
+                var firstPost = new AISNSPost
+                {
+                    UserId = UserObjectId,
+                    Body = "我今天开始使用语音助手ViGi，这是我让ViGi发布的第一条动态。",
+                    BodyType = AISNSPost.BODY_TYPE_TEXT,
+                    State = AISNSPost.STATE_NORMAL,
+                    Type = AISNSPost.TYPE_NORMAL,
+                    CreatedTime = DateTime.UtcNow,
+                    UpdatedTime = DateTime.UtcNow
+                };
+                await AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost").InsertOneAsync(firstPost);
             }
             return new
             {
