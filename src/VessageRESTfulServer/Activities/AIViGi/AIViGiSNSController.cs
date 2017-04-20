@@ -94,7 +94,6 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var f1 = new FilterDefinitionBuilder<AISNSFocus>().Eq(f => f.UserId, UserObjectId);
             var f2 = new FilterDefinitionBuilder<AISNSFocus>().In(f => f.FocusedUserId, userIdArr);
             var focusedUserIdArr = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").Find(f1 & f2).Project(p => p.FocusedUserId).ToListAsync();
-
             var containFilter = new FilterDefinitionBuilder<AISNSPost>().In(f => f.UserId, focusedUserIdArr);
             var stateFilter = new FilterDefinitionBuilder<AISNSPost>().Eq(f => f.State, AISNSPost.STATE_NORMAL);
             var dateFilter = new FilterDefinitionBuilder<AISNSPost>().Gte(f => f.CreatedTime, DateTime.UtcNow.AddDays(-14));
@@ -144,7 +143,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         }
 
         [HttpPost("NewPost")]
-        public async Task PostNewAsync(string body,int bodyType = AISNSPost.BODY_TYPE_TEXT)
+        public async Task PostNewAsync(string body, int bodyType = AISNSPost.BODY_TYPE_TEXT)
         {
             var post = new AISNSPost
             {
@@ -161,6 +160,18 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var update = new UpdateDefinitionBuilder<AISNSFocus>().Set(f => f.LastPostDate, DateTime.UtcNow);
             var res = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").UpdateManyAsync(f => f.FocusedUserId == UserObjectId, update);
             await col.InsertOneAsync(post);
+        }
+
+        [HttpDelete("RemovePost")]
+        public async Task<object> RemovePostAsync(string postId)
+        {
+            var update = new UpdateDefinitionBuilder<AISNSPost>().Set(f => f.State, AISNSPost.STATE_REMOVED).Set(f => f.UpdatedTime, DateTime.UtcNow);
+            var res = await AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost").UpdateOneAsync(f => f.Id == new ObjectId(postId), update);
+            return new
+            {
+                code = res.MatchedCount > 0 ? 200 : 400,
+                msg = res.MatchedCount > 0 ? "SUCCESS" : "NOT_FOUND"
+            };
         }
     }
 }
