@@ -94,11 +94,12 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var f1 = new FilterDefinitionBuilder<AISNSFocus>().Eq(f => f.UserId, UserObjectId);
             var f2 = new FilterDefinitionBuilder<AISNSFocus>().In(f => f.FocusedUserId, userIdArr);
             var focusedUserIdArr = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").Find(f1 & f2).Project(p => p.FocusedUserId).ToListAsync();
+
             var containFilter = new FilterDefinitionBuilder<AISNSPost>().In(f => f.UserId, focusedUserIdArr);
             var stateFilter = new FilterDefinitionBuilder<AISNSPost>().Eq(f => f.State, AISNSPost.STATE_NORMAL);
             var dateFilter = new FilterDefinitionBuilder<AISNSPost>().Gte(f => f.CreatedTime, DateTime.UtcNow.AddDays(-14));
             var filter = stateFilter & dateFilter & containFilter;
-            var posts = await col.Find(filter).ToListAsync();
+            var posts = await col.Find(filter).SortByDescending(f => f.UpdatedTime).ToListAsync();
             return from p in posts select PostToJsonObject(p);
         }
 
@@ -126,7 +127,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var stateFilter = new FilterDefinitionBuilder<AISNSPost>().Eq(f => f.State, AISNSPost.STATE_NORMAL);
             var dateFilter = new FilterDefinitionBuilder<AISNSPost>().Gte(f => f.CreatedTime, DateTime.UtcNow.AddDays(-14));
             var filter = stateFilter & dateFilter & containFilter;
-            var posts = await col.Find(filter).ToListAsync();
+            var posts = await col.Find(filter).SortByDescending(f => f.UpdatedTime).ToListAsync();
             return from p in posts select PostToJsonObject(p);
         }
 
@@ -136,8 +137,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var col = AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost");
             var limitDate = DateTime.UtcNow.AddDays(-14);
             var focusedUserIdNames = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus")
-            .Find(f => f.UserId == UserObjectId && f.LastPostDate > limitDate)
-            .Project(p => new { id = p.FocusedUserId, name = p.FocusedNoteName })
+            .Find(f => f.UserId == UserObjectId && f.LastPostDate > limitDate).SortByDescending(f => f.LastPostDate)
+            .Project(p => new { id = p.FocusedUserId.ToString(), name = p.FocusedNoteName })
             .ToListAsync();
             return focusedUserIdNames;
         }
