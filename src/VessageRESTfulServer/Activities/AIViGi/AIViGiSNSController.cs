@@ -117,7 +117,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
             }
 
             var containFilter = new FilterDefinitionBuilder<AISNSPost>().In(f => f.UserId, focusedUserIdArr);
-            var stateFilter = new FilterDefinitionBuilder<AISNSPost>().Eq(f => f.State, AISNSPost.STATE_NORMAL);
+            var stateFilter = new FilterDefinitionBuilder<AISNSPost>().Gte(f => f.State, AISNSPost.STATE_NORMAL);
             var dateFilter = new FilterDefinitionBuilder<AISNSPost>().Gte(f => f.CreatedTime, DateTime.UtcNow.AddDays(-14));
             var filter = stateFilter & dateFilter & containFilter;
             var posts = await col.Find(filter).SortByDescending(f => f.UpdatedTime).ToListAsync();
