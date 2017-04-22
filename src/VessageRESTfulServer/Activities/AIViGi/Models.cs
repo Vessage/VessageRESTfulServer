@@ -5,6 +5,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
 {
     class AISNSFocus
     {
+        public const int STATE_CANCELED = -1;
+        public const int STATE_NORMAL = 0;
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
         public ObjectId FocusedUserId { get; set; }
@@ -17,6 +19,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public DateTime CreatedTime { get; set; }
         public DateTime UpdatedTime { get; set; }
 
+        public int State { get; set; }
     }
 
     class AIViGiProfile
@@ -30,7 +33,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
 
     class AISNSPost
     {
-        public const int STATE_DELETED = -2;
+        public const int STATE_OBJECTION_REVIEWING = -2;
+        public const int STATE_DELETED = -999;
         public const int STATE_REMOVED = -1;
         public const int STATE_NORMAL = 0;
 
@@ -52,5 +56,17 @@ namespace VessageRESTfulServer.Activities.AIViGi
 
         public DateTime CreatedTime { get; set; }
         public DateTime UpdatedTime { get; set; }
+
+        public int ObjectionTimes { get; set; }
+    }
+
+    class AISNSPostObjection
+    {
+        public ObjectId Id { get; set; }
+        public ObjectId PostId { get; set; }
+        public string ObjectionNote { get; set; }
+        public ObjectId ObjectionUserId { get; set; }
+
+        public DateTime CreatedTime { get; set; }
     }
 }

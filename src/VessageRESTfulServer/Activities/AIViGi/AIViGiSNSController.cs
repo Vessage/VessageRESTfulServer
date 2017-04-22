@@ -44,7 +44,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
             .Set(p => p.UpdatedTime, now)
             .Set(p => p.FocusedNoteName, noteName)
             .Set(p => p.FocusedUserId, focusdUserId)
-            .Set(p => p.Linked, isLinked);
+            .Set(p => p.Linked, isLinked)
+            .Set(P => P.State, AISNSFocus.STATE_NORMAL);
 
             var r = await col.UpdateOneAsync(f => f.UserId == UserObjectId, update);
             if (r.MatchedCount == 0)
@@ -56,7 +57,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
                     FocusedUserId = focusdUserId,
                     UpdatedTime = now,
                     CreatedTime = now,
-                    Linked = isLinked
+                    Linked = isLinked,
+                    State = AISNSFocus.STATE_NORMAL
                 };
                 await col.InsertOneAsync(newFocus);
             }
@@ -70,11 +72,24 @@ namespace VessageRESTfulServer.Activities.AIViGi
             };
         }
 
+        [HttpPut("UnfocusUser")]
+        public async Task<object> UnfocusUserAsync(string userId)
+        {
+            var col = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
+            var update = new UpdateDefinitionBuilder<AISNSFocus>().Set(p => p.State, AISNSFocus.STATE_CANCELED);
+            var res = await col.UpdateOneAsync(f => f.UserId == UserObjectId && f.FocusedUserId == new ObjectId(userId), update);
+            return new
+            {
+                code = res.MatchedCount > 0 ? 200 : 400,
+                msg = res.MatchedCount > 0 ? "SUCCESS" : "NOT_FOUND"
+            };
+        }
+
         [HttpGet("FocusedUsers")]
         public async Task<IEnumerable<object>> GetFocusedUsersAsync()
         {
             var col = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
-            var list = await col.Find(f => f.UserId == UserObjectId).ToListAsync();
+            var list = await col.Find(f => f.UserId == UserObjectId && f.State >= 0).ToListAsync();
             return from f in list
                    select new
                    {
@@ -92,8 +107,9 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var col = AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost");
 
             var f1 = new FilterDefinitionBuilder<AISNSFocus>().Eq(f => f.UserId, UserObjectId);
-            var f2 = new FilterDefinitionBuilder<AISNSFocus>().In(f => f.FocusedUserId, userIdArr);
-            var focusedUserIdArr = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").Find(f1 & f2).Project(p => p.FocusedUserId).ToListAsync();
+            var f2 = new FilterDefinitionBuilder<AISNSFocus>().Gte(f => f.State, 0);
+            var f3 = new FilterDefinitionBuilder<AISNSFocus>().In(f => f.FocusedUserId, userIdArr);
+            var focusedUserIdArr = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").Find(f1 & f2 & f3).Project(p => p.FocusedUserId).ToListAsync();
 
             if (userIdArr.Contains(UserObjectId))
             {
@@ -142,7 +158,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var col = AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost");
             var limitDate = DateTime.UtcNow.AddDays(-14);
             var focusedUserIdNames = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus")
-            .Find(f => f.UserId == UserObjectId && f.LastPostDate > limitDate).SortByDescending(f => f.LastPostDate)
+            .Find(f => f.UserId == UserObjectId && f.State >= 0 && f.LastPostDate > limitDate).SortByDescending(f => f.LastPostDate)
             .Project(p => new { id = p.FocusedUserId.ToString(), name = p.FocusedNoteName })
             .ToListAsync();
             return focusedUserIdNames;
@@ -168,11 +184,36 @@ namespace VessageRESTfulServer.Activities.AIViGi
             await col.InsertOneAsync(post);
         }
 
+        [HttpPut("ObjectionPost")]
+        public async Task<object> ObjectionPostAsync(string postId, string msg = null)
+        {
+            var update = new UpdateDefinitionBuilder<AISNSPost>()
+            .Set(f => f.State, AISNSPost.STATE_OBJECTION_REVIEWING)
+            .Inc(f => f.ObjectionTimes, 1);
+            var postOId = new ObjectId(postId);
+            var res = await AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost").UpdateOneAsync(f => f.Id == postOId && f.State != AISNSPost.STATE_DELETED, update);
+            if (res.ModifiedCount > 0)
+            {
+                await AiViGiSNSDb.GetCollection<AISNSPostObjection>("AISNSPostObjection").InsertOneAsync(new AISNSPostObjection
+                {
+                    PostId = postOId,
+                    ObjectionNote = msg,
+                    ObjectionUserId = UserObjectId,
+                    CreatedTime = DateTime.UtcNow
+                });
+            }
+            return new
+            {
+                code = res.MatchedCount > 0 ? 200 : 400,
+                msg = res.MatchedCount > 0 ? "SUCCESS" : "NOT_FOUND"
+            };
+        }
+
         [HttpDelete("RemovePost")]
         public async Task<object> RemovePostAsync(string postId)
         {
             var update = new UpdateDefinitionBuilder<AISNSPost>().Set(f => f.State, AISNSPost.STATE_REMOVED).Set(f => f.UpdatedTime, DateTime.UtcNow);
-            var res = await AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost").UpdateOneAsync(f => f.Id == new ObjectId(postId), update);
+            var res = await AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost").UpdateOneAsync(f => f.Id == new ObjectId(postId) && f.UserId == UserObjectId, update);
             return new
             {
                 code = res.MatchedCount > 0 ? 200 : 400,
