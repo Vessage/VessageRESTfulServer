@@ -33,7 +33,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
 
     class AISNSPost
     {
-        public const int STATE_OBJECTION_REVIEWING = -2;
+        public const int STATE_OBJECTION_REVIEWING = 999;
         public const int STATE_DELETED = -999;
         public const int STATE_REMOVED = -1;
         public const int STATE_NORMAL = 0;
