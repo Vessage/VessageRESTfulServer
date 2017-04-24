@@ -28,6 +28,12 @@ namespace VessageRESTfulServer.Activities.AIViGi
         [HttpPost("FocusUser")]
         public async Task<object> FocusNewUserAsync(string userId, string noteName)
         {
+            if (string.IsNullOrWhiteSpace(noteName))
+            {
+                Response.StatusCode = 417;
+                return null;
+            }
+
             var col = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
             var focusdUserId = new ObjectId(userId);
 
@@ -82,7 +88,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var res = await col.UpdateOneAsync(f => f.UserId == UserObjectId && f.FocusedUserId == new ObjectId(userId), update);
             return new
             {
-                code = res.MatchedCount > 0 ? 200 : 400,
+                code = res.MatchedCount > 0 ? 200 : 404,
                 msg = res.MatchedCount > 0 ? "SUCCESS" : "NOT_FOUND"
             };
         }
@@ -212,7 +218,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
             }
             return new
             {
-                code = res.MatchedCount > 0 ? 200 : 400,
+                code = res.MatchedCount > 0 ? 200 : 404,
                 msg = res.MatchedCount > 0 ? "SUCCESS" : "NOT_FOUND"
             };
         }
@@ -224,7 +230,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var res = await AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost").UpdateOneAsync(f => f.Id == new ObjectId(postId) && f.UserId == UserObjectId, update);
             return new
             {
-                code = res.MatchedCount > 0 ? 200 : 400,
+                code = res.MatchedCount > 0 ? 200 : 404,
                 msg = res.MatchedCount > 0 ? "SUCCESS" : "NOT_FOUND"
             };
         }
