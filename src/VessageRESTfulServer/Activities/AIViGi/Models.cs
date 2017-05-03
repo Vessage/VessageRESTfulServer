@@ -9,6 +9,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public const int STATE_NORMAL = 0;
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
+        public string UserNick { get; set; }
+        public string UserAccount { get; set; }
         public ObjectId FocusedUserId { get; set; }
         public string FocusedNoteName { get; set; }
 

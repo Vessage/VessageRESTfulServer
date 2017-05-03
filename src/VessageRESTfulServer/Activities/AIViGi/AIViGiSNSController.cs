@@ -36,14 +36,15 @@ namespace VessageRESTfulServer.Activities.AIViGi
 
             var col = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
             var focusdUserId = new ObjectId(userId);
-
+            var userOId = UserObjectId;
+            var userAccount = UserSessionData.AccountId;
             var now = DateTime.UtcNow;
 
             var updateLinked = new UpdateDefinitionBuilder<AISNSFocus>()
             .Set(p => p.Linked, true)
             .Set(p => p.UpdatedTime, now);
 
-            var linked = await col.UpdateOneAsync(f => f.FocusedUserId == UserObjectId && f.UserId == focusdUserId, updateLinked);
+            var linked = await col.UpdateOneAsync(f => f.FocusedUserId == userOId && f.UserId == focusdUserId, updateLinked);
 
             var isLinked = linked.MatchedCount > 0;
 
@@ -54,19 +55,22 @@ namespace VessageRESTfulServer.Activities.AIViGi
             .Set(p => p.Linked, isLinked)
             .Set(P => P.State, AISNSFocus.STATE_NORMAL);
 
-            var r = await col.UpdateOneAsync(f => f.UserId == UserObjectId && f.FocusedUserId == focusdUserId, update);
+            var r = await col.UpdateOneAsync(f => f.UserId == userOId && f.FocusedUserId == focusdUserId, update);
             if (r.MatchedCount == 0)
             {
+                var nick = await AppServiceProvider.GetUserService().GetUserNickOfUserId(userOId);
                 var newFocus = new AISNSFocus
                 {
-                    UserId = UserObjectId,
+                    UserId = userOId,
+                    UserAccount = userAccount,
+                    UserNick = string.IsNullOrWhiteSpace(nick) ? userAccount : nick,
                     FocusedNoteName = noteName,
                     FocusedUserId = focusdUserId,
                     UpdatedTime = now,
                     CreatedTime = now,
                     Linked = isLinked,
                     State = AISNSFocus.STATE_NORMAL,
-                    LastPostDate = DateTime.UtcNow
+                    LastPostDate = now
                 };
                 await col.InsertOneAsync(newFocus);
             }
@@ -97,15 +101,28 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public async Task<IEnumerable<object>> GetFocusedUsersAsync()
         {
             var col = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
-            var list = await col.Find(f => f.UserId == UserObjectId && f.State >= 0).ToListAsync();
-            return from f in list
-                   select new
-                   {
-                       usrId = f.FocusedUserId.ToString(),
-                       name = f.FocusedNoteName,
-                       linked = f.Linked,
-                       uts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(f.UpdatedTime)
-                   };
+            var list = await col.Find(f => f.UserId == UserObjectId && f.State >= 0).Project(f => new
+            {
+                usrId = f.FocusedUserId.ToString(),
+                name = f.FocusedNoteName,
+                linked = f.Linked,
+                uts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(f.UpdatedTime)
+            }).ToListAsync();
+            return list;
+        }
+
+        [HttpGet("FocusMeUsers")]
+        public async Task<IEnumerable<object>> GetFocusMeUsersAsync()
+        {
+            var col = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
+            var list = await col.Find(f => f.FocusedUserId == UserObjectId && f.State >= 0).Project(f => new
+            {
+                usrId = f.UserId.ToString(),
+                name = f.UserNick,
+                linked = f.Linked,
+                uts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(f.UpdatedTime)
+            }).ToListAsync();
+            return list;
         }
 
         [HttpGet("UsersPosts")]
@@ -118,7 +135,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var f2 = new FilterDefinitionBuilder<AISNSFocus>().Gte(f => f.State, 0);
             var f3 = new FilterDefinitionBuilder<AISNSFocus>().In(f => f.FocusedUserId, userIdArr);
             var focusedUserIdArr = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").Find(f1 & f2 & f3).Project(p => p.FocusedUserId).ToListAsync();
-            
+
             var limitDate = DateTime.UtcNow.AddDays(CHECK_POST_LIMIT_DAYS);
             if (userIdArr.Contains(UserObjectId))
             {
@@ -171,7 +188,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var col = AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost");
             var limitDate = DateTime.UtcNow.AddDays(CHECK_POST_LIMIT_DAYS);
             var focusedUserIdNames = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus")
-            .Find(f => f.UserId == UserObjectId && f.State >= 0 && f.LastPostDate >= limitDate )
+            .Find(f => f.UserId == UserObjectId && f.State >= 0 && f.LastPostDate >= limitDate)
             .SortByDescending(f => f.LastPostDate)
             .Project(p => new { id = p.FocusedUserId.ToString(), name = p.FocusedNoteName })
             .ToListAsync();
