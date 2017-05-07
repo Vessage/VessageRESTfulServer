@@ -38,7 +38,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         };
 
         private static AISNSPost[] DefaultPosts = {
-            new AISNSPost{ Body = "我今天开始使用语音助手ViGi，这是我让ViGi发布的第一条动态。",BodyType = AISNSPost.BODY_TYPE_TEXT }
+            new AISNSPost{ Body = "这是为新用户自动发布的一条动态，欢迎使用ViGi。ps:你可以左划删除这条动态。",BodyType = AISNSPost.BODY_TYPE_TEXT }
         };
 
         [HttpGet("AIProfile")]
