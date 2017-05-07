@@ -32,6 +32,15 @@ namespace VessageRESTfulServer.Activities.AIViGi
             }
         }
 
+        private static AISNSFocus[] DefaultFocusProfiles = {
+            new AISNSFocus{ FocusedNoteName = "语音助手公告",FocusedUserId = new ObjectId("589576a736c14122b8b8f3b8") },
+            new AISNSFocus{ FocusedNoteName = "账号推荐",FocusedUserId = new ObjectId("590f352f0d7d036859bf0e82") }
+        };
+
+        private static AISNSPost[] DefaultPosts = {
+            new AISNSPost{ Body = "我今天开始使用语音助手ViGi，这是我让ViGi发布的第一条动态。",BodyType = AISNSPost.BODY_TYPE_TEXT }
+        };
+
         [HttpGet("AIProfile")]
         public async Task<object> GetUserSettingInfoAsync()
         {
@@ -50,35 +59,36 @@ namespace VessageRESTfulServer.Activities.AIViGi
                 };
                 await col.InsertOneAsync(user);
 
-                var firstPost = new AISNSPost
-                {
-                    UserId = userOId,
-                    Body = "我今天开始使用语音助手ViGi，这是我让ViGi发布的第一条动态。",
-                    BodyType = AISNSPost.BODY_TYPE_TEXT,
-                    State = AISNSPost.STATE_NORMAL,
-                    Type = AISNSPost.TYPE_NORMAL,
-                    CreatedTime = now,
-                    UpdatedTime = now
-                };
-                await AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost").InsertOneAsync(firstPost);
+                var posts = from p in DefaultPosts
+                            select new AISNSPost
+                            {
+                                UserId = userOId,
+                                Body = p.Body,
+                                BodyType = p.BodyType,
+                                State = AISNSPost.STATE_NORMAL,
+                                Type = AISNSPost.TYPE_NORMAL,
+                                CreatedTime = now,
+                                UpdatedTime = now
+                            };
+                await AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost").InsertManyAsync(posts);
 
                 var userAccount = UserSessionData.AccountId;
 
-                var newFocus = new AISNSFocus
-                {
-                    UserId = userOId,
-                    UserAccount = userAccount,
-                    UserNick = userAccount,
-                    FocusedNoteName = "语音助手公告",
-                    FocusedUserId = new ObjectId("589576a736c14122b8b8f3b8"),
-                    UpdatedTime = now,
-                    CreatedTime = now,
-                    Linked = false,
-                    State = AISNSFocus.STATE_NORMAL,
-                    LastPostDate = now
-                };
-
-                await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").InsertOneAsync(newFocus);
+                var focus = from f in DefaultFocusProfiles
+                            select new AISNSFocus
+                            {
+                                UserId = userOId,
+                                UserAccount = userAccount,
+                                UserNick = userAccount,
+                                FocusedNoteName = f.FocusedNoteName,
+                                FocusedUserId = f.FocusedUserId,
+                                UpdatedTime = now,
+                                CreatedTime = now,
+                                Linked = false,
+                                State = AISNSFocus.STATE_NORMAL,
+                                LastPostDate = now
+                            };
+                await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").InsertManyAsync(focus);
             }
 
             return new
