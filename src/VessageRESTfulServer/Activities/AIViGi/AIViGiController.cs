@@ -49,12 +49,14 @@ namespace VessageRESTfulServer.Activities.AIViGi
             if (user == null)
             {
                 var userOId = UserObjectId;
+                var userAccount = UserSessionData.AccountId;
                 var now = DateTime.UtcNow;
 
                 user = new AIViGiProfile
                 {
                     CreatedTime = now,
                     UpdatedTime = now,
+                    AccountId = userAccount,
                     UserId = userOId
                 };
                 await col.InsertOneAsync(user);
@@ -72,7 +74,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
                             };
                 await AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost").InsertManyAsync(posts);
 
-                var userAccount = UserSessionData.AccountId;
+
 
                 var focus = from f in DefaultFocusProfiles
                             select new AISNSFocus

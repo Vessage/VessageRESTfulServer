@@ -27,6 +27,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
     class AIViGiProfile
     {
         public ObjectId Id { get; set; }
+        public string AccountId { get; set; }
         public ObjectId UserId { get; set; }
         public string MasterName { get; set; }
         public DateTime CreatedTime { get; set; }
