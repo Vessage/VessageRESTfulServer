@@ -8,6 +8,8 @@ using MongoDB.Driver;
 using MongoDB.Bson;
 using VessageRESTfulServer.Services;
 using VessageRESTfulServer.Controllers;
+using BahamutService.Service;
+using Newtonsoft.Json;
 
 namespace VessageRESTfulServer.Activities.AIViGi
 {
@@ -73,6 +75,22 @@ namespace VessageRESTfulServer.Activities.AIViGi
                     LastPostDate = now
                 };
                 await col.InsertOneAsync(newFocus);
+                var format = isLinked ? "{0}关注了你，你可以用语音查看谁关注了你。" : "{0}关注了你，现在你们互相关注了对方。";
+                var msg = String.Format(format, nick);
+                var notification = new BahamutPublishModel
+                {
+                    NotifyInfo = JsonConvert.SerializeObject(new
+                    {
+                        BuilderId = 0,
+                        AfterOpen = "go_custom",
+                        Custom = "ViGiAddFocus",
+                        Text = UserSessionData.UserId,
+                        LocKey = msg,
+                    }, Formatting.None),
+                    NotifyType = "ViGiAddFocus",
+                    ToUser = userId
+                };
+                AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notification);
             }
 
             return new
