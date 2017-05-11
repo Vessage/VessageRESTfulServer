@@ -217,9 +217,10 @@ namespace VessageRESTfulServer.Activities.AIViGi
         [HttpPost("NewPost")]
         public async Task PostNewAsync(string body, int bodyType = AISNSPost.BODY_TYPE_TEXT)
         {
+            var userOId = UserObjectId;
             var post = new AISNSPost
             {
-                UserId = UserObjectId,
+                UserId = userOId,
                 Body = body,
                 BodyType = bodyType,
                 CreatedTime = DateTime.UtcNow,
@@ -228,10 +229,35 @@ namespace VessageRESTfulServer.Activities.AIViGi
                 State = AISNSPost.STATE_NORMAL
             };
             var col = AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost");
-
             var update = new UpdateDefinitionBuilder<AISNSFocus>().Set(f => f.LastPostDate, DateTime.UtcNow);
-            var res = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").UpdateManyAsync(f => f.FocusedUserId == UserObjectId, update);
             await col.InsertOneAsync(post);
+            await Task.Run(async () =>
+              {
+                  var focusCol = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
+                  await focusCol.UpdateManyAsync(f => f.FocusedUserId == userOId, update);
+
+                  var followers = await focusCol.Find(f => f.FocusedUserId == userOId).Project(p => new { userId = p.UserId, noteName = p.FocusedNoteName }).ToListAsync();
+
+                  var format = "{0}发布了新动态，要查看ta最新的动态请对我说：‘看看{0}的动态’";
+                  foreach (var follower in followers)
+                  {
+                      var msg = String.Format(format, follower.noteName);
+                      var notification = new BahamutPublishModel
+                      {
+                          NotifyInfo = JsonConvert.SerializeObject(new
+                          {
+                              BuilderId = 0,
+                              AfterOpen = "go_custom",
+                              Custom = "ViGiHasNewPost",
+                              LocKey = msg,
+                          }, Formatting.None),
+                          NotifyType = "ViGiHasNewPost",
+                          ToUser = follower.userId.ToString()
+                      };
+                      AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notification);
+                  }
+              });
+
         }
 
         [HttpPut("ObjectionPost")]
