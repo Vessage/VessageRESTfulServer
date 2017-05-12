@@ -33,7 +33,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         }
 
         private static AISNSFocus[] DefaultFocusProfiles = {
-            new AISNSFocus{ FocusedNoteName = "语音助手公告",FocusedUserId = new ObjectId("589576a736c14122b8b8f3b8"),NotificationState = AISNSFocus.NOTIFICATION_STATE_ON },
+            new AISNSFocus{ FocusedNoteName = "助手公告",FocusedUserId = new ObjectId("589576a736c14122b8b8f3b8"),NotificationState = AISNSFocus.NOTIFICATION_STATE_ON },
             new AISNSFocus{ FocusedNoteName = "账号推荐",FocusedUserId = new ObjectId("590f352f0d7d036859bf0e82"),NotificationState = AISNSFocus.NOTIFICATION_STATE_ON }
         };
 
