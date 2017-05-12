@@ -72,7 +72,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
                     CreatedTime = now,
                     Linked = isLinked,
                     State = AISNSFocus.STATE_NORMAL,
-                    LastPostDate = now
+                    LastPostDate = now,
+                    NotificationState = AISNSFocus.NOTIFICATION_STATE_ON
                 };
                 await col.InsertOneAsync(newFocus);
                 var format = isLinked ? "{0}关注了你，你可以用语音查看谁关注了你。" : "{0}关注了你，现在你们互相关注了对方。";
@@ -125,13 +126,15 @@ namespace VessageRESTfulServer.Activities.AIViGi
                 usrId = f.FocusedUserId.ToString(),
                 name = f.FocusedNoteName,
                 linked = f.Linked,
-                uts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(f.UpdatedTime)
+                uts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(f.UpdatedTime),
+                notifyState = f.NotificationState,
+                notifyInfo = f.NotificationInfo
             }).ToListAsync();
             return list;
         }
 
         [HttpGet("FocusMeUsers")]
-        public async Task<IEnumerable<object>> GetFocusMeUsersAsync()
+        public async Task<IEnumerable<object>> GetFollowersAsync()
         {
             var col = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
             var list = await col.Find(f => f.FocusedUserId == UserObjectId && f.State >= 0).Project(f => new
@@ -215,7 +218,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         }
 
         [HttpPost("NewPost")]
-        public async Task PostNewAsync(string body, int bodyType = AISNSPost.BODY_TYPE_TEXT)
+        public async Task PostNewAsync(string body, int bodyType = AISNSPost.BODY_TYPE_TEXT, bool notify = true)
         {
             var userOId = UserObjectId;
             var post = new AISNSPost
@@ -231,33 +234,51 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var col = AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost");
             var update = new UpdateDefinitionBuilder<AISNSFocus>().Set(f => f.LastPostDate, DateTime.UtcNow);
             await col.InsertOneAsync(post);
-            await Task.Run(async () =>
-              {
-                  var focusCol = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
-                  await focusCol.UpdateManyAsync(f => f.FocusedUserId == userOId, update);
-
-                  var followers = await focusCol.Find(f => f.FocusedUserId == userOId).Project(p => new { userId = p.UserId, noteName = p.FocusedNoteName }).ToListAsync();
-
-                  var format = "{0}发布了新动态，要查看ta最新的动态请对我说：‘看看{0}的动态’";
-                  foreach (var follower in followers)
+            if (notify)
+            {
+                await Task.Run(async () =>
                   {
-                      var msg = String.Format(format, follower.noteName);
-                      var notification = new BahamutPublishModel
-                      {
-                          NotifyInfo = JsonConvert.SerializeObject(new
-                          {
-                              BuilderId = 0,
-                              AfterOpen = "go_custom",
-                              Custom = "ViGiHasNewPost",
-                              LocKey = msg,
-                          }, Formatting.None),
-                          NotifyType = "ViGiHasNewPost",
-                          ToUser = follower.userId.ToString()
-                      };
-                      AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notification);
-                  }
-              });
+                      var focusCol = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
+                      await focusCol.UpdateManyAsync(f => f.FocusedUserId == userOId, update);
 
+                      var followers = await focusCol.Find(f => f.FocusedUserId == userOId && f.NotificationState == AISNSFocus.NOTIFICATION_STATE_ON).Project(p => new { userId = p.UserId, noteName = p.FocusedNoteName }).ToListAsync();
+
+                      var format = "{0}发布了新动态，要查看ta最新的动态请对我说：‘看看{0}的动态’";
+                      foreach (var follower in followers)
+                      {
+                          var msg = String.Format(format, follower.noteName);
+                          var notification = new BahamutPublishModel
+                          {
+                              NotifyInfo = JsonConvert.SerializeObject(new
+                              {
+                                  BuilderId = 0,
+                                  AfterOpen = "go_custom",
+                                  Custom = "ViGiHasNewPost",
+                                  LocKey = msg,
+                              }, Formatting.None),
+                              NotifyType = "ViGiHasNewPost",
+                              ToUser = follower.userId.ToString()
+                          };
+                          AppServiceProvider.GetBahamutPubSubService().PublishVegeNotifyMessage(notification);
+                      }
+                  });
+            }
+        }
+
+        [HttpPut("FocusNotificationState")]
+        public async Task<object> UpdateFocusNotificationStateAsync(string userId, int state, string info = null)
+        {
+            var focusCol = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
+            var update = new UpdateDefinitionBuilder<AISNSFocus>().Set(p => p.NotificationState, state);
+            if (info != null)
+            {
+                update = update.Set(p => p.NotificationInfo, info);
+            }
+            var res = await focusCol.UpdateOneAsync(f => f.UserId == UserObjectId && f.FocusedUserId == ObjectId.Parse(userId), update);
+            return new
+            {
+                code = res.MatchedCount > 0 ? 200 : 404
+            };
         }
 
         [HttpPut("ObjectionPost")]

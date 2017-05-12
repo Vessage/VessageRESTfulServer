@@ -33,8 +33,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
         }
 
         private static AISNSFocus[] DefaultFocusProfiles = {
-            new AISNSFocus{ FocusedNoteName = "语音助手公告",FocusedUserId = new ObjectId("589576a736c14122b8b8f3b8") },
-            new AISNSFocus{ FocusedNoteName = "账号推荐",FocusedUserId = new ObjectId("590f352f0d7d036859bf0e82") }
+            new AISNSFocus{ FocusedNoteName = "语音助手公告",FocusedUserId = new ObjectId("589576a736c14122b8b8f3b8"),NotificationState = AISNSFocus.NOTIFICATION_STATE_ON },
+            new AISNSFocus{ FocusedNoteName = "账号推荐",FocusedUserId = new ObjectId("590f352f0d7d036859bf0e82"),NotificationState = AISNSFocus.NOTIFICATION_STATE_ON }
         };
 
         private static AISNSPost[] DefaultPosts = {
@@ -88,7 +88,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
                                 CreatedTime = now,
                                 Linked = false,
                                 State = AISNSFocus.STATE_NORMAL,
-                                LastPostDate = now
+                                LastPostDate = now,
+                                NotificationState = f.NotificationState
                             };
                 await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").InsertManyAsync(focus);
             }

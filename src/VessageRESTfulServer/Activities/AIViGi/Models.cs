@@ -7,6 +7,9 @@ namespace VessageRESTfulServer.Activities.AIViGi
     {
         public const int STATE_CANCELED = -1;
         public const int STATE_NORMAL = 0;
+        public const int NOTIFICATION_STATE_ON = 0;
+        public const int NOTIFICATION_STATE_OFF = 1;
+
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
         public string UserNick { get; set; }
@@ -22,6 +25,8 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public DateTime UpdatedTime { get; set; }
 
         public int State { get; set; }
+        public int NotificationState { get; set; }
+        public string NotificationInfo { get; set; }
     }
 
     class AIViGiProfile
