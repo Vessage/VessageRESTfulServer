@@ -18,6 +18,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public string FocusedNoteName { get; set; }
 
         public DateTime LastPostDate { get; set; }
+        public DateTime FetchDate { get; set; }
 
         public bool Linked { get; set; }
 

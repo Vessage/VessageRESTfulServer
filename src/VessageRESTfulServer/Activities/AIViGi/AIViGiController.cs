@@ -86,6 +86,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
                                 FocusedUserId = f.FocusedUserId,
                                 UpdatedTime = now,
                                 CreatedTime = now,
+                                FetchDate = DateTime.MinValue,
                                 Linked = false,
                                 State = AISNSFocus.STATE_NORMAL,
                                 LastPostDate = now,

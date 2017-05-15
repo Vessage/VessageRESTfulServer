@@ -70,6 +70,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
                     FocusedUserId = focusdUserId,
                     UpdatedTime = now,
                     CreatedTime = now,
+                    FetchDate = DateTime.MinValue,
                     Linked = isLinked,
                     State = AISNSFocus.STATE_NORMAL,
                     LastPostDate = now,
@@ -156,6 +157,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var f1 = new FilterDefinitionBuilder<AISNSFocus>().Eq(f => f.UserId, UserObjectId);
             var f2 = new FilterDefinitionBuilder<AISNSFocus>().Gte(f => f.State, 0);
             var f3 = new FilterDefinitionBuilder<AISNSFocus>().In(f => f.FocusedUserId, userIdArr);
+
             var focusedUserIdArr = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").Find(f1 & f2 & f3).Project(p => p.FocusedUserId).ToListAsync();
 
             var limitDate = DateTime.UtcNow.AddDays(CHECK_POST_LIMIT_DAYS);
@@ -212,7 +214,14 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var focusedUserIdNames = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus")
             .Find(f => f.UserId == UserObjectId && f.State >= 0 && f.LastPostDate >= limitDate)
             .SortByDescending(f => f.LastPostDate)
-            .Project(p => new { id = p.FocusedUserId.ToString(), name = p.FocusedNoteName })
+            .SortBy(f => f.Linked)
+            .Project(p => new
+            {
+                id = p.FocusedUserId.ToString(),
+                name = p.FocusedNoteName,
+                lpts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(p.LastPostDate),
+                lfts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(p.FetchDate)
+            })
             .ToListAsync();
             return focusedUserIdNames;
         }
