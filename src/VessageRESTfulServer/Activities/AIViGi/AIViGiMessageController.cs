@@ -43,22 +43,29 @@ namespace VessageRESTfulServer.Activities.AIViGi
             var lastFetchDate = DateTimeUtil.UnixTimeSpanZeroDate().AddMilliseconds(lstFetchTs);
             await col.UpdateManyAsync(f => f.Receiver == UserSessionData.UserId && f.State >= 0 && f.SendTime <= lastFetchDate, update);
             var messages = await col.Find(f => f.Receiver == UserSessionData.UserId && f.State >= 0 && f.SendTime > lastFetchDate).SortByDescending(f => f.SendTime).ToListAsync();
-            var first = messages.First();
-            var last = messages.Last();
-            return new
+            if (messages.Count > 0)
             {
-                id = "order",
-                newts = first == null ? 0 : DateTimeUtil.UnixTimeSpanOfDateTimeMs(first.SendTime),
-                lasts = last == null ? 0 : DateTimeUtil.UnixTimeSpanOfDateTimeMs(last.SendTime),
-                msgs = from m in messages
-                       select new
-                       {
-                           mid = m.Id.ToString(),
-                           bodyType = m.BodyType,
-                           body = m.Body,
-                           ts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(m.SendTime)
-                       }
-            };
+                return new
+                {
+                    id = "order",
+                    newts = messages.First() == null ? 0 : DateTimeUtil.UnixTimeSpanOfDateTimeMs(messages.First().SendTime),
+                    lasts = messages.Last() == null ? 0 : DateTimeUtil.UnixTimeSpanOfDateTimeMs(messages.Last().SendTime),
+                    msgs = from m in messages
+                           select new
+                           {
+                               mid = m.Id.ToString(),
+                               bodyType = m.BodyType,
+                               body = m.Body,
+                               sender = m.Sender.ToString(),
+                               snoteName = m.SNoteName,
+                               ts = DateTimeUtil.UnixTimeSpanOfDateTimeMs(m.SendTime)
+                           }
+                };
+            }
+            else
+            {
+                return new { id = "order", newts = 0, lasts = 0, msgs = new AIMessage[0] };
+            }
         }
 
         [HttpPost("Messages")]
@@ -80,6 +87,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
                 BodyType = bodyType,
                 Body = body,
                 Sender = UserObjectId,
+                SNoteName = noteName,
                 Receiver = receiver,
                 SendTime = DateTime.UtcNow,
                 State = AIMessage.STATE_NORMAL

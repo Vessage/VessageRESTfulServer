@@ -86,6 +86,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public const int STATE_RECEIVED = -1;
         public ObjectId Id { get; set; }
         public ObjectId Sender { get; set; }
+        public string SNoteName { get; set; } //Sender Note Name
         public string Receiver { get; set; }
         public DateTime SendTime { get; set; }
         public int BodyType { get; set; }
