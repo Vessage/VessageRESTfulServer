@@ -288,7 +288,7 @@ namespace VessageRESTfulServer.Activities.SNS
         {
             var usrCol = SNSDb.GetCollection<SNSMemberProfile>("SNSMemberProfile");
 
-            var poster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState > 0).Project(p => new { Follower = p.Followers, UserId = p.UserId }).FirstAsync();
+            var poster = await usrCol.Find(p => p.UserId == UserObjectId && p.ProfileState > 0).Project(p => new { Follower = p.Followers, UserId = p.UserId }).FirstOrDefaultAsync();
             if (poster == null)
             {
                 Response.StatusCode = 403;

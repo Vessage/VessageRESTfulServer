@@ -195,7 +195,7 @@ namespace VessageRESTfulServer.Services
             var collection = VessageDb.GetCollection<VessageBox>("VessageBox");
             try
             {
-                var vb = await collection.Find(v => v.UserId == userOId).FirstAsync();
+                var vb = await collection.Find(v => v.UserId == userOId).FirstOrDefaultAsync();
                 if (vb != null)
                 {
                     var updateGotTime = new UpdateDefinitionBuilder<VessageBox>().Set(v => v.LastGotMessageTime, vb.LastGetMessageTime);

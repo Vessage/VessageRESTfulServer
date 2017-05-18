@@ -58,7 +58,7 @@ namespace VessageRESTfulServer.Services
         public async Task<bool> QuitChatGroup(ObjectId userId, ObjectId groupId)
         {
             var collection = VessageDb.GetCollection<ChatGroup>("ChatGroup");
-            var g = await collection.Find(f => f.Id == groupId).FirstAsync();
+            var g = await collection.Find(f => f.Id == groupId).FirstOrDefaultAsync();
             if (g != null)
             {
                 return await KickUserFromChatGroup(collection, g.Hosters[0], groupId, userId);

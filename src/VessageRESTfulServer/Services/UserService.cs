@@ -210,7 +210,7 @@ namespace VessageRESTfulServer.Services
             try
             {
                 var collection = UserDb.GetCollection<VessageUser>("VessageUser");
-                var user = await collection.Find(u => u.Id == userId && u.Mobile == null).FirstAsync();
+                var user = await collection.Find(u => u.Id == userId && u.Mobile == null).FirstOrDefaultAsync();
                 if (user != null)
                 {
                     var update = new UpdateDefinitionBuilder<VessageUser>()
