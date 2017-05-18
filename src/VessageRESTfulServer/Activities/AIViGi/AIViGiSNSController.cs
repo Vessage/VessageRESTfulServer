@@ -241,12 +241,12 @@ namespace VessageRESTfulServer.Activities.AIViGi
                 State = AISNSPost.STATE_NORMAL
             };
             var col = AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost");
-            var update = new UpdateDefinitionBuilder<AISNSFocus>().Set(f => f.LastPostDate, DateTime.UtcNow);
             await col.InsertOneAsync(post);
             if (notify)
             {
                 await Task.Run(async () =>
                   {
+                      var update = new UpdateDefinitionBuilder<AISNSFocus>().Set(f => f.LastPostDate, DateTime.UtcNow);
                       var focusCol = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
                       await focusCol.UpdateManyAsync(f => f.FocusedUserId == userOId, update);
 

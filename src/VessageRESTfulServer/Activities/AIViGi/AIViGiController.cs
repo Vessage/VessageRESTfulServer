@@ -34,11 +34,12 @@ namespace VessageRESTfulServer.Activities.AIViGi
 
         private static AISNSFocus[] DefaultFocusProfiles = {
             new AISNSFocus{ FocusedNoteName = "助手公告",FocusedUserId = new ObjectId("589576a736c14122b8b8f3b8"),NotificationState = AISNSFocus.NOTIFICATION_STATE_ON },
-            new AISNSFocus{ FocusedNoteName = "账号推荐",FocusedUserId = new ObjectId("590f352f0d7d036859bf0e82"),NotificationState = AISNSFocus.NOTIFICATION_STATE_ON }
+            new AISNSFocus{ FocusedNoteName = "账号推荐",FocusedUserId = new ObjectId("590f352f0d7d036859bf0e82"),NotificationState = AISNSFocus.NOTIFICATION_STATE_ON },
+            new AISNSFocus{ FocusedNoteName = "科技头条",FocusedUserId = new ObjectId("58f5a3b2b377111b7e659e55"),NotificationState = AISNSFocus.NOTIFICATION_STATE_ON }
         };
 
         private static AISNSPost[] DefaultPosts = {
-            new AISNSPost{ Body = "这是为新用户自动发布的一条动态，欢迎使用ViGi。ps:你可以左划删除这条动态。",BodyType = AISNSPost.BODY_TYPE_TEXT }
+            new AISNSPost{ Body = "欢迎使用ViGi。ps:这是一条自动发布的动态，你可以左划删除这条动态。",BodyType = AISNSPost.BODY_TYPE_TEXT }
         };
 
         [HttpGet("AIProfile")]

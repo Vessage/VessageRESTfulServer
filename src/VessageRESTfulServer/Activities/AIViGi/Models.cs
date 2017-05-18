@@ -78,4 +78,19 @@ namespace VessageRESTfulServer.Activities.AIViGi
 
         public DateTime CreatedTime { get; set; }
     }
+    
+    class AIMessage
+    {
+        public const int BODY_TYPE_TEXT = 0;
+        public const int STATE_NORMAL = 0;
+        public const int STATE_RECEIVED = -1;
+        public ObjectId Id { get; set; }
+        public ObjectId Sender { get; set; }
+        public string Receiver { get; set; }
+        public DateTime SendTime { get; set; }
+        public int BodyType { get; set; }
+        public string Body { get; set; }
+
+        public int State { get; set; }
+    }
 }
