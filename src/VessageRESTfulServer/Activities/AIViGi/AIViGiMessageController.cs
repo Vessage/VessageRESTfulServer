@@ -72,7 +72,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public async Task<object> SendMessage(string receiver, int bodyType, string body)
         {
             var col = MessageDb.GetCollection<AIMessage>("AIMessage");
-            var noteName = await MessageDb.GetCollection<AISNSFocus>("AISNSFocus").Find(f => f.UserId == new ObjectId(receiver) && f.FocusedUserId == UserObjectId && f.Linked)
+            var noteName = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus").Find(f => f.UserId == new ObjectId(receiver) && f.FocusedUserId == UserObjectId && f.Linked)
             .Project(f => f.FocusedNoteName).FirstOrDefaultAsync();
             if (string.IsNullOrWhiteSpace(noteName))
             {
