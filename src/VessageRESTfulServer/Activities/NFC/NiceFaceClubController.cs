@@ -22,7 +22,7 @@ namespace VessageRESTfulServer.Activities.NFC
 {
     public class NiceFaceClubConfigCenter
     {
-        private static Random random = new Random(DateTime.Now.Millisecond);
+        private static Random random = new Random(DateTime.UtcNow.Millisecond);
         public static Random Random { get { return random; } }
         private static IConfiguration _nfcConfig;
         private static IConfiguration NFCConfig
@@ -93,7 +93,7 @@ namespace VessageRESTfulServer.Activities.NFC
     [Route("api/[controller]")]
     public partial class NiceFaceClubController : APIControllerBase
     {
-        private static Random random = new Random(DateTime.Now.Millisecond);
+        private static Random random = new Random(DateTime.UtcNow.Millisecond);
         private IMongoDatabase NiceFaceClubDb
         {
             get

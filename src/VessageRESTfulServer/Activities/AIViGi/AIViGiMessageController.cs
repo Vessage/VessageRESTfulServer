@@ -40,7 +40,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         {
             var update = new UpdateDefinitionBuilder<AIMessage>().Set(f => f.State, AIMessage.STATE_RECEIVED);
             var col = MessageDb.GetCollection<AIMessage>("AIMessage");
-            var lastFetchDate = DateTimeUtil.UnixTimeSpanZeroDate().AddMilliseconds(lstFetchTs);
+            var lastFetchDate = DateTimeOffset.FromUnixTimeMilliseconds(lstFetchTs).UtcDateTime;
             await col.UpdateManyAsync(f => f.Receiver == UserSessionData.UserId && f.State >= 0 && f.SendTime <= lastFetchDate, update);
             var messages = await col.Find(f => f.Receiver == UserSessionData.UserId && f.State >= 0 && f.SendTime > lastFetchDate).SortByDescending(f => f.SendTime).ToListAsync();
             if (messages.Count > 0)
@@ -99,10 +99,10 @@ namespace VessageRESTfulServer.Activities.AIViGi
                 {
                     BuilderId = 0,
                     AfterOpen = "go_custom",
-                    Custom = "ViGiNewMessage",
+                    Custom = "NewMessage",
                     LocKey = String.Format("{0}发来一条消息", noteName),
                 }, Formatting.None),
-                NotifyType = "ViGiNewMessage",
+                NotifyType = "NewMessage",
                 ToUser = receiver
             };
 

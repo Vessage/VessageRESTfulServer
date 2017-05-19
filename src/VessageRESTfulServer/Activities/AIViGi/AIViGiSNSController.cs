@@ -121,7 +121,7 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public async Task<IEnumerable<object>> GetFocusedUsersAsync(long lastTs = 0)
         {
             var col = AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus");
-            var lastDate = DateTimeUtil.UnixTimeSpanZeroDate().AddMilliseconds(lastTs);
+            var lastDate = DateTimeOffset.FromUnixTimeMilliseconds(lastTs).UtcDateTime;
             var list = await col.Find(f => f.UserId == UserObjectId && f.State >= 0 && f.UpdatedTime > lastDate).Project(f => new
             {
                 usrId = f.FocusedUserId.ToString(),
