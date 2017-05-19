@@ -10,6 +10,7 @@ using MongoDB.Bson;
 using System.Net;
 using BahamutCommon;
 using Newtonsoft.Json;
+using static UMengTools.UMengMessageModel;
 
 namespace VessageRESTfulServer.Controllers
 {
@@ -280,18 +281,32 @@ namespace VessageRESTfulServer.Controllers
             {
                 notifyText = tips.NotifyText;
             }
+            var umodel = new UMengTools.UMengMessageModel
+            {
+                apsPayload = new APSPayload
+                {
+                    aps = new APS
+                    {
+                        alert = new { loc_key = notifyText }
+                    },
+                    custom = "NewVessageNotify"
+                },
+                androidPayload = new AndroidPayload
+                {
+                    body = new ABody
+                    {
+                        builder_id = 1,
+                        after_open = "go_custom",
+                        custom = "NewVessageNotify",
+                        text = sender
+                    },
+                    extra = tips != null ? new { nick = tips.Nick, tips = tips.MSGTips } : null
+                }
+            };
+
             var notifyMsg = new BahamutPublishModel
             {
-
-                NotifyInfo = JsonConvert.SerializeObject(new
-                {
-                    BuilderId = 1,
-                    AfterOpen = "go_custom",
-                    Custom = "NewVessageNotify",
-                    Text = sender,
-                    LocKey = notifyText,
-                    Extra = tips != null ? new { nick = tips.Nick, tips = tips.MSGTips } : null
-                }, Formatting.None),
+                NotifyInfo = umodel.toMiniJson(),
                 NotifyType = "NewVessageNotify",
                 ToUser = string.Join(",", toUsers)
             };

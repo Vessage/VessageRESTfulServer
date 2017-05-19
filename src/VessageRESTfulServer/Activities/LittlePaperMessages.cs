@@ -11,6 +11,7 @@ using System.Net;
 using BahamutService.Service;
 using Newtonsoft.Json;
 using VessageRESTfulServer.Controllers;
+using static UMengTools.UMengMessageModel;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -171,16 +172,31 @@ namespace VessageRESTfulServer.Activities.LPM
 
         private void PublishActivityNotify(string user)
         {
+            var umodel = new UMengTools.UMengMessageModel
+            {
+                apsPayload = new APSPayload
+                {
+                    aps = new APS
+                    {
+                        alert = new { loc_key = "ACTIVITY_UPDATED_NOTIFICATION" }
+                    },
+                    custom = "ActivityUpdatedNotify"
+                },
+                androidPayload = new AndroidPayload
+                {
+                    body = new ABody
+                    {
+                        builder_id = 2,
+                        after_open = "go_custom",
+                        custom = "ActivityUpdatedNotify",
+                        text = UserSessionData.UserId
+                    }
+                }
+            };
+
             var notifyMsg = new BahamutPublishModel
             {
-                NotifyInfo = JsonConvert.SerializeObject(new
-                {
-                    BuilderId = 2,
-                    AfterOpen = "go_custom",
-                    Custom = "ActivityUpdatedNotify",
-                    Text = UserSessionData.UserId,
-                    LocKey = "ACTIVITY_UPDATED_NOTIFICATION"
-                }, Formatting.None),
+                NotifyInfo = umodel.toMiniJson(),
                 NotifyType = "ActivityUpdatedNotify",
                 ToUser = user
             };

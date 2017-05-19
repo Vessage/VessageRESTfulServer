@@ -10,6 +10,7 @@ using VessageRESTfulServer.Services;
 using BahamutService.Service;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static UMengTools.UMengMessageModel;
 
 namespace VessageRESTfulServer.Activities.NFC
 {
@@ -405,17 +406,31 @@ namespace VessageRESTfulServer.Activities.NFC
 
         private void PublishActivityNotify(string user, string msgLocKey, object extra)
         {
+            var umodel = new UMengTools.UMengMessageModel
+            {
+                apsPayload = new APSPayload
+                {
+                    aps = new APS
+                    {
+                        alert = new { loc_key = msgLocKey }
+                    },
+                    custom = "ActivityUpdatedNotify"
+                },
+                androidPayload = new AndroidPayload
+                {
+                    body = new ABody
+                    {
+                        builder_id = 2,
+                        after_open = "go_custom",
+                        custom = "ActivityUpdatedNotify",
+                        text = UserSessionData.UserId
+                    }
+                }
+            };
+
             var notifyMsg = new BahamutPublishModel
             {
-                NotifyInfo = JsonConvert.SerializeObject(new
-                {
-                    BuilderId = 2,
-                    AfterOpen = "go_custom",
-                    Custom = "ActivityUpdatedNotify",
-                    Text = UserSessionData.UserId,
-                    LocKey = msgLocKey,
-                    Extra = extra
-                }, Formatting.None),
+                NotifyInfo = umodel.toMiniJson(),
                 NotifyType = "ActivityUpdatedNotify",
                 ToUser = user
             };

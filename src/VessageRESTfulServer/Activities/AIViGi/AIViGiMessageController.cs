@@ -10,6 +10,8 @@ using MongoDB.Bson;
 using BahamutCommon;
 using BahamutService.Service;
 using Newtonsoft.Json;
+using UMengTools;
+using static UMengTools.UMengMessageModel;
 
 namespace VessageRESTfulServer.Activities.AIViGi
 {
@@ -93,15 +95,32 @@ namespace VessageRESTfulServer.Activities.AIViGi
                 State = AIMessage.STATE_NORMAL
             };
             await col.InsertOneAsync(newmsg);
+
+            var umodel = new UMengTools.UMengMessageModel
+            {
+                apsPayload = new APSPayload
+                {
+                    aps = new APS
+                    {
+                        alert = new { loc_key = String.Format("{0}发来一条消息", noteName) },
+                        content_available = 1
+                    },
+                    custom = "NewMessage"
+                },
+                androidPayload = new AndroidPayload
+                {
+                    body = new ABody
+                    {
+                        builder_id = 0,
+                        after_open = "go_custom",
+                        custom = "NewMessage"
+                    }
+                }
+            };
+
             var notification = new BahamutPublishModel
             {
-                NotifyInfo = JsonConvert.SerializeObject(new
-                {
-                    BuilderId = 0,
-                    AfterOpen = "go_custom",
-                    Custom = "NewMessage",
-                    LocKey = String.Format("{0}发来一条消息", noteName),
-                }, Formatting.None),
+                NotifyInfo = umodel.toMiniJson(),
                 NotifyType = "NewMessage",
                 ToUser = receiver
             };

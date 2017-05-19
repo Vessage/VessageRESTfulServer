@@ -10,6 +10,7 @@ using VessageRESTfulServer.Services;
 using VessageRESTfulServer.Controllers;
 using BahamutService.Service;
 using Newtonsoft.Json;
+using static UMengTools.UMengMessageModel;
 
 namespace VessageRESTfulServer.Activities.AIViGi
 {
@@ -79,16 +80,31 @@ namespace VessageRESTfulServer.Activities.AIViGi
                 await col.InsertOneAsync(newFocus);
                 var format = isLinked ? "{0}关注了你，你可以用语音查看谁关注了你。" : "{0}关注了你，现在你们互相关注了对方。";
                 var msg = String.Format(format, nick);
+
+                var umodel = new UMengTools.UMengMessageModel
+                {
+                    apsPayload = new APSPayload
+                    {
+                        aps = new APS
+                        {
+                            alert = new { loc_key = msg }
+                        },
+                        custom = "ViGiAddFocus"
+                    },
+                    androidPayload = new AndroidPayload
+                    {
+                        body = new ABody
+                        {
+                            builder_id = 0,
+                            after_open = "go_custom",
+                            custom = "ViGiAddFocus"
+                        }
+                    }
+                };
+
                 var notification = new BahamutPublishModel
                 {
-                    NotifyInfo = JsonConvert.SerializeObject(new
-                    {
-                        BuilderId = 0,
-                        AfterOpen = "go_custom",
-                        Custom = "ViGiAddFocus",
-                        Text = UserSessionData.UserId,
-                        LocKey = msg,
-                    }, Formatting.None),
+                    NotifyInfo = umodel.toMiniJson(),
                     NotifyType = "ViGiAddFocus",
                     ToUser = userId
                 };
@@ -256,15 +272,30 @@ namespace VessageRESTfulServer.Activities.AIViGi
                       foreach (var follower in followers)
                       {
                           var msg = String.Format(format, follower.noteName);
+                          var umodel = new UMengTools.UMengMessageModel
+                          {
+                              apsPayload = new APSPayload
+                              {
+                                  aps = new APS
+                                  {
+                                      alert = new { loc_key = msg }
+                                  },
+                                  custom = "ViGiHasNewPost"
+                              },
+                              androidPayload = new AndroidPayload
+                              {
+                                  body = new ABody
+                                  {
+                                      builder_id = 0,
+                                      after_open = "go_custom",
+                                      custom = "ViGiHasNewPost"
+                                  }
+                              }
+                          };
+
                           var notification = new BahamutPublishModel
                           {
-                              NotifyInfo = JsonConvert.SerializeObject(new
-                              {
-                                  BuilderId = 0,
-                                  AfterOpen = "go_custom",
-                                  Custom = "ViGiHasNewPost",
-                                  LocKey = msg,
-                              }, Formatting.None),
+                              NotifyInfo = umodel.toMiniJson(),
                               NotifyType = "ViGiHasNewPost",
                               ToUser = follower.userId.ToString()
                           };

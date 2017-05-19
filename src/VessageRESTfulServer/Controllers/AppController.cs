@@ -9,6 +9,7 @@ using BahamutService.Service;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VessageRESTfulServer.Models;
+using static UMengTools.UMengMessageModel;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -100,16 +101,30 @@ namespace VessageRESTfulServer.Controllers
             var id = await AppServiceProvider.GetVessageService().SendVessagesToUser(UserId, vsgs);
             if (id != ObjectId.Empty)
             {
+                var umodel = new UMengTools.UMengMessageModel
+                {
+                    apsPayload = new APSPayload
+                    {
+                        aps = new APS
+                        {
+                            alert = new { loc_key = "NEW_VMSG_NOTIFICATION" }
+                        },
+                        custom = "NewVessageNotify"
+                    },
+                    androidPayload = new AndroidPayload
+                    {
+                        body = new ABody
+                        {
+                            builder_id = 1,
+                            after_open = "go_custom",
+                            custom = "NewVessageNotify"
+                        }
+                    }
+                };
+
                 var notifyMsg = new BahamutPublishModel
                 {
-                    NotifyInfo = JsonConvert.SerializeObject(new
-                    {
-                        BuilderId = 1,
-                        AfterOpen = "go_custom",
-                        Custom = "NewVessageNotify",
-                        Text = "",
-                        LocKey = "NEW_VMSG_NOTIFICATION"
-                    }, Formatting.None),
+                    NotifyInfo = umodel.toMiniJson(),
                     NotifyType = "NewVessageNotify",
                     ToUser = UserId.ToString()
                 };

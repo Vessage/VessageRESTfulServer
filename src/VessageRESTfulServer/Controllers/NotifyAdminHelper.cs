@@ -6,6 +6,8 @@ using BahamutService.Service;
 using Newtonsoft.Json;
 using VessageRESTfulServer.Models;
 using VessageRESTfulServer.Services;
+using static UMengTools.UMengMessageModel;
+
 namespace VessageRESTfulServer.Controllers
 {
     public class NotifyAdminHelper
@@ -84,17 +86,33 @@ namespace VessageRESTfulServer.Controllers
             {
                 return;
             }
+
+            var umodel = new UMengTools.UMengMessageModel
+            {
+                apsPayload = new APSPayload
+                {
+                    aps = new APS
+                    {
+                        alert = new { loc_key = msg }
+                    },
+                    custom = "ActivityUpdatedNotify"
+                },
+                androidPayload = new AndroidPayload
+                {
+                    body = new ABody
+                    {
+                        builder_id = 2,
+                        after_open = "go_custom",
+                        custom = "ActivityUpdatedNotify",
+                        text = notifyAdmins.First()
+                    },
+                    extra = new { acName = "通知管理员", acMsg = msg }
+                }
+            };
+
             var notifyMsg = new BahamutPublishModel
             {
-                NotifyInfo = JsonConvert.SerializeObject(new
-                {
-                    BuilderId = 2,
-                    AfterOpen = "go_custom",
-                    Custom = "ActivityUpdatedNotify",
-                    Text = notifyAdmins.First(),
-                    LocKey = msg,
-                    Extra = new { acName = "通知管理员", acMsg = msg }
-                }, Formatting.None),
+                NotifyInfo = umodel.toMiniJson(),
                 NotifyType = "ActivityUpdatedNotify",
                 ToUser = notifyAdmins.Count() > 1 ? string.Join(",", notifyAdmins) : notifyAdmins.First()
             };
