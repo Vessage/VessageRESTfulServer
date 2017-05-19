@@ -210,11 +210,11 @@ namespace VessageRESTfulServer.Activities.AIViGi
         public async Task<IEnumerable<object>> GetRecentlyPostUsers()
         {
             var col = AiViGiSNSDb.GetCollection<AISNSPost>("AISNSPost");
+
             var limitDate = DateTime.UtcNow.AddDays(CHECK_POST_LIMIT_DAYS);
             var focusedUserIdNames = await AiViGiSNSDb.GetCollection<AISNSFocus>("AISNSFocus")
             .Find(f => f.UserId == UserObjectId && f.State >= 0 && f.LastPostDate >= limitDate)
-            .SortByDescending(f => f.LastPostDate)
-            .SortBy(f => f.Linked)
+            .SortByDescending(f => f.LastPostDate).ThenBy(f => f.Linked)
             .Project(p => new
             {
                 id = p.FocusedUserId.ToString(),
