@@ -32,7 +32,7 @@ namespace VessageRESTfulServer.Services
                 GroupName = groupName,
                 Chatters = chatterList.ToArray(),
                 Hosters = new ObjectId[] { hoster },
-                InviteCode = new Random(DateTime.Now.Millisecond).Next(1000, 9999).ToString()
+                InviteCode = new Random(DateTime.UtcNow.Millisecond).Next(1000, 9999).ToString()
             };
             var collection = VessageDb.GetCollection<ChatGroup>("ChatGroup");
             await collection.InsertOneAsync(group);
