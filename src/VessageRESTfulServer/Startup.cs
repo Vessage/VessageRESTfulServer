@@ -196,6 +196,7 @@ namespace VessageRESTfulServer
     {
         public static void PublishVegeNotifyMessage(this BahamutPubSubService service, BahamutPublishModel message)
         {
+            message.Appkey = Startup.Appkey;
             service.PublishBahamutUserNotifyMessage(Startup.AppChannelId, message);
         }
     }

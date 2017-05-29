@@ -452,7 +452,7 @@ namespace VessageRESTfulServer.Controllers
                 {
                     if (user.Type == VessageUser.TYPE_SUBSCRIPTION)
                     {
-                        await Startup.ServicesProvider.GetSubscriptionService().UpdateAccountTitleAsync(user.AccountId,nick);
+                        await Startup.ServicesProvider.GetSubscriptionService().UpdateAccountTitleAsync(user.AccountId, nick);
                     }
                     return new { msg = "SUCCESS" };
                 }
@@ -480,7 +480,7 @@ namespace VessageRESTfulServer.Controllers
                 {
                     if (user.Type == VessageUser.TYPE_SUBSCRIPTION)
                     {
-                        await Startup.ServicesProvider.GetSubscriptionService().UpdateAccountDescAsync(user.AccountId,motto);
+                        await Startup.ServicesProvider.GetSubscriptionService().UpdateAccountDescAsync(user.AccountId, motto);
                     }
                     return new { msg = "SUCCESS" };
                 }
@@ -524,7 +524,7 @@ namespace VessageRESTfulServer.Controllers
                 {
                     if (user.Type == VessageUser.TYPE_SUBSCRIPTION)
                     {
-                        await Startup.ServicesProvider.GetSubscriptionService().UpdateAccountAvatarAsync(user.AccountId,avatar);
+                        await Startup.ServicesProvider.GetSubscriptionService().UpdateAccountAvatarAsync(user.AccountId, avatar);
                     }
                     return new { msg = "SUCCESS" };
                 }
